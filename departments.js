@@ -645,7 +645,7 @@
       error.textContent = "";
       error.style.color = "";
 
-      const role = normalizeRole(roleSel.value);
+      const selectedRole = normalizeRole(roleSel.value);
       const u = String(username.value || "").trim().toLowerCase();
       const p = String(password.value || "");
 
@@ -653,16 +653,24 @@
       const acc =
         accounts.find(
           (a) =>
-            normalizeRole(a.role) === role &&
-            String(a.username || "").toLowerCase() === u,
+            selectedRole &&
+            normalizeRole(a.role) === selectedRole &&
+            String(a.username || "").toLowerCase() === u &&
+            String(a.password || "") === p,
+        ) ||
+        accounts.find(
+          (a) =>
+            String(a.username || "").toLowerCase() === u &&
+            String(a.password || "") === p,
         ) || null;
 
-      if (!acc || String(acc.password || "") !== p) {
-        error.textContent = "Invalid credentials for selected department.";
-        audit("login_failed", { role, username: u });
+      if (!acc) {
+        error.textContent = "Username or password is incorrect.";
+        audit("login_failed", { role: selectedRole || "auto", username: u });
         return;
       }
 
+      const role = normalizeRole(acc.role);
       setSession({ role, userId: acc.id, username: acc.username });
       ensureERP();
       ensureHR();
@@ -719,13 +727,15 @@
       accounts.push(account);
       saveJson(ACCOUNTS_KEY, accounts);
       audit("register_success", { role, userId: account.id, username: u });
-      // After registration, go back to login page (required sequence).
+      setSession({ role, userId: account.id, username: account.username });
+      ensureERP();
+      ensureHR();
       try {
         await getStore()?.flush?.();
       } catch {
         // ignore
       }
-      window.location.href = `departments.html?registered=1&role=${encodeURIComponent(role)}&username=${encodeURIComponent(u)}`;
+      window.location.href = roleHome(role);
     }));
   };
 
