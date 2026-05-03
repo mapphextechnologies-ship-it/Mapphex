@@ -914,6 +914,18 @@
     URL.revokeObjectURL(url);
   };
 
+  const downloadText = (filename, text, type = "text/plain;charset=utf-8") => {
+    const blob = new Blob([String(text ?? "")], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
   const printHtmlReport = (reportHtml, title = "Report") => {
     const w = window.open("", "_blank");
     if (!w) return;
@@ -2701,7 +2713,13 @@
       } catch {
         // IndexedDB already has the approval locally.
       }
-      toast("Account updated", `Account ${status}. The user can try logging in now.`);
+      if (status === "approved") {
+        toast("Approved successful", "The account is approved and can login now.");
+      } else if (status === "rejected") {
+        toast("Rejected successful", "The account has been rejected.");
+      } else {
+        toast("Account updated", `Account ${status}.`);
+      }
       renderAccounts();
       render();
     };
@@ -2772,9 +2790,31 @@
       }
     };
 
-    const exportAllData = () => {
+    const exportAllData = async () => {
+      const keys = [
+        ERP_KEY,
+        HR_KEY,
+        ACCOUNTS_KEY,
+        BRANCH_ACCOUNTS_KEY,
+        AGENT_ACCOUNTS_KEY,
+        DIRECTOR_ACCOUNT_KEY,
+        AUDIT_KEY,
+        NOTIFY_KEY,
+        NOTIFY_SEEN_KEY,
+        SMS_OUTBOX_KEY,
+      ];
+      try {
+        await getStore()?.refresh?.(keys);
+      } catch {
+        // Export whatever is available locally if the shared API is offline.
+      }
       const payload = {
         exportedAt: isoNow(),
+        source: {
+          apiState: getStore()?.apiState || "unknown",
+          idbState: getStore()?.idbState || "unknown",
+          keys,
+        },
         erp: loadJson(ERP_KEY, null),
         hr: loadJson(HR_KEY, null),
         departmentAccounts: loadJson(ACCOUNTS_KEY, []),
@@ -2783,9 +2823,15 @@
         directorAccount: loadJson(DIRECTOR_ACCOUNT_KEY, null),
         audit: loadJson(AUDIT_KEY, []),
         notifications: loadJson(NOTIFY_KEY, null),
+        notificationSeen: loadJson(NOTIFY_SEEN_KEY, null),
         smsOutbox: loadJson(SMS_OUTBOX_KEY, []),
       };
-      downloadText(`jixels-data-export-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(payload, null, 2));
+      downloadText(
+        `jixels-data-export-${new Date().toISOString().slice(0, 10)}.json`,
+        JSON.stringify(payload, null, 2),
+        "application/json;charset=utf-8",
+      );
+      toast("Export ready", "JSON data export downloaded.");
     };
 
     const deleteAllData = async () => {
@@ -2817,21 +2863,38 @@
       toast("Data deleted", "ERP, HR, accounts, audit, notifications, and SMS queues have been cleared.");
     };
 
-    const buildAdminReportHtml = ({ dueDate }) => {
+    const inReportRange = (value, range) => {
+      if (!range || range.key === "all") return true;
+      const ms = new Date(value).getTime();
+      return Number.isFinite(ms) && ms >= range.startMs && ms <= range.endMs;
+    };
+
+    const buildAdminReportHtml = ({ dueDate, range }) => {
       erp = loadJson(ERP_KEY, erp);
       const now = new Date().toLocaleString();
       const due = String(dueDate || "").trim();
       const dueLine = due ? `<p><strong>Due date:</strong> ${escapeHtml(due)}</p>` : "";
+      const periodLabel = range?.label || "All time";
+      const periodLine = `<p><strong>Period:</strong> ${escapeHtml(periodLabel)}</p>`;
 
       const bId = String(branchSelect?.value || erp.branches?.[0]?.id || "");
       const branch = (erp.branches || []).find((b) => b.id === bId) || null;
       if (!branch) {
-        return `<h3>Admin Inventory Report</h3><p><strong>Generated:</strong> ${escapeHtml(now)}</p>${dueLine}<p>No branch selected.</p>`;
+        return `<h3>Admin Inventory Report</h3><p><strong>Generated:</strong> ${escapeHtml(now)}</p>${periodLine}${dueLine}<p>No branch selected.</p>`;
       }
 
       const phones = Array.isArray(branch.phones) ? branch.phones : [];
+      const periodPhones = phones.filter((p) => inReportRange(p.createdAt || p.updatedAt, range));
+      const soldPhones = Array.isArray(branch.soldPhones) ? branch.soldPhones : [];
+      const periodSoldPhones = soldPhones.filter((p) => inReportRange(p.soldAt || p.updatedAt, range));
+      const txLog = Array.isArray(branch.txLog) ? branch.txLog : [];
+      const periodTx = txLog.filter((tx) => inReportRange(tx.at, range));
       let totalValue = 0;
       for (const p of phones) totalValue += Number(p.price || 0) || 0;
+      let periodAddedValue = 0;
+      for (const p of periodPhones) periodAddedValue += Number(p.price || 0) || 0;
+      let periodSalesValue = 0;
+      for (const tx of periodTx) periodSalesValue += Number(tx.amount || 0) || 0;
 
       const rowsHtml = phones
         .slice()
@@ -2851,6 +2914,7 @@
       return `
         <h3>Admin Inventory Report</h3>
         <p><strong>Generated:</strong> ${escapeHtml(now)}</p>
+        ${periodLine}
         ${dueLine}
         <p><strong>Branch:</strong> ${escapeHtml(branch.name || branch.id || "—")}</p>
 
@@ -2862,6 +2926,22 @@
           <div class="report-card">
             <div class="label">Total value (KES)</div>
             <div class="value">${formatInt(totalValue)}</div>
+          </div>
+          <div class="report-card">
+            <div class="label">Added in period</div>
+            <div class="value">${formatInt(periodPhones.length)}</div>
+          </div>
+          <div class="report-card">
+            <div class="label">Added value (KES)</div>
+            <div class="value">${formatInt(periodAddedValue)}</div>
+          </div>
+          <div class="report-card">
+            <div class="label">Sold in period</div>
+            <div class="value">${formatInt(periodSoldPhones.length)}</div>
+          </div>
+          <div class="report-card">
+            <div class="label">Sales in period (KES)</div>
+            <div class="value">${formatInt(periodSalesValue)}</div>
           </div>
         </div>
 
@@ -2892,7 +2972,7 @@
     if (branchSelect) branchSelect.addEventListener("change", safe("admin_branch_change", () => render()));
     if (addBtn) addBtn.addEventListener("click", safe("admin_add_phone", () => addPhone()));
     if (refreshAccountsBtn) refreshAccountsBtn.addEventListener("click", safe("admin_refresh_accounts", () => renderAccounts()));
-    if (exportDataBtn) exportDataBtn.addEventListener("click", safe("admin_export_data", () => exportAllData()));
+    if (exportDataBtn) exportDataBtn.addEventListener("click", safe("admin_export_data", async () => exportAllData()));
     if (deleteDataBtn) deleteDataBtn.addEventListener("click", safe("admin_delete_data", async () => deleteAllData()));
 
     render();
