@@ -38,16 +38,46 @@
     }
   };
 
+  const readBrowserJson = (key, fallback) => {
+    for (const storage of [sessionStorage, localStorage]) {
+      try {
+        const raw = storage.getItem(key);
+        if (!raw) continue;
+        return safeJsonParse(raw, fallback);
+      } catch {
+        // Try the next storage.
+      }
+    }
+    return fallback;
+  };
+
+  const mirrorBrowserJson = (key, value) => {
+    try {
+      const raw = JSON.stringify(value ?? null);
+      sessionStorage.setItem(key, raw);
+      localStorage.setItem(key, raw);
+    } catch {
+      // Browser storage can be blocked; KV remains the source of truth.
+    }
+  };
+
+  const removeBrowserJson = (key) => {
+    for (const storage of [sessionStorage, localStorage]) {
+      try {
+        storage.removeItem(key);
+      } catch {
+        // ignore
+      }
+    }
+  };
+
   const loadJson = (key, fallback) => {
     const store = getStore();
-    if (store?.getJson) return store.getJson(key, fallback);
-    try {
-      const raw = localStorage.getItem(key);
-      if (!raw) return fallback;
-      return safeJsonParse(raw, fallback);
-    } catch {
-      return fallback;
+    if (store?.getJson) {
+      const fromStore = store.getJson(key, undefined);
+      if (typeof fromStore !== "undefined" && fromStore !== null) return fromStore;
     }
+    return readBrowserJson(key, fallback);
   };
 
   const loadJsonAnyStorage = (key, fallback) => {
@@ -76,20 +106,18 @@
     try {
       if (store?.remove) {
         store.remove(key);
+        removeBrowserJson(key);
         return true;
       }
     } catch {
       // ignore
     }
-    try {
-      localStorage.removeItem(key);
-      return true;
-    } catch {
-      return false;
-    }
+    removeBrowserJson(key);
+    return true;
   };
 
   const saveJson = (key, value) => {
+    mirrorBrowserJson(key, value);
     const store = getStore();
     try {
       if (store?.setJson) {
@@ -101,14 +129,7 @@
       return false;
     }
 
-    // Fallback (should not be used when running via the backend).
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-      return true;
-    } catch (err) {
-      console.error("Storage write failed:", key, err);
-      return false;
-    }
+    return true;
   };
 
   const bootstrapFromApi = (() => {
