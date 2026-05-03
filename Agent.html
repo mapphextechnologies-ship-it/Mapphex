@@ -115,6 +115,14 @@
             </label>
 
             <label class="field">
+              <span>Sale type</span>
+              <select id="tx-sale-type">
+                <option value="cash">Full payment</option>
+                <option value="credit">Sell on credit</option>
+              </select>
+            </label>
+
+            <label class="field">
               <span>Reference</span>
               <input id="tx-ref" type="text" placeholder="Auto-generated if blank" />
             </label>
@@ -122,6 +130,16 @@
             <label class="field">
               <span>Amount (KES)</span>
               <input id="tx-amount" type="number" min="0" step="1" placeholder="Auto from phone price" />
+            </label>
+
+            <label class="field">
+              <span>Amount paid (KES)</span>
+              <input id="tx-paid" type="number" min="0" step="1" placeholder="Use for credit sale" />
+            </label>
+
+            <label class="field">
+              <span>Credit due date</span>
+              <input id="tx-credit-due" type="date" />
             </label>
 
             <div class="report-buttons" style="justify-content:flex-start;">
@@ -151,6 +169,8 @@
                   <th>Channel</th>
                   <th>Reference</th>
                   <th class="num">Amount (KES)</th>
+                  <th class="num">Paid</th>
+                  <th class="num">Balance</th>
                   <th>Status</th>
                 </tr>
               </thead>

@@ -1034,13 +1034,20 @@
     let mpesa = 0;
     let bank = 0;
     let tx = 0;
+    let creditCount = 0;
+    let creditBalance = 0;
     for (const b of erp.branches || []) {
       const fin = b.financeSummary || {};
       mpesa += Number(fin.mpesaIn || 0) || 0;
       bank += Number(fin.bankIn || 0) || 0;
       tx += Number(fin.txCount || 0) || 0;
+      for (const sale of b.txLog || []) {
+        if (String(sale.saleType || "").toLowerCase() !== "credit") continue;
+        creditCount += 1;
+        creditBalance += Number(sale.balance || 0) || 0;
+      }
     }
-    return { mpesa, bank, tx };
+    return { mpesa, bank, tx, creditCount, creditBalance };
   };
 
   const computeStockSold = (erp) => {
@@ -2171,14 +2178,18 @@
       const dueLine = due ? `<p><strong>Due date:</strong> ${escapeHtml(due)}</p>` : "";
       const periodLine = `<p><strong>Period:</strong> ${escapeHtml(range?.label || "All time")}</p>`;
 
-      const periodTotals = { mpesa: 0, bank: 0, tx: 0 };
+      const periodTotals = { mpesa: 0, bank: 0, tx: 0, creditCount: 0, creditBalance: 0 };
       for (const b of erp?.branches || []) {
         for (const tx of b.txLog || []) {
           if (!inReportRange(tx.at, range)) continue;
-          const amount = toMoney(tx.amount, 0);
+          const amount = toMoney(tx.amountPaid ?? tx.amount, 0);
           if (String(tx.channel || "").toLowerCase() === "bank") periodTotals.bank += amount;
           else periodTotals.mpesa += amount;
           periodTotals.tx += 1;
+          if (String(tx.saleType || "").toLowerCase() === "credit") {
+            periodTotals.creditCount += 1;
+            periodTotals.creditBalance += toMoney(tx.balance, 0);
+          }
         }
       }
       const totals = range?.key === "all" && erp ? computeFinanceTotals(erp) : periodTotals;
@@ -2207,20 +2218,33 @@
         .sort((a, z) => String(a.name || "").localeCompare(String(z.name || "")))
         .map((b) => {
           const fin = b.financeSummary || {};
-          const rowTotals = { mpesa: 0, bank: 0, tx: 0, last: "" };
+          const rowTotals = { mpesa: 0, bank: 0, tx: 0, creditCount: 0, creditBalance: 0, last: "" };
+          if (range?.key === "all") {
+            for (const tx of b.txLog || []) {
+              if (String(tx.saleType || "").toLowerCase() !== "credit") continue;
+              rowTotals.creditCount += 1;
+              rowTotals.creditBalance += toMoney(tx.balance, 0);
+            }
+          }
           if (range?.key !== "all") {
             for (const tx of b.txLog || []) {
               if (!inReportRange(tx.at, range)) continue;
-              const amount = toMoney(tx.amount, 0);
+              const amount = toMoney(tx.amountPaid ?? tx.amount, 0);
               if (String(tx.channel || "").toLowerCase() === "bank") rowTotals.bank += amount;
               else rowTotals.mpesa += amount;
               rowTotals.tx += 1;
+              if (String(tx.saleType || "").toLowerCase() === "credit") {
+                rowTotals.creditCount += 1;
+                rowTotals.creditBalance += toMoney(tx.balance, 0);
+              }
               if (!rowTotals.last || String(tx.at || "") > rowTotals.last) rowTotals.last = String(tx.at || "");
             }
           }
           const mpesa = range?.key === "all" ? toMoney(fin.mpesaIn || 0, 0) : rowTotals.mpesa;
           const bank = range?.key === "all" ? toMoney(fin.bankIn || 0, 0) : rowTotals.bank;
           const txCount = range?.key === "all" ? toMoney(fin.txCount || 0, 0) : rowTotals.tx;
+          const creditCount = rowTotals.creditCount;
+          const creditBalance = rowTotals.creditBalance;
           const lastTxAt = range?.key === "all" ? fin.lastTxAt : rowTotals.last;
           return `
             <tr>
@@ -2228,6 +2252,8 @@
               <td class="num">${formatInt(mpesa)}</td>
               <td class="num">${formatInt(bank)}</td>
               <td class="num">${formatInt(txCount)}</td>
+              <td class="num">${formatInt(creditCount)}</td>
+              <td class="num">${formatInt(creditBalance)}</td>
               <td>${lastTxAt ? escapeHtml(new Date(lastTxAt).toLocaleString()) : "—"}</td>
             </tr>`;
         })
@@ -2240,6 +2266,8 @@
               <td class="num">${formatInt(totals.mpesa)}</td>
               <td class="num">${formatInt(totals.bank)}</td>
               <td class="num">${formatInt(totals.tx)}</td>
+              <td class="num">${formatInt(totals.creditCount || 0)}</td>
+              <td class="num">${formatInt(totals.creditBalance || 0)}</td>
               <td>—</td>
             </tr>`
         : "";
@@ -2286,6 +2314,14 @@
             <div class="value">${formatInt(totals.tx)}</div>
           </div>
           <div class="report-card">
+            <div class="label">Credit phones</div>
+            <div class="value">${formatInt(totals.creditCount || 0)}</div>
+          </div>
+          <div class="report-card">
+            <div class="label">Credit balance (KES)</div>
+            <div class="value">${formatInt(totals.creditBalance || 0)}</div>
+          </div>
+          <div class="report-card">
             <div class="label">Payroll pending (KES)</div>
             <div class="value">${formatInt(pendingTotal)}</div>
           </div>
@@ -2311,11 +2347,13 @@
                 <th class="num">M-Pesa</th>
                 <th class="num">Bank</th>
                 <th class="num">Tx</th>
+                <th class="num">Credit phones</th>
+                <th class="num">Credit balance</th>
                 <th>Last tx</th>
               </tr>
             </thead>
             <tbody>
-              ${branchRowsHtml || `<tr><td colspan="5">No branch data.</td></tr>`}
+              ${branchRowsHtml || `<tr><td colspan="7">No branch data.</td></tr>`}
               ${branchTotalRowHtml}
             </tbody>
           </table>
@@ -2471,6 +2509,8 @@
       let totalSold = 0;
       let periodSold = 0;
       let periodRevenue = 0;
+      let periodCreditCount = 0;
+      let periodCreditBalance = 0;
       let totalDamaged = 0;
       let totalLost = 0;
 
@@ -2482,17 +2522,31 @@
           totalSold += t.sold;
           let branchPeriodSold = 0;
           let branchPeriodRevenue = 0;
+          let branchCreditCount = 0;
+          let branchCreditBalance = 0;
           for (const p of b.soldPhones || []) {
             if (!inReportRange(p.soldAt, range)) continue;
             branchPeriodSold += 1;
-            branchPeriodRevenue += toMoney(p.soldAmount || p.price, 0);
+            if (!Array.isArray(b.txLog) || !b.txLog.length) {
+              branchPeriodRevenue += toMoney(p.soldPaid ?? p.soldAmount ?? p.price, 0);
+            }
+            if ((!Array.isArray(b.txLog) || !b.txLog.length) && String(p.saleType || "").toLowerCase() === "credit") {
+              branchCreditCount += 1;
+              branchCreditBalance += toMoney(p.creditBalance, 0);
+            }
           }
           for (const tx of b.txLog || []) {
             if (!inReportRange(tx.at, range)) continue;
-            branchPeriodRevenue += toMoney(tx.amount, 0);
+            branchPeriodRevenue += toMoney(tx.amountPaid ?? tx.amount, 0);
+            if (String(tx.saleType || "").toLowerCase() === "credit") {
+              branchCreditCount += 1;
+              branchCreditBalance += toMoney(tx.balance, 0);
+            }
           }
           periodSold += branchPeriodSold;
           periodRevenue += branchPeriodRevenue;
+          periodCreditCount += branchCreditCount;
+          periodCreditBalance += branchCreditBalance;
           totalDamaged += t.damaged;
           totalLost += t.lost;
           return `
@@ -2502,6 +2556,8 @@
               <td class="num">${formatInt(t.stock)}</td>
               <td class="num">${formatInt(t.sold)}</td>
               <td class="num">${formatInt(branchPeriodSold)}</td>
+              <td class="num">${formatInt(branchCreditCount)}</td>
+              <td class="num">${formatInt(branchCreditBalance)}</td>
               <td class="num">${formatInt(t.damaged)}</td>
               <td class="num">${formatInt(t.lost)}</td>
               <td>${escapeHtml(t.topModel || "—")}</td>
@@ -2533,6 +2589,14 @@
             <div class="value">${formatInt(periodRevenue)}</div>
           </div>
           <div class="report-card">
+            <div class="label">Credit phones</div>
+            <div class="value">${formatInt(periodCreditCount)}</div>
+          </div>
+          <div class="report-card">
+            <div class="label">Credit balance (KES)</div>
+            <div class="value">${formatInt(periodCreditBalance)}</div>
+          </div>
+          <div class="report-card">
             <div class="label">Damaged / Lost</div>
             <div class="value">${formatInt(totalDamaged)}/${formatInt(totalLost)}</div>
           </div>
@@ -2547,13 +2611,15 @@
               <th class="num">In stock</th>
               <th class="num">Sold</th>
               <th class="num">Period sold</th>
+              <th class="num">Credit phones</th>
+              <th class="num">Credit balance</th>
               <th class="num">Damaged</th>
               <th class="num">Lost</th>
               <th>Top model</th>
             </tr>
           </thead>
           <tbody>
-            ${tableRowsHtml || `<tr><td colspan="8">No branches found.</td></tr>`}
+            ${tableRowsHtml || `<tr><td colspan="10">No branches found.</td></tr>`}
           </tbody>
         </table>
       `;
@@ -2894,7 +2960,30 @@
       let periodAddedValue = 0;
       for (const p of periodPhones) periodAddedValue += Number(p.price || 0) || 0;
       let periodSalesValue = 0;
-      for (const tx of periodTx) periodSalesValue += Number(tx.amount || 0) || 0;
+      let periodCreditCount = 0;
+      let periodCreditBalance = 0;
+      for (const tx of periodTx) {
+        periodSalesValue += Number(tx.amountPaid ?? tx.amount ?? 0) || 0;
+        if (String(tx.saleType || "").toLowerCase() === "credit") {
+          periodCreditCount += 1;
+          periodCreditBalance += Number(tx.balance || 0) || 0;
+        }
+      }
+      const creditRowsHtml = periodTx
+        .filter((tx) => String(tx.saleType || "").toLowerCase() === "credit")
+        .map(
+          (tx) => `
+            <tr>
+              <td>${tx.at ? escapeHtml(new Date(tx.at).toLocaleString()) : "—"}</td>
+              <td>${escapeHtml(tx.serial || "—")}</td>
+              <td>${escapeHtml(tx.customerPhone || "—")}</td>
+              <td class="num">${formatInt(Number(tx.amount || 0) || 0)}</td>
+              <td class="num">${formatInt(Number(tx.amountPaid ?? tx.paidAmount ?? 0) || 0)}</td>
+              <td class="num">${formatInt(Number(tx.balance || 0) || 0)}</td>
+              <td>${escapeHtml(tx.creditDueDate || "—")}</td>
+            </tr>`,
+        )
+        .join("");
 
       const rowsHtml = phones
         .slice()
@@ -2943,7 +3032,33 @@
             <div class="label">Sales in period (KES)</div>
             <div class="value">${formatInt(periodSalesValue)}</div>
           </div>
+          <div class="report-card">
+            <div class="label">Credit phones</div>
+            <div class="value">${formatInt(periodCreditCount)}</div>
+          </div>
+          <div class="report-card">
+            <div class="label">Credit balance (KES)</div>
+            <div class="value">${formatInt(periodCreditBalance)}</div>
+          </div>
         </div>
+
+        <h3 style="margin-top: 14px;">Credit Sales in Period</h3>
+        <table class="table" aria-label="Admin credit sales report">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Serial</th>
+              <th>Customer</th>
+              <th class="num">Amount</th>
+              <th class="num">Paid</th>
+              <th class="num">Balance</th>
+              <th>Due date</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${creditRowsHtml || `<tr><td colspan="7">No credit sales in this period.</td></tr>`}
+          </tbody>
+        </table>
 
         <h3 style="margin-top: 14px;">Branch Phones</h3>
         <table class="table" aria-label="Admin phones report">

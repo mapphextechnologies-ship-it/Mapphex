@@ -966,6 +966,8 @@
       let mpesaIn = 0;
       let bankIn = 0;
       let txCount = 0;
+      let creditCount = 0;
+      let creditBalance = 0;
       const byModel = new Map();
 
       if (soldPhones.length) {
@@ -989,8 +991,12 @@
 
       for (const tx of txLog) {
         if (!inRange(tx.at, range)) continue;
+        if (String(tx.saleType || "").toLowerCase() === "credit") {
+          creditCount += 1;
+          creditBalance += Number(tx.balance || 0) || 0;
+        }
         txCount += 1;
-        const amount = Number(tx.amount || 0);
+        const amount = Number(tx.amountPaid ?? tx.amount ?? 0);
         if (!Number.isFinite(amount) || amount <= 0) continue;
         const channel = String(tx.channel || "").toLowerCase();
         if (channel === "bank") bankIn += amount;
@@ -1024,7 +1030,7 @@
         else damaged += qty;
       }
 
-      return { sold, damaged, lost, mpesaIn, bankIn, txCount, topModel };
+      return { sold, damaged, lost, mpesaIn, bankIn, txCount, topModel, creditCount, creditBalance };
     };
 
     const buildCompanyPeriodReportHtml = (periodKey) => {
@@ -1047,6 +1053,8 @@
           acc.mpesaIn += row.p.mpesaIn;
           acc.bankIn += row.p.bankIn;
           acc.txCount += row.p.txCount;
+          acc.creditCount += row.p.creditCount;
+          acc.creditBalance += row.p.creditBalance;
           acc.employees += Number(row.b.employees || 0);
           return acc;
         },
@@ -1058,6 +1066,8 @@
           mpesaIn: 0,
           bankIn: 0,
           txCount: 0,
+          creditCount: 0,
+          creditBalance: 0,
           employees: 0,
         },
       );
@@ -1112,6 +1122,8 @@
               <td class="num">${formatInt(row.p.txCount)}</td>
               <td class="num">${formatInt(row.p.mpesaIn)}</td>
               <td class="num">${formatInt(row.p.bankIn)}</td>
+              <td class="num">${formatInt(row.p.creditCount)}</td>
+              <td class="num">${formatInt(row.p.creditBalance)}</td>
               <td class="num">${formatInt(row.p.damaged)}</td>
               <td class="num">${formatInt(row.p.lost)}</td>
               <td>${row.p.topModel || "—"}</td>
@@ -1174,6 +1186,14 @@
             <div class="value">${formatInt(totals.txCount)}</div>
           </div>
           <div class="report-card">
+            <div class="label">Credit phones</div>
+            <div class="value">${formatInt(totals.creditCount)}</div>
+          </div>
+          <div class="report-card">
+            <div class="label">Credit balance (KES)</div>
+            <div class="value">${formatInt(totals.creditBalance)}</div>
+          </div>
+          <div class="report-card">
             <div class="label">Employees (snapshot)</div>
             <div class="value">${formatInt(totals.employees)}</div>
           </div>
@@ -1193,6 +1213,8 @@
                 <th class="num">Tx</th>
                 <th class="num">M-Pesa</th>
                 <th class="num">Bank</th>
+                <th class="num">Credit phones</th>
+                <th class="num">Credit balance</th>
                 <th class="num">Damaged</th>
                 <th class="num">Lost</th>
                 <th>Top model</th>
@@ -1227,6 +1249,8 @@
           "Transactions",
           "MpesaInKES",
           "BankInKES",
+          "CreditPhones",
+          "CreditBalanceKES",
           "Damaged",
           "Lost",
           "TopModel",
@@ -1247,6 +1271,8 @@
           p.txCount,
           p.mpesaIn,
           p.bankIn,
+          p.creditCount,
+          p.creditBalance,
           p.damaged,
           p.lost,
           p.topModel,

@@ -339,8 +339,11 @@
     const serialList = $("#serial-list");
     const customerPhone = $("#tx-customer-phone");
     const channelSel = $("#tx-channel");
+    const saleTypeSel = $("#tx-sale-type");
     const refInput = $("#tx-ref");
     const amountInput = $("#tx-amount");
+    const paidInput = $("#tx-paid");
+    const creditDueInput = $("#tx-credit-due");
     const addBtn = $("#tx-add-btn");
     const exportBtn = $("#tx-export-btn");
     const helper = $("#tx-helper");
@@ -433,16 +436,28 @@
       const txLog = Array.isArray(branch.txLog) ? branch.txLog : [];
       const rows = txLog.slice().reverse().slice(0, 80);
       for (const tx of rows) {
+        const saleType = String(tx.saleType || "cash").toLowerCase();
+        const amount = Number(tx.amount || 0) || 0;
+        const paid = Number(tx.amountPaid ?? tx.paidAmount ?? amount) || 0;
+        const balance = Math.max(0, Number(tx.balance ?? (amount - paid)) || 0);
+        const status =
+          saleType === "credit"
+            ? balance > 0
+              ? `Credit due${tx.creditDueDate ? ` ${tx.creditDueDate}` : ""}`
+              : "Credit cleared"
+            : "Completed";
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td></td><td></td><td></td><td></td><td></td><td></td><td class="num"></td><td></td>`;
+        tr.innerHTML = `<td></td><td></td><td></td><td></td><td></td><td></td><td class="num"></td><td class="num"></td><td class="num"></td><td></td>`;
         tr.children[0].textContent = tx.at ? new Date(tx.at).toLocaleString() : "—";
         tr.children[1].textContent = String(tx?.phone?.model ?? tx?.model ?? "—") || "—";
         tr.children[2].textContent = tx.serial || "—";
         tr.children[3].textContent = tx.customerPhone || "—";
         tr.children[4].textContent = String(tx.channel || "").toUpperCase() || "—";
         tr.children[5].textContent = tx.ref || "—";
-        tr.children[6].textContent = formatInt(Number(tx.amount || 0) || 0);
-        tr.children[7].textContent = "Completed";
+        tr.children[6].textContent = formatInt(amount);
+        tr.children[7].textContent = formatInt(paid);
+        tr.children[8].textContent = formatInt(balance);
+        tr.children[9].textContent = status;
         txTbody.appendChild(tr);
       }
     };
@@ -474,6 +489,9 @@
       if (amountInput && !String(amountInput.value || "").trim()) {
         amountInput.value = String(Math.max(0, Number(phone.price || 0) || 0));
       }
+      if (paidInput && !String(paidInput.value || "").trim()) {
+        paidInput.value = String(Math.max(0, Number(phone.price || 0) || 0));
+      }
     };
 
     const completeSale = async () => {
@@ -481,6 +499,7 @@
       if (!branch) return;
 
       const channel = String(channelSel?.value || "mpesa");
+      const saleType = String(saleTypeSel?.value || "cash").toLowerCase() === "credit" ? "credit" : "cash";
       const serial = String(serialInput?.value || "").trim();
       const cust = String(customerPhone?.value || "").trim();
       let ref = String(refInput?.value || "").trim();
@@ -499,6 +518,12 @@
 
       const amount = Math.max(0, Number(amountInput?.value || phone.price || 0));
       if (!Number.isFinite(amount) || amount <= 0) return amountInput?.focus?.();
+      const paidRaw = saleType === "credit" ? Number(paidInput?.value || 0) : amount;
+      const amountPaid = Math.max(0, Math.min(amount, Number.isFinite(paidRaw) ? paidRaw : 0));
+      const balance = Math.max(0, amount - amountPaid);
+      const creditDueDate = saleType === "credit" ? String(creditDueInput?.value || "").trim() : "";
+      if (saleType === "credit" && balance <= 0) return paidInput?.focus?.();
+      if (saleType === "credit" && !creditDueDate) return creditDueInput?.focus?.();
 
       if (!ref) {
         const stamp = new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14);
@@ -508,11 +533,11 @@
       const at = isoNow();
 
       let mpesaResponse = null;
-      if (channel === "mpesa") {
+      if (channel === "mpesa" && amountPaid > 0) {
         if (smsLine) smsLine.textContent = "Sending M-Pesa STK push...";
         try {
           mpesaResponse = await requestMpesaStk({
-            amount,
+            amount: amountPaid,
             phoneNumber: cust,
             accountReference: ref,
             transactionDesc: `Jixels ${phone.model || "phone"} sale`,
@@ -528,6 +553,11 @@
         channel,
         ref,
         amount,
+        amountPaid,
+        balance,
+        saleType,
+        creditDueDate,
+        creditStatus: saleType === "credit" ? (balance > 0 ? "open" : "cleared") : "paid",
         serial: phone.serial,
         customerPhone: cust,
         agent: { id: account.id, username: account.username },
@@ -547,8 +577,8 @@
       if (!branch.financeSummary || typeof branch.financeSummary !== "object") {
         branch.financeSummary = { mpesaIn: 0, bankIn: 0, txCount: 0, lastTxAt: "" };
       }
-      if (channel === "bank") branch.financeSummary.bankIn += amount;
-      else branch.financeSummary.mpesaIn += amount;
+      if (channel === "bank") branch.financeSummary.bankIn += amountPaid;
+      else branch.financeSummary.mpesaIn += amountPaid;
       branch.financeSummary.txCount += 1;
       branch.financeSummary.lastTxAt = at;
 
@@ -559,6 +589,11 @@
         soldTo: cust,
         soldRef: ref,
         soldAmount: amount,
+        soldPaid: amountPaid,
+        creditBalance: balance,
+        saleType,
+        creditDueDate,
+        creditStatus: saleType === "credit" ? (balance > 0 ? "open" : "cleared") : "paid",
         soldChannel: channel,
         soldBy: account.username || "",
       };
@@ -577,19 +612,25 @@
       // UI cleanup
       if (refInput) refInput.value = "";
       if (amountInput) amountInput.value = "";
+      if (paidInput) paidInput.value = "";
+      if (creditDueInput) creditDueInput.value = "";
       if (serialInput) serialInput.value = "";
       if (customerPhone) customerPhone.value = "";
       if (helper) helper.textContent = "";
 
       const msg =
-        channel === "mpesa"
-          ? `M-Pesa payment recorded. Ref ${ref}.`
-          : `Bank payment recorded. Ref ${ref}.`;
+        saleType === "credit"
+          ? `Credit sale recorded. Paid KES ${formatInt(amountPaid)}, balance KES ${formatInt(balance)}. Ref ${ref}.`
+          : channel === "mpesa"
+            ? `M-Pesa payment recorded. Ref ${ref}.`
+            : `Bank payment recorded. Ref ${ref}.`;
       if (smsLine) smsLine.textContent = msg;
 
       queueSms(
         cust,
-        `Jixels Technologies: Payment received KES ${formatInt(amount)} for ${sold.model} (${sold.storage}, ${sold.color}). Serial: ${sold.serial}. Ref: ${ref}. Thank you.`,
+        saleType === "credit"
+          ? `Jixels Technologies: Credit sale for ${sold.model} (${sold.storage}, ${sold.color}). Paid KES ${formatInt(amountPaid)}, balance KES ${formatInt(balance)}, due ${creditDueDate}. Serial: ${sold.serial}. Ref: ${ref}.`
+          : `Jixels Technologies: Payment received KES ${formatInt(amount)} for ${sold.model} (${sold.storage}, ${sold.color}). Serial: ${sold.serial}. Ref: ${ref}. Thank you.`,
       );
 
       renderKPIs();
@@ -602,17 +643,25 @@
       const branch = normalizeBranch(getBranch());
       if (!branch) return;
       const rows = [
-        ["Date", "Channel", "Reference", "Serial", "CustomerPhone", "AmountKES", "Model", "Agent"],
+        ["Date", "Channel", "Reference", "Serial", "CustomerPhone", "AmountKES", "PaidKES", "BalanceKES", "SaleType", "CreditDueDate", "CreditStatus", "Model", "Agent"],
       ];
       for (const tx of branch.txLog || []) {
         const modelRaw = tx?.phone?.model ?? tx?.model ?? "";
+        const amount = Number(tx.amount || 0) || 0;
+        const paid = Number(tx.amountPaid ?? tx.paidAmount ?? amount) || 0;
+        const balance = Math.max(0, Number(tx.balance ?? (amount - paid)) || 0);
         rows.push([
           tx.at || "",
           tx.channel || "",
           tx.ref || "",
           tx.serial || "",
           tx.customerPhone || "",
-          tx.amount || 0,
+          amount,
+          paid,
+          balance,
+          tx.saleType || "cash",
+          tx.creditDueDate || "",
+          tx.creditStatus || "",
           modelRaw || "",
           tx?.agent?.username || "",
         ]);

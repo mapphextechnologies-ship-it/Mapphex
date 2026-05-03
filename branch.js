@@ -357,8 +357,11 @@
     const txSerial = $("#tx-serial");
     const txCustomerPhone = $("#tx-customer-phone");
     const txChannel = $("#tx-channel");
+    const txSaleType = $("#tx-sale-type");
     const txRef = $("#tx-ref");
     const txAmount = $("#tx-amount");
+    const txPaid = $("#tx-paid");
+    const txCreditDue = $("#tx-credit-due");
     const txAddBtn = $("#tx-add-btn");
     const txExportBtn = $("#tx-export-btn");
     const txTbody = $("#tx-tbody");
@@ -656,6 +659,9 @@
       if (txAmount && !String(txAmount.value || "").trim()) {
         txAmount.value = String(Number(phone.price || 0));
       }
+      if (txPaid && !String(txPaid.value || "").trim()) {
+        txPaid.value = String(Number(phone.price || 0));
+      }
       if (txHelper) {
         txHelper.textContent = `${phone.model || "Phone"} • ${phone.color || "—"} • ${phone.storage || "—"} • KES ${formatInt(phone.price || 0)}`;
       }
@@ -741,6 +747,11 @@
               serial: p.serial || "",
               customerPhone: p.soldTo || "",
               amount: Number(p.soldAmount || p.price || 0) || 0,
+              amountPaid: Number(p.soldPaid ?? p.soldAmount ?? p.price ?? 0) || 0,
+              balance: Number(p.creditBalance || 0) || 0,
+              saleType: p.saleType || "cash",
+              creditDueDate: p.creditDueDate || "",
+              creditStatus: p.creditStatus || "",
               phone: { model: p.model, color: p.color, storage: p.storage, price: p.price },
               agent: { username: p.soldBy || "" },
             }));
@@ -748,6 +759,16 @@
       for (const obj of rows) {
         const modelRaw = obj?.phone?.model ?? obj?.model ?? "—";
         const soldBy = obj?.agent?.username ?? obj?.soldBy ?? "";
+        const amount = Number(obj.amount || 0) || 0;
+        const paid = Number(obj.amountPaid ?? obj.paidAmount ?? amount) || 0;
+        const balance = Math.max(0, Number(obj.balance ?? (amount - paid)) || 0);
+        const saleType = String(obj.saleType || "cash").toLowerCase();
+        const status =
+          saleType === "credit"
+            ? balance > 0
+              ? `Credit due${obj.creditDueDate ? ` ${obj.creditDueDate}` : ""}`
+              : "Credit cleared"
+            : "Transaction completed";
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td></td>
@@ -756,6 +777,8 @@
           <td></td>
           <td></td>
           <td></td>
+          <td class="num"></td>
+          <td class="num"></td>
           <td class="num"></td>
           <td></td>
           <td></td>
@@ -766,9 +789,11 @@
         tr.children[3].textContent = obj.customerPhone || "—";
         tr.children[4].textContent = String(obj.channel || "").toUpperCase() || "—";
         tr.children[5].textContent = obj.ref || "—";
-        tr.children[6].textContent = formatInt(obj.amount);
-        tr.children[7].textContent = "Transaction completed";
-        tr.children[8].textContent = soldBy || "—";
+        tr.children[6].textContent = formatInt(amount);
+        tr.children[7].textContent = formatInt(paid);
+        tr.children[8].textContent = formatInt(balance);
+        tr.children[9].textContent = status;
+        tr.children[10].textContent = soldBy || "—";
         txTbody.appendChild(tr);
       }
 
@@ -783,6 +808,7 @@
       const branch = normalizeBranch(getBranch());
       if (!branch) return;
       const channel = String(txChannel?.value || "mpesa");
+      const saleType = String(txSaleType?.value || "cash").toLowerCase() === "credit" ? "credit" : "cash";
       const serial = String(txSerial?.value || "").trim();
       const customerPhone = String(txCustomerPhone?.value || "").trim();
       let ref = String(txRef?.value || "").trim();
@@ -802,6 +828,12 @@
 
       const amount = Math.max(0, Number(txAmount?.value || phone.price || 0));
       if (!Number.isFinite(amount) || amount <= 0) return txAmount?.focus?.();
+      const paidRaw = saleType === "credit" ? Number(txPaid?.value || 0) : amount;
+      const amountPaid = Math.max(0, Math.min(amount, Number.isFinite(paidRaw) ? paidRaw : 0));
+      const balance = Math.max(0, amount - amountPaid);
+      const creditDueDate = saleType === "credit" ? String(txCreditDue?.value || "").trim() : "";
+      if (saleType === "credit" && balance <= 0) return txPaid?.focus?.();
+      if (saleType === "credit" && !creditDueDate) return txCreditDue?.focus?.();
 
       if (!ref) {
         const stamp = new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14);
@@ -809,11 +841,11 @@
       }
 
       let mpesaResponse = null;
-      if (channel === "mpesa") {
+      if (channel === "mpesa" && amountPaid > 0) {
         if (txSms) txSms.textContent = "Sending M-Pesa STK push...";
         try {
           mpesaResponse = await requestMpesaStk({
-            amount,
+            amount: amountPaid,
             phoneNumber: customerPhone,
             accountReference: ref,
             transactionDesc: `Jixels ${phone.model || "phone"} sale`,
@@ -829,6 +861,11 @@
         channel,
         ref,
         amount,
+        amountPaid,
+        balance,
+        saleType,
+        creditDueDate,
+        creditStatus: saleType === "credit" ? (balance > 0 ? "open" : "cleared") : "paid",
         serial: phone.serial,
         customerPhone,
         phone: {
@@ -857,8 +894,8 @@
       if (!branch.financeSummary || typeof branch.financeSummary !== "object") {
         branch.financeSummary = { mpesaIn: 0, bankIn: 0, txCount: 0, lastTxAt: "" };
       }
-      if (channel === "bank") branch.financeSummary.bankIn += amount;
-      else branch.financeSummary.mpesaIn += amount;
+      if (channel === "bank") branch.financeSummary.bankIn += amountPaid;
+      else branch.financeSummary.mpesaIn += amountPaid;
       branch.financeSummary.txCount += 1;
       branch.financeSummary.lastTxAt = isoNow();
 
@@ -869,6 +906,14 @@
         soldAt: isoNow(),
         soldTo: customerPhone,
         soldRef: ref,
+        soldAmount: amount,
+        soldPaid: amountPaid,
+        creditBalance: balance,
+        saleType,
+        creditDueDate,
+        creditStatus: saleType === "credit" ? (balance > 0 ? "open" : "cleared") : "paid",
+        soldChannel: channel,
+        soldBy: "branch",
       };
       const pos = branch.phones.findIndex(
         (p) => String(p.serial || "").toLowerCase() === serial.toLowerCase(),
@@ -883,6 +928,8 @@
 
       if (txRef) txRef.value = "";
       if (txAmount) txAmount.value = "";
+      if (txPaid) txPaid.value = "";
+      if (txCreditDue) txCreditDue.value = "";
       if (txSerial) txSerial.value = "";
       if (txCustomerPhone) {
         txCustomerPhone.value = "";
@@ -890,8 +937,10 @@
       }
       if (txHelper) txHelper.textContent = "";
 
-      if (channel === "mpesa") {
-        const promptMsg = `M-Pesa prompt sent. Enter your M-Pesa PIN to pay KES ${formatInt(amount)} for ${sold.model} (${sold.storage}, ${sold.color}) [SN:${sold.serial}]. Ref ${ref}.`;
+      if (saleType === "credit") {
+        if (txSms) txSms.textContent = `Credit sale recorded. Paid KES ${formatInt(amountPaid)}, balance KES ${formatInt(balance)}. Ref ${ref}.`;
+      } else if (channel === "mpesa") {
+        const promptMsg = `M-Pesa prompt sent. Enter your M-Pesa PIN to pay KES ${formatInt(amountPaid)} for ${sold.model} (${sold.storage}, ${sold.color}) [SN:${sold.serial}]. Ref ${ref}.`;
         if (txSms) txSms.textContent = promptMsg;
       } else {
         if (txSms) txSms.textContent = `Bank transaction recorded. Ref ${ref}.`;
@@ -899,7 +948,9 @@
 
       sendSmsReceipt(
         customerPhone,
-        `Jixels Technologies: Payment received KES ${formatInt(amount)} for ${sold.model} (${sold.storage}, ${sold.color}). Serial: ${sold.serial}. Ref: ${ref}. Thank you.`,
+        saleType === "credit"
+          ? `Jixels Technologies: Credit sale for ${sold.model} (${sold.storage}, ${sold.color}). Paid KES ${formatInt(amountPaid)}, balance KES ${formatInt(balance)}, due ${creditDueDate}. Serial: ${sold.serial}. Ref: ${ref}.`
+          : `Jixels Technologies: Payment received KES ${formatInt(amount)} for ${sold.model} (${sold.storage}, ${sold.color}). Serial: ${sold.serial}. Ref: ${ref}. Thank you.`,
       );
 
       await renderTransactions();
@@ -921,6 +972,11 @@
           "Channel",
           "Reference",
           "AmountKES",
+          "PaidKES",
+          "BalanceKES",
+          "SaleType",
+          "CreditDueDate",
+          "CreditStatus",
           "Status",
           "SoldBy",
         ],
@@ -932,6 +988,9 @@
       if (txLog.length) {
         for (const tx of txLog) {
           const modelRaw = tx?.phone?.model ?? tx?.model ?? "";
+          const amount = Number(tx.amount || 0) || 0;
+          const paid = Number(tx.amountPaid ?? tx.paidAmount ?? amount) || 0;
+          const balance = Math.max(0, Number(tx.balance ?? (amount - paid)) || 0);
           rows.push([
             tx.at || "",
             modelRaw || "",
@@ -939,7 +998,12 @@
             tx.customerPhone || "",
             tx.channel || "",
             tx.ref || "",
-            tx.amount || 0,
+            amount,
+            paid,
+            balance,
+            tx.saleType || "cash",
+            tx.creditDueDate || "",
+            tx.creditStatus || "",
             "completed",
             tx?.agent?.username || "",
           ]);
@@ -954,6 +1018,11 @@
             p.soldChannel || "",
             p.soldRef || "",
             Number(p.soldAmount || p.price || 0) || 0,
+            Number(p.soldPaid ?? p.soldAmount ?? p.price ?? 0) || 0,
+            Number(p.creditBalance || 0) || 0,
+            p.saleType || "cash",
+            p.creditDueDate || "",
+            p.creditStatus || "",
             "completed",
             p.soldBy || "",
           ]);
@@ -1060,6 +1129,11 @@
               <td>${t.serial || "—"}</td>
               <td>${t.customerPhone || "—"}</td>
               <td class="num">${formatInt(t.amount || 0)}</td>
+              <td class="num">${formatInt(t.amountPaid ?? t.amount ?? 0)}</td>
+              <td class="num">${formatInt(t.balance ?? 0)}</td>
+              <td>${String(t.saleType || "cash").toUpperCase()}</td>
+              <td>${t.creditDueDate || "—"}</td>
+              <td>${t.creditStatus || "—"}</td>
             </tr>`,
         )
         .join("");
@@ -1080,7 +1154,10 @@
       const periodSold = (branch.soldPhones || []).filter((p) => inReportRange(p.soldAt, range)).length;
       const periodRevenue = (branch.txLog || [])
         .filter((t) => inReportRange(t.at, range))
-        .reduce((sum, t) => sum + (Number(t.amount || 0) || 0), 0);
+        .reduce((sum, t) => sum + (Number(t.amountPaid ?? t.amount ?? 0) || 0), 0);
+      const creditRows = (branch.txLog || []).filter((t) => String(t.saleType || "").toLowerCase() === "credit" && inReportRange(t.at, range));
+      const creditCount = creditRows.length;
+      const creditBalance = creditRows.reduce((sum, t) => sum + (Number(t.balance || 0) || 0), 0);
 
       const modelRows = makeReportModelRows(branch);
       const dlRows = makeReportDlRows(branch, range);
@@ -1129,6 +1206,14 @@
           <div class="report-card">
             <div class="label">Period revenue (KES)</div>
             <div class="value">${formatInt(periodRevenue)}</div>
+          </div>
+          <div class="report-card">
+            <div class="label">Credit phones</div>
+            <div class="value">${formatInt(creditCount)}</div>
+          </div>
+          <div class="report-card">
+            <div class="label">Credit balance (KES)</div>
+            <div class="value">${formatInt(creditBalance)}</div>
           </div>
           <div class="report-card">
             <div class="label">Damaged</div>
@@ -1185,6 +1270,11 @@
                 <th>Serial</th>
                 <th>Customer</th>
                 <th class="num">Amount (KES)</th>
+                <th class="num">Paid</th>
+                <th class="num">Balance</th>
+                <th>Sale type</th>
+                <th>Due date</th>
+                <th>Status</th>
               </tr>
             </thead>
             <tbody>${txRows || ""}</tbody>
@@ -1210,10 +1300,13 @@
       }
       rows.push([]);
       rows.push(["Transactions", range.label]);
-      rows.push(["Date", "Channel", "Reference", "Serial", "Customer", "AmountKES"]);
+      rows.push(["Date", "Channel", "Reference", "Serial", "Customer", "AmountKES", "PaidKES", "BalanceKES", "SaleType", "CreditDueDate", "CreditStatus"]);
       for (const tx of branch.txLog || []) {
         if (!inReportRange(tx.at, range)) continue;
-        rows.push([tx.at || "", tx.channel || "", tx.ref || "", tx.serial || "", tx.customerPhone || "", tx.amount || 0]);
+        const amount = Number(tx.amount || 0) || 0;
+        const paid = Number(tx.amountPaid ?? tx.paidAmount ?? amount) || 0;
+        const balance = Math.max(0, Number(tx.balance ?? (amount - paid)) || 0);
+        rows.push([tx.at || "", tx.channel || "", tx.ref || "", tx.serial || "", tx.customerPhone || "", amount, paid, balance, tx.saleType || "cash", tx.creditDueDate || "", tx.creditStatus || ""]);
       }
       const csv = rows.map((r) => r.map(csvEscape).join(",")).join("\n");
       downloadText(
