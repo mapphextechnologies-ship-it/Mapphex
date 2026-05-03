@@ -623,6 +623,7 @@
     const username = $("#dept-username");
     const password = $("#dept-password");
     const error = $("#dept-login-error");
+    const registerLink = $("#dept-register-link");
 
     if (!form || !roleSel || !username || !password || !error) return;
 
@@ -641,6 +642,11 @@
     const userParam = String(params.get("username") || "").trim().toLowerCase();
     if (roleParam && Array.from(roleSel.options).some((o) => normalizeRole(o.value) === roleParam)) {
       roleSel.value = roleParam;
+    }
+    if (registerLink) {
+      registerLink.href = roleParam
+        ? `departments-register.html?role=${encodeURIComponent(roleParam)}`
+        : "departments-register.html";
     }
     if (userParam) username.value = userParam;
     if (params.get("registered") === "1") {
@@ -716,6 +722,12 @@
     const password2 = $("#reg-password2");
     const error = $("#dept-register-error");
     if (!form || !roleSel || !username || !password || !password2 || !error) return;
+
+    const params = new URLSearchParams(window.location.search || "");
+    const roleParam = normalizeRole(params.get("role") || "");
+    if (roleParam && Array.from(roleSel.options).some((o) => normalizeRole(o.value) === roleParam)) {
+      roleSel.value = roleParam;
+    }
 
     form.addEventListener("submit", safe("dept_register_submit", async (e) => {
       e.preventDefault();
