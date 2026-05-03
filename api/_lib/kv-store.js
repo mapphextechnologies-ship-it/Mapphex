@@ -1,5 +1,6 @@
 const fs = require("fs");
 const fsp = require("fs/promises");
+const os = require("os");
 const path = require("path");
 
 const DEFAULT_FILE_KV_PATH = path.resolve(process.cwd(), "server", "data", "kv.json");
@@ -179,7 +180,9 @@ const getStore = () => {
 
   const kvPath = process.env.JIXELS_KV_FILE_PATH
     ? path.resolve(process.cwd(), process.env.JIXELS_KV_FILE_PATH)
-    : DEFAULT_FILE_KV_PATH;
+    : process.env.VERCEL
+      ? path.resolve(os.tmpdir(), "jixels-kv.json")
+      : DEFAULT_FILE_KV_PATH;
 
   return {
     driver: "file",

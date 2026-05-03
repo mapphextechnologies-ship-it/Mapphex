@@ -132,6 +132,7 @@
       const inputPassword = String(password.value || "");
 
       await window.JixelsStore?.bootstrap?.([AGENT_ACCOUNTS_KEY]);
+      await window.JixelsStore?.refresh?.([AGENT_ACCOUNTS_KEY]);
       const latestAccounts = loadAgentAccounts();
       const account =
         latestAccounts.find(

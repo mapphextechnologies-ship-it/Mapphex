@@ -9,6 +9,7 @@
 
   const mem = new Map();
   const pending = new Map();
+  const trackedKeys = new Set();
   const subscribers = new Set();
 
   let apiState = "unknown"; // "unknown" | "ok" | "down"
@@ -16,6 +17,7 @@
   let idbPromise = null;
   let flushTimer = null;
   let retryTimer = null;
+  let refreshTimer = null;
   let flushInFlight = false;
   let bc = null;
 
@@ -43,6 +45,10 @@
           .filter(Boolean),
       ),
     );
+
+  const trackKeys = (keys) => {
+    for (const key of uniqueStrings(keys)) trackedKeys.add(key);
+  };
 
   const emit = (event) => {
     for (const cb of subscribers) {
@@ -146,6 +152,8 @@
 
   const tryHydrate = async (keys) => {
     const want = uniqueStrings(keys);
+    trackKeys(want);
+    ensureRefreshLoop();
     let missing = want.filter((k) => !mem.has(k));
     if (missing.length === 0) return { ok: true, source: "cache", apiState };
 
@@ -233,6 +241,8 @@
   const setJson = (key, value) => {
     const k = String(key || "").trim();
     if (!k) return;
+    trackKeys([k]);
+    ensureRefreshLoop();
     setMem(k, value);
     idbSetMany({ [k]: value }).catch(() => null);
     pending.set(k, value ?? null);
@@ -246,6 +256,7 @@
 
   const refresh = async (keys) => {
     const want = uniqueStrings(keys);
+    trackKeys(want);
     if (want.length === 0) return { ok: true, apiState };
     try {
       const qs = encodeURIComponent(want.join(","));
@@ -272,6 +283,37 @@
       return { ok: Object.keys(localItems).length > 0, apiState, idbState };
     }
   };
+
+  const refreshTracked = async () => {
+    if (trackedKeys.size === 0) return;
+    if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+    if (pending.size > 0 || flushInFlight) {
+      await flushPending().catch(() => null);
+      if (pending.size > 0 || flushInFlight) return;
+    }
+    await refresh(Array.from(trackedKeys)).catch(() => null);
+  };
+
+  const ensureRefreshLoop = () => {
+    if (refreshTimer) return;
+    refreshTimer = setInterval(() => {
+      refreshTracked().catch(() => null);
+    }, 5000);
+    try {
+      if (typeof refreshTimer.unref === "function") refreshTimer.unref();
+    } catch {
+      // Browser timers do not support unref.
+    }
+  };
+
+  try {
+    document?.addEventListener?.("visibilitychange", () => {
+      if (document.visibilityState === "visible") refreshTracked().catch(() => null);
+    });
+    window?.addEventListener?.("online", () => refreshTracked().catch(() => null));
+  } catch {
+    // ignore
+  }
 
   const subscribe = (cb) => {
     if (typeof cb !== "function") return () => {};

@@ -132,6 +132,7 @@
       const inputPassword = String(password.value || "");
 
       await window.JixelsStore?.bootstrap?.([BRANCH_ACCOUNTS_KEY]);
+      await window.JixelsStore?.refresh?.([BRANCH_ACCOUNTS_KEY]);
       const latestAccounts = loadBranchAccounts();
       const account =
         latestAccounts.find(
