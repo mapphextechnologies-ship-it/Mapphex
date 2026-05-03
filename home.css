@@ -184,4 +184,68 @@
   .hero-visual {
     order: -1;
   }
+  .phone-stack {
+    width: min(320px, 100%);
+    height: 220px;
+  }
+  .phone-img {
+    width: 180px;
+  }
+  .phone-img-2 {
+    left: 60px;
+  }
+  .phone-img-3 {
+    left: 120px;
+  }
+}
+
+@media (max-width: 520px) {
+  .hero-grid {
+    padding: 16px 12px 14px;
+  }
+  .hero-title {
+    font-size: 24px;
+  }
+  .hero-subtitle {
+    font-size: 13px;
+  }
+  .hero-actions .btn,
+  .portal-actions .btn {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+  .hero-visual {
+    min-height: 190px;
+  }
+  .phone-stack {
+    width: min(260px, 100%);
+    height: 180px;
+  }
+  .phone-img {
+    width: 145px;
+  }
+  .phone-img-1 {
+    left: 0;
+    top: 24px;
+  }
+  .phone-img-2 {
+    left: 48px;
+    top: 4px;
+  }
+  .phone-img-3 {
+    left: 96px;
+    top: 36px;
+  }
+  .portal-grid,
+  .phones-grid {
+    padding: 12px;
+  }
+  .portal-card,
+  .phone-card {
+    border-radius: 14px;
+    padding: 12px;
+  }
+  .phone-card img {
+    height: 170px;
+  }
 }
