@@ -124,6 +124,15 @@
     hideButtonIfInstalled();
   };
 
+  const createPoweredFooter = () => {
+    if (document.getElementById("site-powered-footer")) return;
+    const footer = document.createElement("footer");
+    footer.id = "site-powered-footer";
+    footer.className = "site-powered-footer";
+    footer.textContent = "Powered by C Teams Technology";
+    document.body.appendChild(footer);
+  };
+
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
       navigator.serviceWorker.register("sw.js").catch(() => null);
@@ -144,6 +153,7 @@
   });
 
   window.addEventListener("DOMContentLoaded", () => {
+    createPoweredFooter();
     createInstallButton();
   });
 })();
