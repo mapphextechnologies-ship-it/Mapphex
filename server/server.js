@@ -212,6 +212,10 @@ const handleApi = async (req, res, url) => {
     return ok(res, { changed, version: saved.version, updatedAt: saved.updatedAt });
   }
 
+  if (url.pathname === "/api/assets/sync") {
+    return require("../api/assets/sync")(req, res);
+  }
+
   return notFound(res);
 };
 
@@ -222,7 +226,7 @@ const withCors = (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", origin);
     res.setHeader("Vary", "Origin");
     res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type,X-Asset-Sync-Token");
     res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
   }
 };

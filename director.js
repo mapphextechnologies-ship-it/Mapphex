@@ -90,7 +90,7 @@
     if (store?.subscribe) {
       store.subscribe((ev) => {
         if (!ev || ev.type !== "set" || ev.key !== DATA_KEY) return;
-        cb();
+        store.refresh?.([DATA_KEY]).finally(() => cb());
       });
       return;
     }

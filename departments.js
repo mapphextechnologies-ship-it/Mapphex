@@ -1828,9 +1828,11 @@
         safe("hr_store", (ev) => {
           if (!ev || ev.type !== "set") return;
           if (ev.key !== HR_KEY && ev.key !== ERP_KEY) return;
-          renderEmployeesTable();
-          if (preview.mode === "branch") viewBranch();
-          if (preview.mode === "all") viewAll();
+          getStore()?.refresh?.([HR_KEY, ERP_KEY]).finally(() => {
+            renderEmployeesTable();
+            if (preview.mode === "branch") viewBranch();
+            if (preview.mode === "all") viewAll();
+          });
         }),
       );
     } else {
@@ -2457,7 +2459,7 @@
       store.subscribe(
         safe("finance_store", (ev) => {
           if (!ev || ev.type !== "set") return;
-          if (ev.key === HR_KEY || ev.key === ERP_KEY) render();
+          if (ev.key === HR_KEY || ev.key === ERP_KEY) getStore()?.refresh?.([HR_KEY, ERP_KEY]).finally(() => render());
         }),
       );
     } else {
@@ -2481,8 +2483,154 @@
     const updatedOut = $("#dept-updated");
     const branchSearch = $("#dept-branch-search");
     const branchesTbody = $("#dept-branches-tbody");
+    const assetSyncJson = $("#asset-sync-json");
+    const assetSyncImport = $("#asset-sync-import");
+    const assetSyncStatus = $("#asset-sync-status");
 
     const roleLabel = String(role || "").trim() ? String(role).toUpperCase() : "DEPARTMENT";
+
+    const setAssetStatus = (message, isError = false) => {
+      if (!assetSyncStatus) return;
+      assetSyncStatus.textContent = message || "";
+      assetSyncStatus.style.color = isError ? "#ffb4b4" : "";
+    };
+
+    const assignmentListFromPayload = (payload) => {
+      if (Array.isArray(payload)) return payload;
+      if (Array.isArray(payload?.assignments)) return payload.assignments;
+      if (Array.isArray(payload?.phones)) return payload.phones;
+      if (Array.isArray(payload?.assets)) return payload.assets;
+      return payload && typeof payload === "object" ? [payload] : [];
+    };
+
+    const assetBranchToken = (value) => String(value || "").trim().toLowerCase();
+    const assetSerial = (item) => String(item?.serial || item?.imei || item?.assetTag || item?.assetId || item?.id || "").trim();
+    const assetMoney = (value) => {
+      const num = Number(value);
+      return Number.isFinite(num) && num >= 0 ? num : 0;
+    };
+
+    const findAssetBranch = (erp, item) => {
+      const rawId = String(item.branchId || item.branch || item.branchCode || item.assignedBranchId || "").trim();
+      const rawName = String(item.branchName || item.assignedBranch || "").trim();
+      const numeric = rawId.match(/^\d+$/) ? `b${String(Number(rawId)).padStart(2, "0")}` : "";
+      const candidates = [rawId, rawName, numeric].map(assetBranchToken).filter(Boolean);
+      return (erp.branches || []).find((branch) => {
+        const id = assetBranchToken(branch.id);
+        const name = assetBranchToken(branch.name);
+        return candidates.some((candidate) => candidate === id || candidate === name);
+      });
+    };
+
+    const hasAssetSerial = (erp, serial) => {
+      const needle = String(serial || "").trim().toLowerCase();
+      if (!needle) return false;
+      return (erp.branches || []).some((branch) =>
+        [...(branch.phones || []), ...(branch.soldPhones || [])].some((phone) => assetSerial(phone).toLowerCase() === needle),
+      );
+    };
+
+    const importAssignedAssetsLocal = async (payload) => {
+      const erp = ensureERP();
+      const assignments = assignmentListFromPayload(payload);
+      let imported = 0;
+      let skipped = 0;
+      const errors = [];
+
+      for (const item of assignments) {
+        if (!item || typeof item !== "object") {
+          skipped += 1;
+          errors.push("Invalid assignment item.");
+          continue;
+        }
+        const branch = findAssetBranch(erp, item);
+        if (!branch) {
+          skipped += 1;
+          errors.push(`Branch not found for ${item.branchId || item.branchName || "assignment"}.`);
+          continue;
+        }
+        const serial = assetSerial(item);
+        const model = String(item.model || item.name || item.assetName || item.phoneModel || "").trim();
+        if (!serial || !model) {
+          skipped += 1;
+          errors.push(`Missing serial or model for ${branch.name || branch.id}.`);
+          continue;
+        }
+        if (hasAssetSerial(erp, serial)) {
+          skipped += 1;
+          continue;
+        }
+        if (!Array.isArray(branch.phones)) branch.phones = [];
+        branch.phones.push({
+          id: String(item.id || item.assetId || `asset-${serial}`).trim(),
+          model,
+          color: String(item.color || "").trim(),
+          storage: String(item.storage || item.capacity || "").trim(),
+          serial,
+          price: assetMoney(item.price || item.cost || item.value || item.amount),
+          status: "in_stock",
+          source: "asset-management",
+          syncedFrom: String(item.source || "operations-assets").trim(),
+          assignedAt: item.assignedAt || item.createdAt || isoNow(),
+          createdAt: item.createdAt || isoNow(),
+        });
+        branch.updatedAt = isoNow();
+        rebuildInventoryFromPhones(branch);
+        imported += 1;
+      }
+
+      erp.lastUpdated = isoNow();
+      saveJson(ERP_KEY, erp);
+      try {
+        await getStore()?.flush?.();
+      } catch {
+        // Browser store already has the latest import.
+      }
+      return { ok: true, imported, skipped, errors };
+    };
+
+    const importAssignedAssets = async () => {
+      if (!assetSyncJson) return;
+      const raw = String(assetSyncJson.value || "").trim();
+      if (!raw) {
+        setAssetStatus("Paste assigned phones JSON first.", true);
+        return;
+      }
+
+      let payload = null;
+      try {
+        payload = JSON.parse(raw);
+      } catch {
+        setAssetStatus("Invalid JSON. Check commas, quotes, and brackets.", true);
+        return;
+      }
+
+      if (assetSyncImport) assetSyncImport.disabled = true;
+      setAssetStatus("Syncing assigned phones...");
+      try {
+        let result = null;
+        if (location.protocol !== "file:") {
+          const res = await fetch("/api/assets/sync", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const data = await res.json().catch(() => null);
+          if (res.ok && data?.ok) {
+            result = data;
+            await getStore()?.refresh?.([ERP_KEY]);
+          }
+        }
+        if (!result) result = await importAssignedAssetsLocal(payload);
+        render();
+        const msg = `Imported ${formatInt(result.imported)} phone(s), skipped ${formatInt(result.skipped)}.`;
+        setAssetStatus(result.errors?.length ? `${msg} ${result.errors.slice(0, 2).join(" ")}` : msg, !!result.errors?.length && !result.imported);
+      } catch (err) {
+        setAssetStatus(String(err?.message || "Asset sync failed."), true);
+      } finally {
+        if (assetSyncImport) assetSyncImport.disabled = false;
+      }
+    };
 
     const renderBranches = (erp) => {
       if (!branchesTbody || !erp?.branches) return;
@@ -2679,6 +2827,7 @@
     });
 
     if (branchSearch) branchSearch.addEventListener("input", safe("dept_branch_search", () => render()));
+    if (assetSyncImport) assetSyncImport.addEventListener("click", safe("asset_sync_import", () => importAssignedAssets()));
 
     render();
     const store = getStore();
@@ -2686,7 +2835,7 @@
       store.subscribe(
         safe("dept_store", (ev) => {
           if (!ev || ev.type !== "set" || ev.key !== ERP_KEY) return;
-          render();
+          getStore()?.refresh?.([ERP_KEY]).finally(() => render());
         }),
       );
     } else {
@@ -3230,7 +3379,7 @@
       store.subscribe(
         safe("admin_store", (ev) => {
           if (!ev || ev.type !== "set" || ev.key !== ERP_KEY) return;
-          render();
+          getStore()?.refresh?.([ERP_KEY]).finally(() => render());
         }),
       );
     } else {

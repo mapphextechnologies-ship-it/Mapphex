@@ -409,9 +409,14 @@
       return branch;
     };
 
-    const persist = () => {
+    const persist = async () => {
       data.lastUpdated = isoNow();
       saveJson(DATA_KEY, data);
+      try {
+        await window.JixelsStore?.flush?.();
+      } catch {
+        // IndexedDB/localStorage already has the latest branch change.
+      }
     };
 
     const setMenuOpen = (open) => {
@@ -512,7 +517,7 @@
       });
       branch.damageLoss = list;
       branch.updatedAt = isoNow();
-      persist();
+      persist().catch(() => null);
 
       if (dlModel) dlModel.value = "";
       if (dlQty) dlQty.value = "";
@@ -577,7 +582,7 @@
           branch.phones.splice(pos, 1);
           rebuildInventoryFromPhones(branch);
           branch.updatedAt = isoNow();
-          persist();
+          persist().catch(() => null);
           renderInventory();
           renderKPIs();
         });
@@ -595,7 +600,7 @@
       if (phonePrice) phonePrice.value = "";
     };
 
-    const addPhone = () => {
+    const addPhone = async () => {
       const branch = normalizeBranch(getBranch());
       if (!branch) return;
 
@@ -636,10 +641,16 @@
 
       rebuildInventoryFromPhones(branch);
       branch.updatedAt = isoNow();
-      persist();
+      await persist();
       clearPhoneForm();
       renderInventory();
       renderKPIs();
+      if (ledgerIndicator) {
+        ledgerIndicator.textContent = "Stock synced";
+        window.setTimeout(() => {
+          ledgerIndicator.textContent = "Ledger OK";
+        }, 1400);
+      }
     };
 
     const updateTxFromSerial = () => {
@@ -932,7 +943,7 @@
       branch.financeSummary.lastTxAt = at;
       updateSoldCreditRecord(branch, saleTx, paidNow, nextBalance, at, ref);
       branch.updatedAt = at;
-      persist();
+      persist().catch(() => null);
       notifyTransaction(paymentTx, branch);
       sendSmsReceipt(
         saleTx.customerPhone,
@@ -1072,7 +1083,7 @@
       branch.soldPhones.push(sold);
       rebuildInventoryFromPhones(branch);
       branch.updatedAt = isoNow();
-      persist();
+      persist().catch(() => null);
       notifyTransaction(txObj, branch);
 
       if (txRef) txRef.value = "";
@@ -1722,12 +1733,12 @@
     });
 
     if (addPhoneBtn) addPhoneBtn.addEventListener("click", () => phoneModel?.focus?.());
-    if (phoneSaveBtn) phoneSaveBtn.addEventListener("click", () => addPhone());
+    if (phoneSaveBtn) phoneSaveBtn.addEventListener("click", () => addPhone().catch(() => null));
     if (phoneClearBtn) phoneClearBtn.addEventListener("click", () => clearPhoneForm());
     if (phoneSerial) phoneSerial.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
-        addPhone();
+        addPhone().catch(() => null);
       }
     });
 
