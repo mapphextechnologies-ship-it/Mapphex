@@ -2498,6 +2498,8 @@
     const assignmentListFromPayload = (payload) => {
       if (Array.isArray(payload)) return payload;
       if (Array.isArray(payload?.assignments)) return payload.assignments;
+      if (Array.isArray(payload?.allocations)) return payload.allocations;
+      if (Array.isArray(payload?.assignedPhones)) return payload.assignedPhones;
       if (Array.isArray(payload?.phones)) return payload.phones;
       if (Array.isArray(payload?.assets)) return payload.assets;
       return payload && typeof payload === "object" ? [payload] : [];
@@ -2511,8 +2513,8 @@
     };
 
     const findAssetBranch = (erp, item) => {
-      const rawId = String(item.branchId || item.branch || item.branchCode || item.assignedBranchId || "").trim();
-      const rawName = String(item.branchName || item.assignedBranch || "").trim();
+      const rawId = String(item.branchId || item.branch_id || item.branch || item.branchCode || item.assignedBranchId || "").trim();
+      const rawName = String(item.branchName || item.assignedBranch || item.allocatedBranch || item.allocatedToBranch || "").trim();
       const numeric = rawId.match(/^\d+$/) ? `b${String(Number(rawId)).padStart(2, "0")}` : "";
       const candidates = [rawId, rawName, numeric].map(assetBranchToken).filter(Boolean);
       return (erp.branches || []).find((branch) => {
@@ -2550,7 +2552,7 @@
           continue;
         }
         const serial = assetSerial(item);
-        const model = String(item.model || item.name || item.assetName || item.phoneModel || "").trim();
+        const model = String(item.model || item.name || item.assetName || item.phoneModel || item.phoneName || "").trim();
         if (!serial || !model) {
           skipped += 1;
           errors.push(`Missing serial or model for ${branch.name || branch.id}.`);

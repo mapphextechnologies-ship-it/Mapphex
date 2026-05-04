@@ -66,6 +66,8 @@ const rebuildInventoryFromPhones = (branch) => {
 const getAssignments = (body) => {
   if (Array.isArray(body)) return body;
   if (Array.isArray(body?.assignments)) return body.assignments;
+  if (Array.isArray(body?.allocations)) return body.allocations;
+  if (Array.isArray(body?.assignedPhones)) return body.assignedPhones;
   if (Array.isArray(body?.phones)) return body.phones;
   if (Array.isArray(body?.assets)) return body.assets;
   if (body && typeof body === "object") return [body];
@@ -75,8 +77,8 @@ const getAssignments = (body) => {
 const normalizeBranchToken = (value) => String(value || "").trim().toLowerCase();
 
 const findBranch = (erp, item) => {
-  const rawId = String(item.branchId || item.branch || item.branchCode || item.assignedBranchId || "").trim();
-  const rawName = String(item.branchName || item.assignedBranch || "").trim();
+  const rawId = String(item.branchId || item.branch_id || item.branch || item.branchCode || item.assignedBranchId || "").trim();
+  const rawName = String(item.branchName || item.assignedBranch || item.allocatedBranch || item.allocatedToBranch || "").trim();
   const numeric = rawId.match(/^\d+$/) ? `b${String(Number(rawId)).padStart(2, "0")}` : "";
   const candidates = [rawId, rawName, numeric].map(normalizeBranchToken).filter(Boolean);
   return (erp.branches || []).find((branch) => {
@@ -98,7 +100,7 @@ const hasSerial = (erp, serial) => {
 };
 
 const makePhone = (item, serial) => {
-  const model = String(item.model || item.name || item.assetName || item.phoneModel || "").trim();
+  const model = String(item.model || item.name || item.assetName || item.phoneModel || item.phoneName || "").trim();
   return {
     id: String(item.id || item.assetId || `asset-${serial}`).trim(),
     model,
