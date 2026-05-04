@@ -108,7 +108,7 @@ const makePhone = (item, serial) => {
     price: toMoney(item.price || item.cost || item.value || item.amount, 0),
     status: "in_stock",
     source: "asset-management",
-    syncedFrom: String(item.source || "operations-assets").trim(),
+    syncedFrom: String(item.source || "AssetWise").trim(),
     assignedAt: item.assignedAt || item.createdAt || isoNow(),
     createdAt: item.createdAt || isoNow(),
   };

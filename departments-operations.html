@@ -3,7 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Operations Department • Jixels Technologies</title>
+    <title>Asset management • Operations Department • Jixels Technologies</title>
+    <meta name="description" content="Internal asset & equipment tracking tool" />
+    <meta property="og:title" content="AssetWise" />
+    <meta property="og:description" content="Internal asset & equipment tracking tool" />
+    <meta name="twitter:title" content="AssetWise" />
+    <meta name="twitter:description" content="Internal asset & equipment tracking tool" />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="images/jixels-icon-192.png" type="image/png" />
     <link rel="stylesheet" href="director.css" />
@@ -60,18 +65,18 @@
           <h2>Manage Assets</h2>
           <div class="panel-actions">
             <a class="btn primary" href="https://assert-management.lovable.app/" target="_blank" rel="noopener noreferrer">
-              Open asset management
+              Open AssetWise
             </a>
           </div>
         </div>
         <p class="muted small-note" style="padding: 0 18px 18px; margin: 0;">
-          Use this external asset management system to add and manage company stock/assets. For automatic sync on Vercel,
+          Use AssetWise to add and manage company stock/assets. For automatic sync on Vercel,
           configure it to POST assigned phones to <code>/api/assets/sync</code>.
         </p>
         <div class="branch-form" style="padding-top: 0;">
           <label class="field" style="grid-column: 1 / -1;">
             <span>Assigned phones JSON</span>
-            <textarea id="asset-sync-json" rows="6" placeholder='{"assignments":[{"branchId":"b01","model":"Samsung Galaxy S Series","serial":"SN001","storage":"128GB","color":"Black","price":25000}]}'></textarea>
+            <textarea id="asset-sync-json" rows="6" placeholder='{"assignments":[{"branchId":"b01","model":"Samsung Galaxy S Series","serial":"SN001","storage":"128GB","color":"Black","price":25000,"source":"AssetWise"}]}'></textarea>
           </label>
           <button id="asset-sync-import" class="btn primary" type="button">Import assigned phones</button>
           <div id="asset-sync-status" class="muted small-note" aria-live="polite"></div>
