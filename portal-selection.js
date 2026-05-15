@@ -71,9 +71,8 @@
   let selected = new Set();
 
   const portalUrl = (portal) => {
-    if (portal?.externalUrl || portal?.external) return portal.externalUrl || portal.href;
     const tenant = window.EnterpriseCore?.currentTenantId?.() || "";
-    const href = String(portal?.href || "organization-workspace.html");
+    const href = portal?.externalUrl || portal?.external ? "organization-module.html" : String(portal?.href || "organization-workspace.html");
     try {
       const url = new URL(href, location.origin);
       url.searchParams.set("tenant", tenant);
@@ -147,7 +146,7 @@
             <div class="portal-card-actions">
               ${
                 isInstalled
-                  ? `<a class="btn primary" href="${escapeHtml(portalUrl(portal))}" ${portal.external ? 'target="_blank" rel="noopener noreferrer"' : ""}>Open Portal</a>`
+                  ? `<a class="btn primary" href="${escapeHtml(portalUrl(portal))}">Open Portal</a>`
                   : `<button class="btn" data-portal-toggle="${escapeHtml(portal.id)}" type="button">${isSelected ? "Remove from install" : "Add to install"}</button>`
               }
             </div>

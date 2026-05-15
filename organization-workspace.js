@@ -51,9 +51,8 @@
   let portals = [];
 
   const portalUrl = (portal, org) => {
-    if (portal?.externalUrl || portal?.external) return portal.externalUrl || portal.href;
     const tenant = window.EnterpriseCore?.currentTenantId?.() || "";
-    const href = String(portal?.href || "organization-workspace.html");
+    const href = portal?.externalUrl || portal?.external ? "organization-module.html" : String(portal?.href || "organization-workspace.html");
     try {
       const url = new URL(href, location.origin);
       url.searchParams.set("tenant", tenant);
@@ -111,7 +110,7 @@
             <ul class="portal-feature-list">
               ${(portal.features || []).slice(0, 3).map((feature) => `<li>${escapeHtml(feature)}</li>`).join("")}
             </ul>
-            <a class="btn primary" href="${escapeHtml(portalUrl(portal, org))}" ${portal.external ? 'target="_blank" rel="noopener noreferrer"' : ""}>Open Portal</a>
+            <a class="btn primary" href="${escapeHtml(portalUrl(portal, org))}">Open Portal</a>
           </article>`,
       )
       .join("");
