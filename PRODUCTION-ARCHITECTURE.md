@@ -8,7 +8,8 @@ Recommended production deployment:
 
 - Static assets behind a CDN.
 - API routes behind a load balancer.
-- Upstash/Redis or equivalent for KV, rate-limit coordination, queues, and realtime fan-out.
+- Supabase Postgres for durable tenant data. Run `SUPABASE_PRODUCTION.sql` first.
+- Upstash/Redis or equivalent can still be used for rate-limit coordination, queues, and realtime fan-out.
 - Durable object storage for uploaded files, with only encrypted metadata/content references in KV.
 - Separate secrets per environment: `SESSION_SECRET`, `DATA_ENCRYPTION_KEY`, `ASSET_SYNC_TOKEN`, payment provider keys.
 
@@ -49,4 +50,14 @@ Serverless deployments use the same endpoint as a polling source. Production can
 
 ## Scale Notes
 
-The current file KV fallback is for development and small installations only. For thousands of concurrent users, use a managed low-latency datastore and external queue workers. The application code is now structured so that storage can be swapped behind `api/_lib/kv-store.js` without changing the portals.
+The current file KV fallback is for development only. For Vercel production, set:
+
+```text
+SUPABASE_URL
+SUPABASE_SERVICE_ROLE_KEY
+SESSION_SECRET
+SUPER_ADMIN_KEY
+DATA_ENCRYPTION_KEY
+```
+
+The application automatically uses Supabase when `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are present. Storage is abstracted behind `api/_lib/kv-store.js`, so existing organization registration, agreements, module installation, sessions, and portal hub APIs keep working without rewriting the frontend.

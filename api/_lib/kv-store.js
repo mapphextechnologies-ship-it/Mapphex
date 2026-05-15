@@ -17,7 +17,65 @@ const safeJsonParse = (raw, fallback) => {
 const hasUpstash = () =>
   !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
 
+const hasSupabase = () =>
+  !!(process.env.SUPABASE_URL && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY));
+
 const normalizeUrl = (u) => String(u || "").replace(/\/+$/, "");
+
+const supabaseHeaders = (extra = {}) => {
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+  return {
+    apikey: key,
+    Authorization: `Bearer ${key}`,
+    "Content-Type": "application/json; charset=utf-8",
+    ...extra,
+  };
+};
+
+const supabaseFetch = async (pathName, opts = {}) => {
+  const base = normalizeUrl(process.env.SUPABASE_URL);
+  const res = await fetch(`${base}/rest/v1/${pathName}`, {
+    ...opts,
+    headers: supabaseHeaders(opts.headers || {}),
+  });
+  const text = await res.text();
+  const data = text ? safeJsonParse(text, text) : null;
+  if (!res.ok) {
+    const err = new Error("Supabase request failed");
+    err.statusCode = res.status;
+    err.details = data;
+    throw err;
+  }
+  return data;
+};
+
+const supabaseGet = async (key) => {
+  const rows = await supabaseFetch(`mapphex_kv?select=value&key=eq.${encodeURIComponent(key)}&limit=1`, { method: "GET" });
+  return Array.isArray(rows) && rows.length ? rows[0].value : null;
+};
+
+const supabaseMget = async (keys) => {
+  const entries = await Promise.all(keys.map(async (key) => [key, await supabaseGet(key)]));
+  return Object.fromEntries(entries);
+};
+
+const supabaseSet = async (key, value) => {
+  await supabaseFetch("mapphex_kv?on_conflict=key", {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates" },
+    body: JSON.stringify([{ key, value: value ?? null }]),
+  });
+};
+
+const supabaseSetManyAtomic = async (items) => {
+  const rows = Object.entries(items || {}).map(([key, value]) => ({ key, value: value ?? null }));
+  if (!rows.length) return;
+  await supabaseFetch("mapphex_kv?on_conflict=key", {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates" },
+    body: JSON.stringify(rows),
+  });
+};
 
 const upstashFetch = async (url, opts = {}) => {
   const token = process.env.KV_REST_API_TOKEN;
@@ -191,6 +249,16 @@ const withFileLock = async (kvPath, fn) => {
 };
 
 const getStore = () => {
+  if (hasSupabase()) {
+    return {
+      driver: "supabase",
+      get: supabaseGet,
+      mget: supabaseMget,
+      set: supabaseSet,
+      setManyAtomic: supabaseSetManyAtomic,
+    };
+  }
+
   if (hasUpstash()) {
     return {
       driver: "upstash",

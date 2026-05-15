@@ -1,0 +1,30 @@
+# MAPPHEX production environment variables for Vercel
+# Add these in Vercel Project Settings -> Environment Variables.
+# Never commit real secrets.
+
+SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=YOUR_SUPABASE_SERVICE_ROLE_KEY
+
+# Required for signed organization sessions. Use a long random value.
+SESSION_SECRET=REPLACE_WITH_64_PLUS_RANDOM_CHARACTERS
+
+# Required if using encrypted file APIs.
+DATA_ENCRYPTION_KEY=REPLACE_WITH_32_BYTE_BASE64_OR_HEX_SECRET
+
+# Internal hidden platform admin route/API key.
+SUPER_ADMIN_KEY=REPLACE_WITH_LONG_INTERNAL_ADMIN_KEY
+INTERNAL_ADMIN_KEY=REPLACE_WITH_LONG_INTERNAL_ADMIN_KEY
+
+# Optional integrations.
+ASSET_SYNC_TOKEN=REPLACE_WITH_ASSET_SYNC_SECRET
+MPESA_CONSUMER_KEY=
+MPESA_CONSUMER_SECRET=
+MPESA_PASSKEY=
+MPESA_SHORTCODE=
+MPESA_CALLBACK_URL=
+
+# Firebase is not required by the current app runtime.
+# If you later add Firebase Auth, keep credentials in Vercel only:
+FIREBASE_PROJECT_ID=
+FIREBASE_CLIENT_EMAIL=
+FIREBASE_PRIVATE_KEY=
