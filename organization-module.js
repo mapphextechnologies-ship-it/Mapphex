@@ -18,7 +18,6 @@
     { id: "finance", title: "Finance Module", href: "organization-module.html", description: "Income, expenses, transaction logs, financial summaries, and reports.", features: ["Shared transactions", "Expense views", "Reports"] },
     { id: "pharmacy", title: "Pharmacy Module", href: "organization-module.html", description: "Medicine inventory, stock tracking, suppliers, and expiry monitoring.", features: ["Medicine stock", "Supplier control", "Shared inventory"] },
     { id: "inventory", title: "Inventory Module", href: "organization-module.html", description: "Stock management, item tracking, warehouse control, and movement logs.", features: ["Stock levels", "Transfers", "Availability"] },
-    { id: "assetwise", title: "AssetWise Module", href: "https://assert-management.lovable.app/", external: true, externalUrl: "https://assert-management.lovable.app/", description: "Asset lifecycle, allocation, status monitoring, and maintenance logs.", features: ["Shared assets", "Asset lifecycle", "Allocation"] },
     { id: "logistics", title: "Logistics Module", href: "organization-module.html", description: "Delivery tracking, dispatch management, fleet operations, and shipment status.", features: ["Dispatch", "Tracking", "Delivery status"] },
     { id: "sales", title: "Sales Module", href: "organization-module.html", description: "Customer management, sales records, order tracking, and performance dashboards.", features: ["Customers", "Sales activity", "Performance"] },
     { id: "school", title: "School Module", href: "organization-module.html", description: "Student records, classes, departments, reports, and school admin workflows.", features: ["Administration", "Departments", "Reports"] },
@@ -28,6 +27,7 @@
     { id: "customer", title: "Customer Module", href: "organization-module.html", description: "Customer records, service tracking, support tickets, and interaction history.", features: ["Customers", "Service records", "Support"] },
     { id: "reporting", title: "Reporting Module", href: "organization-module.html", description: "Exportable reports, financial summaries, operational reports, and printable analytics.", features: ["Operational reports", "Financial summaries", "Exports"] },
   ];
+  const VALID_PORTAL_IDS = new Set(PORTAL_CATALOG.map((portal) => portal.id));
 
   const MODULE_WORKFLOWS = {
     branch: { title: "Branch Operations", labels: ["Branch", "Manager", "Performance", "Status"], sample: ["Nairobi CBD", "Branch Lead", "92%", "Active"] },
@@ -36,7 +36,6 @@
     finance: { title: "Finance Ledger", labels: ["Transaction", "Type", "Amount", "Status"], sample: ["Daily Sales", "Income", "45000", "Posted"] },
     pharmacy: { title: "Pharmacy Stock", labels: ["Medicine", "Supplier", "Expiry", "Stock"], sample: ["Amoxicillin", "Prime Supplier", "2027-04", "260"] },
     inventory: { title: "Inventory Control", labels: ["Item", "Warehouse", "Movement", "Quantity"], sample: ["Barcode Scanner", "Main Store", "Received", "12"] },
-    assetwise: { title: "Asset Lifecycle", labels: ["Asset", "Assigned To", "Condition", "Maintenance"], sample: ["Delivery Laptop", "Branch Team", "Good", "2026-08"] },
     logistics: { title: "Logistics Flow", labels: ["Shipment", "Driver/Fleet", "Route", "Status"], sample: ["ORD-2048", "Fleet 03", "Nairobi-Kisumu", "In transit"] },
     sales: { title: "Sales Pipeline", labels: ["Customer", "Order", "Value", "Status"], sample: ["Acme Retail", "SO-1021", "12800", "Confirmed"] },
     school: { title: "School Administration", labels: ["Student/Class", "Department", "Report", "Status"], sample: ["Grade 4A", "Academics", "Term Report", "Ready"] },
@@ -160,7 +159,7 @@
         return;
       }
 
-      const installed = new Set(settings.installedPortals || []);
+      const installed = new Set((settings.installedPortals || []).filter((id) => VALID_PORTAL_IDS.has(id)));
       if (!moduleId || !installed.has(moduleId)) {
         location.replace(`portal-selection.html?tenant=${encodeURIComponent(session.tenantId)}`);
         return;
@@ -215,13 +214,6 @@
         renderRows(moduleId, workflow, $("#module-search")?.value || "");
       });
 
-      if (moduleDef.externalUrl) {
-        $("#assetwise-connected-panel").hidden = false;
-        const url = new URL(moduleDef.externalUrl);
-        url.searchParams.set("tenant", session.tenantId);
-        if (org.organizationId) url.searchParams.set("org", org.organizationId);
-        $("#assetwise-link").href = url.href;
-      }
     } catch (err) {
       window.EnterpriseCore?.notify?.("Module", err.message, "error");
     }

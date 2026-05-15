@@ -13,7 +13,6 @@
     { id: "finance", title: "Finance Module", href: "organization-module.html", description: "Finance summaries, payments, and reports.", features: ["Shared transactions", "Expense views", "Reports"] },
     { id: "pharmacy", title: "Pharmacy Module", href: "organization-module.html", description: "Pharmacy inventory and controlled operations.", features: ["Medicine stock", "Supplier control", "Shared inventory"] },
     { id: "inventory", title: "Inventory Module", href: "organization-module.html", description: "Stock, items, transfers, and availability.", features: ["Stock levels", "Transfers", "Availability"] },
-    { id: "assetwise", title: "AssetWise Module", href: "https://assert-management.lovable.app/", external: true, externalUrl: "https://assert-management.lovable.app/", description: "Connected asset lifecycle and allocation.", features: ["Shared assets", "Asset lifecycle", "Allocation"] },
     { id: "logistics", title: "Logistics Module", href: "organization-module.html", description: "Dispatch, delivery, fleet, and tracking workflows.", features: ["Dispatch", "Tracking", "Delivery status"] },
     { id: "sales", title: "Sales Module", href: "organization-module.html", description: "Sales operations, customers, and performance.", features: ["Customers", "Sales activity", "Performance"] },
     { id: "school", title: "School Module", href: "organization-module.html", description: "School operations and administrative workflows.", features: ["Administration", "Departments", "Reports"] },
@@ -23,6 +22,7 @@
     { id: "customer", title: "Customer Module", href: "organization-module.html", description: "Customer operations and service workflows.", features: ["Customers", "Service records", "Support"] },
     { id: "reporting", title: "Reporting Module", href: "organization-module.html", description: "Operational, finance, and organization reports.", features: ["Operational reports", "Financial summaries", "Exports"] },
   ];
+  const VALID_PORTAL_IDS = new Set(PORTAL_CATALOG.map((portal) => portal.id));
 
   const readJson = (key, fallback) => {
     try {
@@ -56,11 +56,17 @@
 
   const localAdminPayload = (tenant) => {
     window.EnterpriseCore?.setTenant?.(tenant);
+    const rawSettings = readJson(SETTINGS_KEY, {});
     return {
       ok: true,
       tenantId: tenant,
       users: readJson("enterprise_org_users_v1", []),
-      settings: readJson(SETTINGS_KEY, {}),
+      settings: {
+        ...rawSettings,
+        installedPortals: (rawSettings.installedPortals || []).filter((id) => VALID_PORTAL_IDS.has(id)),
+        modules: (rawSettings.modules || []).filter((id) => VALID_PORTAL_IDS.has(id) || ["dashboard", "orders", "crm", "documents"].includes(id)),
+        navigation: (rawSettings.navigation || []).filter((id) => VALID_PORTAL_IDS.has(id)),
+      },
       portalCatalog: PORTAL_CATALOG,
     };
   };
@@ -71,7 +77,6 @@
   let selected = new Set();
 
   const portalUrl = (portal) => {
-    if (portal?.id === "assetwise") return portal.externalUrl || portal.href || "https://assert-management.lovable.app/";
     const tenant = window.EnterpriseCore?.currentTenantId?.() || "";
     const href = String(portal?.href || "organization-workspace.html");
     try {
@@ -147,7 +152,7 @@
             <div class="portal-card-actions">
               ${
                 isInstalled
-                  ? `<a class="btn primary" href="${escapeHtml(portalUrl(portal))}" ${portal.id === "assetwise" ? 'target="_blank" rel="noopener noreferrer"' : ""}>Open Portal</a>`
+                  ? `<a class="btn primary" href="${escapeHtml(portalUrl(portal))}">Open Portal</a>`
                   : `<button class="btn" data-portal-toggle="${escapeHtml(portal.id)}" type="button">${isSelected ? "Remove from install" : "Add to install"}</button>`
               }
             </div>

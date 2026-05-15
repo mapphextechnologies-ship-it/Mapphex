@@ -15,7 +15,6 @@ const PORTAL_CATALOG = [
   { id: "finance", title: "Finance Module", href: moduleHref, description: "Finance summaries, payments, and reports.", features: ["Shared transactions", "Expense views", "Reports"] },
   { id: "pharmacy", title: "Pharmacy Module", href: moduleHref, description: "Pharmacy inventory and controlled operations.", features: ["Medicine stock", "Supplier control", "Shared inventory"] },
   { id: "inventory", title: "Inventory Module", href: moduleHref, description: "Stock, items, transfers, and availability.", features: ["Stock levels", "Transfers", "Availability"] },
-  { id: "assetwise", title: "AssetWise Module", href: "https://assert-management.lovable.app/", external: true, externalUrl: "https://assert-management.lovable.app/", description: "Connected asset lifecycle and allocation.", features: ["Shared assets", "Asset lifecycle", "Allocation"] },
   { id: "logistics", title: "Logistics Module", href: moduleHref, description: "Dispatch, delivery, fleet, and tracking workflows.", features: ["Dispatch", "Tracking", "Delivery status"] },
   { id: "sales", title: "Sales Module", href: moduleHref, description: "Sales operations, customers, and performance.", features: ["Customers", "Sales activity", "Performance"] },
   { id: "school", title: "School Module", href: moduleHref, description: "School operations and administrative workflows.", features: ["Administration", "Departments", "Reports"] },
@@ -25,6 +24,15 @@ const PORTAL_CATALOG = [
   { id: "customer", title: "Customer Module", href: moduleHref, description: "Customer operations and service workflows.", features: ["Customers", "Service records", "Support"] },
   { id: "reporting", title: "Reporting Module", href: moduleHref, description: "Operational, finance, and organization reports.", features: ["Operational reports", "Financial summaries", "Exports"] },
 ];
+
+const VALID_PORTAL_IDS = new Set(PORTAL_CATALOG.map((portal) => portal.id));
+const sanitizeSettings = (settings = {}) => ({
+  ...settings,
+  installedPortals: (settings.installedPortals || []).filter((id) => VALID_PORTAL_IDS.has(id)),
+  modules: (settings.modules || []).filter((id) => VALID_PORTAL_IDS.has(id) || ["dashboard", "orders", "crm", "documents"].includes(id)),
+  navigation: (settings.navigation || []).filter((id) => VALID_PORTAL_IDS.has(id)),
+  modulePermissions: Object.fromEntries(Object.entries(settings.modulePermissions || {}).filter(([id]) => VALID_PORTAL_IDS.has(id))),
+});
 
 module.exports = async (req, res) => {
   try {
@@ -39,14 +47,14 @@ module.exports = async (req, res) => {
 
     if (req.method === "GET") {
       const users = (await store.get(usersKey)) || [];
-      const settings = (await store.get(settingsKey)) || {};
+      const settings = sanitizeSettings((await store.get(settingsKey)) || {});
       return sendJson(res, 200, { ok: true, tenantId, users: Array.isArray(users) ? users : [], settings, portalCatalog: PORTAL_CATALOG });
     }
 
     if (req.method !== "POST") return sendJson(res, 405, { ok: false, error: "Method not allowed" });
     assertIdempotent(req, body);
     const users = (await store.get(usersKey)) || [];
-    const settings = (await store.get(settingsKey)) || {};
+    const settings = sanitizeSettings((await store.get(settingsKey)) || {});
 
     if (body.action === "add-user") {
       const user = {
@@ -96,7 +104,7 @@ module.exports = async (req, res) => {
 
     if (body.action === "install-portal" || body.action === "install-portals") {
       const requested = body.action === "install-portals" && Array.isArray(body.portalIds) ? body.portalIds : [body.portalId];
-      const portalIds = Array.from(new Set(requested.map((id) => safeString(id, 80)).filter(Boolean)));
+      const portalIds = Array.from(new Set(requested.map((id) => safeString(id, 80)).filter((id) => VALID_PORTAL_IDS.has(id))));
       const portals = portalIds.map((portalId) => PORTAL_CATALOG.find((item) => item.id === portalId)).filter(Boolean);
       if (!portals.length || portals.length !== portalIds.length) return sendJson(res, 404, { ok: false, error: "One or more portals were not found" });
       if (settings.agreementAccepted !== true) return sendJson(res, 403, { ok: false, error: "Accept licensing terms before installing portals" });

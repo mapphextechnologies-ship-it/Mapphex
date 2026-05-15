@@ -17,14 +17,13 @@ const catalog = [
   { id: "hr", label: "HR & Staff", sectors: ["all"], permissions: ["hr.manage"] },
   { id: "crm", label: "Customers & CRM", sectors: ["all"], permissions: ["customers.manage"] },
   { id: "documents", label: "Files & Documents", sectors: ["all"], permissions: ["documents.manage"] },
-  { id: "assetwise", label: "AssetWise Portal", sectors: ["all"], permissions: ["assets.manage"], url: "https://assert-management.lovable.app/" },
   { id: "school", label: "School Operations", sectors: ["school"], permissions: ["school.manage"] },
   { id: "service", label: "Service Desk", sectors: ["company", "service", "agency", "corporate"], permissions: ["service.manage"] },
 ];
 
 const defaultConfig = {
   businessType: "company",
-  enabled: ["dashboard", "inventory", "pos", "orders", "finance", "hr", "crm", "documents", "assetwise"],
+  enabled: ["dashboard", "inventory", "pos", "orders", "finance", "hr", "crm", "documents"],
   catalog,
 };
 
