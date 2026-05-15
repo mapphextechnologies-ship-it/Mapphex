@@ -15,7 +15,8 @@
   <body data-page="organization-module" class="portal-hub-page">
     <header class="topbar portal-hub-topbar">
       <div class="brand">
-        <img class="logo-img" src="images/enterprise-logo.png" alt="" />
+        <button id="module-menu-toggle" class="icon-btn module-menu-toggle" type="button" aria-label="Open module navigation" aria-expanded="false"><span class="icon-hamburger" aria-hidden="true"></span></button>
+        <img class="logo-img" src="images/bytewave-logo.jpg" alt="" />
         <div>
           <div id="module-title" class="brand-title">MAPPHEX Module</div>
           <div id="module-subtitle" class="brand-subtitle muted">Shared organization system</div>
@@ -28,58 +29,90 @@
       </div>
     </header>
 
-    <main class="layout onboarding-layout portal-hub-layout">
-      <section class="portal-hub-hero panel">
-        <div>
-          <div class="eyebrow">Unified Organization Module</div>
-          <h1 id="module-heading">Module Workspace</h1>
-          <p id="module-description" class="muted">This module uses the same organization users, roles, database, analytics, and activity logs.</p>
+    <main class="layout onboarding-layout portal-hub-layout module-app-shell">
+      <aside id="module-sidebar" class="panel module-sidebar" aria-label="Installed portal navigation">
+        <div class="module-sidebar-head">
+          <strong>Workspace Modules</strong>
+          <button id="module-menu-close" class="btn" type="button">Close</button>
         </div>
-        <div class="portal-hub-profile">
-          <div id="module-icon" class="profile-avatar" aria-hidden="true">M</div>
+        <nav id="module-nav" class="module-nav"></nav>
+      </aside>
+
+      <div class="module-content">
+        <section class="portal-hub-hero panel">
           <div>
-            <strong id="module-org-name">Organization</strong>
-            <span id="module-org-id" class="muted">Tenant isolated</span>
+            <div class="eyebrow">Unified Organization Module</div>
+            <h1 id="module-heading">Module Workspace</h1>
+            <p id="module-description" class="muted">This module uses the same organization users, roles, database, analytics, and activity logs.</p>
           </div>
-        </div>
-      </section>
+          <div class="portal-hub-profile">
+            <div id="module-icon" class="profile-avatar" aria-hidden="true">M</div>
+            <div>
+              <strong id="module-org-name">Organization</strong>
+              <span id="module-org-id" class="muted">Tenant isolated</span>
+            </div>
+          </div>
+        </section>
 
-      <section class="portal-hub-widgets">
-        <article class="kpi"><div class="kpi-label">Shared Users</div><div id="module-kpi-users" class="kpi-value">0</div><div class="kpi-foot muted">Same organization table</div></article>
-        <article class="kpi"><div class="kpi-label">Branches</div><div id="module-kpi-branches" class="kpi-value">0</div><div class="kpi-foot muted">Shared locations</div></article>
-        <article class="kpi"><div class="kpi-label">Enabled Modules</div><div id="module-kpi-modules" class="kpi-value">0</div><div class="kpi-foot muted">Feature toggles</div></article>
-        <article class="kpi"><div class="kpi-label">Data Context</div><div class="kpi-value">Unified</div><div id="module-kpi-tenant" class="kpi-foot muted">One tenant database</div></article>
-      </section>
+        <section class="portal-hub-widgets">
+          <article class="kpi"><div id="module-kpi-a-label" class="kpi-label">Records</div><div id="module-kpi-a" class="kpi-value">0</div><div id="module-kpi-a-foot" class="kpi-foot muted">Module records</div></article>
+          <article class="kpi"><div id="module-kpi-b-label" class="kpi-label">Shared Users</div><div id="module-kpi-users" class="kpi-value">0</div><div class="kpi-foot muted">Same organization table</div></article>
+          <article class="kpi"><div class="kpi-label">Enabled Modules</div><div id="module-kpi-modules" class="kpi-value">0</div><div class="kpi-foot muted">Feature toggles</div></article>
+          <article class="kpi"><div class="kpi-label">Data Context</div><div class="kpi-value">Unified</div><div id="module-kpi-tenant" class="kpi-foot muted">One tenant database</div></article>
+        </section>
 
-      <section class="panel">
-        <div class="panel-header">
-          <h2>Shared Module Data</h2>
-          <div class="panel-actions muted">One organization database and session</div>
-        </div>
-        <div class="module-shared-grid">
-          <article><strong>Authentication</strong><span>Uses the current organization session. No separate module login.</span></article>
-          <article><strong>Permissions</strong><span id="module-permissions">Module permissions load from the organization role system.</span></article>
-          <article><strong>Realtime Activity</strong><span>Actions are recorded in the shared organization activity stream.</span></article>
-          <article><strong>Analytics</strong><span>Reports read from the same organization data context.</span></article>
-        </div>
-      </section>
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h2 id="module-workflow-title">Module Operations</h2>
+              <p id="module-workflow-subtitle" class="portal-manager-subtitle">Create and track shared organization records.</p>
+            </div>
+            <div class="panel-actions">
+              <input id="module-search" type="search" placeholder="Search module records..." />
+            </div>
+          </div>
+          <form id="module-record-form" class="module-record-form"></form>
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr id="module-table-head"></tr></thead>
+              <tbody id="module-table-body"></tbody>
+            </table>
+          </div>
+          <div id="module-empty" class="empty-state" hidden>No records yet. Add the first item to activate this module.</div>
+        </section>
 
-      <section id="assetwise-connected-panel" class="panel" hidden>
-        <div class="panel-header">
-          <h2>AssetWise Connected Portal</h2>
-          <div class="panel-actions muted">Connected to this MAPPHEX organization context</div>
-        </div>
-        <div class="module-shared-grid">
-          <article><strong>External Access</strong><span>AssetWise opens as a connected system while preserving this organization context in MAPPHEX.</span></article>
-          <article><a id="assetwise-link" class="btn primary" href="https://assert-management.lovable.app/" target="_blank" rel="noopener noreferrer">Open AssetWise</a></article>
-        </div>
-      </section>
+        <section class="panel">
+          <div class="panel-header">
+            <h2>Shared System Layer</h2>
+            <div class="panel-actions muted">One organization database and session</div>
+          </div>
+          <div class="module-shared-grid">
+            <article><strong>Authentication</strong><span>Uses the current organization session. No separate module login.</span></article>
+            <article><strong>Permissions</strong><span id="module-permissions">Module permissions load from the organization role system.</span></article>
+            <article><strong>Realtime Activity</strong><span id="module-activity-note">Actions are recorded in the shared organization activity stream.</span></article>
+            <article><strong>Analytics</strong><span>Reports read from the same organization data context.</span></article>
+          </div>
+        </section>
+
+        <section id="assetwise-connected-panel" class="panel" hidden>
+          <div class="panel-header">
+            <h2>AssetWise Connected Portal</h2>
+            <div class="panel-actions muted">Connected to this organization context</div>
+          </div>
+          <div class="module-shared-grid">
+            <article><strong>External Access</strong><span>AssetWise opens as a connected system while preserving this organization context in ByteWave.</span></article>
+            <article><a id="assetwise-link" class="btn primary" href="https://assert-management.lovable.app/" target="_blank" rel="noopener noreferrer">Open AssetWise</a></article>
+          </div>
+        </section>
+
+        <footer class="site-powered-footer">© Teams Technology • Powered by MAPPHEX • Enterprise Workspace System</footer>
+      </div>
     </main>
 
     <script src="enterprise-core.js"></script>
     <script src="kv-client.js"></script>
     <script src="enterprise-store.js"></script>
     <script src="pwa.js"></script>
-    <script src="organization-module.js?v=3"></script>
+    <script src="organization-module.js?v=4"></script>
   </body>
 </html>
