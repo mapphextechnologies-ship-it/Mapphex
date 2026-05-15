@@ -216,6 +216,15 @@
     location.href = `organization-workspace.html?tenant=${encodeURIComponent(window.EnterpriseCore?.currentTenantId?.() || "")}`;
   };
 
+  const showPwaHelp = (message) => {
+    const help = $("#pwa-install-help");
+    const text = $("#pwa-install-help-text");
+    const link = $("#pwa-open-workspace");
+    if (link) link.href = `organization-workspace.html?tenant=${encodeURIComponent(window.EnterpriseCore?.currentTenantId?.() || "")}`;
+    if (text && message) text.textContent = message;
+    if (help) help.hidden = false;
+  };
+
   const install = async (portalIds, options = {}) => {
     const ids = Array.from(new Set((Array.isArray(portalIds) ? portalIds : [portalIds]).filter(Boolean)));
     if (!ids.length) return;
@@ -257,9 +266,19 @@
     if (options.installPwa) {
       if (progress) progress.textContent = "Portals enabled. Installing the unified PWA app...";
       const pwaResult = await promptWorkspacePwa();
-      if (!pwaResult?.ok && progress) {
-        progress.textContent = "Portals installed. If the app prompt did not open, use the browser Install App option.";
+      if (pwaResult?.ok) {
+        if (progress) progress.textContent = "ByteWave Workspace installed. Opening workspace...";
+        setTimeout(openWorkspace, 900);
+        return;
       }
+      const reason = pwaResult?.reason;
+      const message =
+        reason === "dismissed"
+          ? "Portals are installed. You dismissed the app install prompt; click Try install prompt again or open the workspace."
+          : "Portals are installed. Your browser did not show the install prompt yet. Use the browser menu and choose Install app or Add to Home Screen, then open the workspace.";
+      if (progress) progress.textContent = message;
+      showPwaHelp(message);
+      return;
     }
     if (progress && !options.installPwa) progress.textContent = "Unified installation complete. Opening the workspace app...";
     setTimeout(() => {
@@ -303,6 +322,23 @@
           btn.textContent = "Install selected as PWA app";
           renderBulkBar();
         });
+    });
+    $("#pwa-retry-install")?.addEventListener("click", async () => {
+      const progress = $("#portal-progress");
+      if (progress) progress.textContent = "Trying the device app install prompt...";
+      const result = await promptWorkspacePwa();
+      if (result?.ok) {
+        if (progress) progress.textContent = "ByteWave Workspace installed. Opening workspace...";
+        setTimeout(openWorkspace, 900);
+      } else {
+        showPwaHelp("Install prompt is still unavailable. Use the browser menu and choose Install app or Add to Home Screen, then open the workspace.");
+      }
+    });
+    window.MapphexPWA?.onStatus?.((status) => {
+      const help = $("#pwa-install-help");
+      if (status.promptReady && help?.hidden === false) {
+        $("#pwa-install-help-text").textContent = "The app install prompt is ready. Click Try install prompt again to install ByteWave Workspace on this device.";
+      }
     });
     load().catch((err) => window.EnterpriseCore?.notify?.("Portal manager", err.message, "error"));
   });

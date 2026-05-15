@@ -4,6 +4,7 @@
   let deferredPrompt = null;
   let installed = false;
   const installButtons = new Set();
+  const listeners = new Set();
 
   const isStandalone = () =>
     window.matchMedia?.("(display-mode: standalone)")?.matches ||
@@ -24,6 +25,24 @@
     });
   };
 
+  const status = () => ({
+    installed: isStandalone(),
+    promptReady: !!deferredPrompt,
+    supported: "serviceWorker" in navigator,
+  });
+
+  const emitStatus = () => {
+    const detail = status();
+    listeners.forEach((listener) => {
+      try {
+        listener(detail);
+      } catch {
+        // ignore listener failures
+      }
+    });
+    window.dispatchEvent(new CustomEvent("mapphex:pwa-status", { detail }));
+  };
+
   const promptInstall = async () => {
     if (isStandalone()) {
       setButtonState("App Installed", true);
@@ -34,6 +53,7 @@
     if (!deferredPrompt) {
       setButtonState("Use Browser Menu", true);
       window.setTimeout(() => setButtonState("Install selected as PWA app", false), 2400);
+      emitStatus();
       return { ok: false, reason: "prompt-unavailable" };
     }
 
@@ -46,9 +66,11 @@
       installed = true;
       setButtonState("App Installed", true);
       window.setTimeout(hideButtonIfInstalled, 900);
+      emitStatus();
       return { ok: true, installed: true };
     }
     setButtonState("Install selected as PWA app", false);
+    emitStatus();
     return { ok: false, reason: "dismissed" };
   };
 
@@ -72,12 +94,14 @@
     deferredPrompt = event;
     setButtonState("Install selected as PWA app", false);
     hideButtonIfInstalled();
+    emitStatus();
   });
 
   window.addEventListener("appinstalled", () => {
     installed = true;
     setButtonState("Installed", true);
     window.setTimeout(hideButtonIfInstalled, 900);
+    emitStatus();
   });
 
   window.addEventListener("DOMContentLoaded", () => {
@@ -87,10 +111,18 @@
       button.addEventListener("click", () => promptInstall());
     });
     setButtonState(isStandalone() ? "App Installed" : "Install selected as PWA app", isStandalone());
+    emitStatus();
   });
 
   window.MapphexPWA = Object.freeze({
     promptInstall,
     isStandalone,
+    status,
+    onStatus(listener) {
+      if (typeof listener !== "function") return () => {};
+      listeners.add(listener);
+      listener(status());
+      return () => listeners.delete(listener);
+    },
   });
 })();

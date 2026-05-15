@@ -38,6 +38,14 @@
             <button id="portal-install-selected" class="btn primary" type="button" disabled>Install selected as PWA app</button>
           </div>
         </div>
+        <div id="pwa-install-help" class="pwa-install-help" hidden>
+          <strong>Device app install</strong>
+          <p id="pwa-install-help-text">After portals are enabled, your browser will ask to install ByteWave Workspace. If no prompt appears, use your browser menu and choose Install app or Add to Home Screen.</p>
+          <div class="portal-card-actions">
+            <a id="pwa-open-workspace" class="btn primary" href="organization-workspace.html">Open Workspace</a>
+            <button id="pwa-retry-install" class="btn" type="button">Try install prompt again</button>
+          </div>
+        </div>
         <div id="portal-grid" class="portal-install-grid"></div>
       </section>
     </main>
@@ -45,6 +53,6 @@
     <script src="kv-client.js"></script>
     <script src="enterprise-store.js"></script>
     <script src="pwa.js"></script>
-    <script src="portal-selection.js?v=10"></script>
+    <script src="portal-selection.js?v=11"></script>
   </body>
 </html>

@@ -134,6 +134,23 @@
   flex-wrap: wrap;
 }
 
+.pwa-install-help {
+  margin: 12px 18px 0;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(52, 211, 153, 0.26);
+  background:
+    linear-gradient(135deg, rgba(52, 211, 153, 0.12), rgba(91, 214, 255, 0.06)),
+    rgba(255, 255, 255, 0.04);
+}
+
+.pwa-install-help p {
+  margin: 6px 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
 .portal-install-card {
   position: relative;
   display: grid;
@@ -547,6 +564,10 @@
   .portal-bulk-actions .btn {
     width: 100%;
     min-height: 46px;
+  }
+
+  .pwa-install-help {
+    margin: 10px 10px 0;
   }
 
   .portal-install-card,
