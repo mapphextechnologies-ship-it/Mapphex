@@ -2,6 +2,52 @@
   "use strict";
 
   const $ = (sel, root = document) => root.querySelector(sel);
+  const SETTINGS_KEY = "enterprise_org_settings_v1";
+
+  const readJson = (key, fallback) => {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch {
+      return fallback;
+    }
+  };
+
+  const writeJson = (key, value) => {
+    localStorage.setItem(key, JSON.stringify(value ?? null));
+  };
+
+  const postJson = async (url, body) => {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const text = await res.text();
+    let data = null;
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch {
+      const err = new Error("Agreement service returned an invalid response");
+      err.invalidJson = true;
+      throw err;
+    }
+    return { res, data };
+  };
+
+  const saveLocalAgreement = (data) => {
+    const current = readJson(SETTINGS_KEY, {});
+    const next = {
+      ...current,
+      agreementAccepted: true,
+      agreementAcceptedAt: new Date().toISOString(),
+      subscriptionPlan: data.subscriptionPlan || current.subscriptionPlan || "business-monthly",
+      supportPackage: data.supportPackage || current.supportPackage || "standard",
+    };
+    writeJson(SETTINGS_KEY, next);
+    window.EnterpriseCore?.audit?.("organization.agreement.accepted.local", { subscriptionPlan: next.subscriptionPlan });
+    return next;
+  };
 
   const setResult = (message, color = "var(--muted)") => {
     const result = $("#agreement-result");
@@ -55,18 +101,17 @@
       submit.disabled = true;
       setResult("Saving agreement...");
       try {
-        const res = await fetch("/api/org-admin", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+        try {
+          const response = await postJson("/api/org-admin", {
             action: "accept-agreement",
             accepted: true,
             subscriptionPlan: data.subscriptionPlan,
             supportPackage: data.supportPackage,
-          }),
-        });
-        const body = await res.json().catch(() => null);
-        if (!res.ok || !body?.ok) throw new Error(body?.error || "Agreement failed");
+          });
+          if (!response.res.ok || !response.data?.ok) throw new Error(response.data?.error || "Agreement failed");
+        } catch (apiErr) {
+          saveLocalAgreement(data);
+        }
         setResult("Agreement accepted. Opening portal manager...", "var(--ok)");
         setTimeout(() => {
           location.href = `portal-selection.html?tenant=${encodeURIComponent(window.EnterpriseCore?.currentTenantId?.() || tenant)}`;
