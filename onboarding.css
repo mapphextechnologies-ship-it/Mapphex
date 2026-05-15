@@ -369,14 +369,14 @@
   margin-top: auto;
 }
 
-.portal-hub-card-muted {
+.portal-hub-card-add {
   opacity: 0.78;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.025)),
     rgba(2, 8, 18, 0.4);
 }
 
-.portal-hub-card-muted .portal-status {
+.portal-hub-card-add .portal-status {
   border-color: rgba(255, 255, 255, 0.18);
   color: var(--muted);
 }
