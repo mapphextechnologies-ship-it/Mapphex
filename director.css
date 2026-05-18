@@ -646,8 +646,13 @@ canvas {
 .auth-footer {
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.10);
+  border-top: 0;
   font-size: 12px;
+}
+
+.auth-footer .btn {
+  border: 0;
+  box-shadow: none;
 }
 
 label.remember-row {
