@@ -4,7 +4,29 @@
   const loginUrl = "organization-login.html";
   const deniedUrl = "access-denied.html";
   const publicPages = new Set([
+    "",
+    "home",
+    "index",
     "access-denied",
+    "about",
+    "contact",
+    "features",
+    "pricing",
+    "security",
+    "services",
+    "service-detail",
+    "faq",
+    "help",
+    "help-center",
+    "privacy",
+    "terms",
+    "terms-conditions",
+    "blog",
+    "blogs",
+    "news",
+    "careers",
+    "announcements",
+    "organization-landing",
     "organization-login",
     "organization-register",
     "portal-auth",
@@ -17,6 +39,18 @@
     "teamleader-login",
     "teamleader-register",
     "super-admin-login",
+  ]);
+
+  const protectedPages = new Set([
+    "agent-dashboard",
+    "branch-dashboard",
+    "director-dashboard",
+    "teamleader-dashboard",
+    "organization-agreement",
+    "portal-selection",
+    "organization-workspace",
+    "organization-module",
+    "organization-admin",
   ]);
 
   const organizationPages = new Set([
@@ -80,11 +114,16 @@
 
     if (params.get("logout") === "1") {
       core.clearSession?.();
-      redirectToLogin("");
+      if (publicPages.has(page)) {
+        history.replaceState(null, "", location.pathname);
+      } else {
+        location.replace("index.html");
+      }
       return;
     }
 
     if (publicPages.has(page)) return;
+    if (!protectedPages.has(page)) return;
 
     const expectedTenant = params.get("tenant") || core.currentTenantId?.();
     const session = core.requireOrganizationSession?.(expectedTenant);

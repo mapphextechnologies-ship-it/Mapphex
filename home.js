@@ -58,33 +58,11 @@
     window.EnterpriseCore?.clearSession?.();
   };
 
-  const redirectActiveOrganization = async () => {
+  const handlePublicLogout = () => {
     const params = new URLSearchParams(location.search);
     if (params.get("logout") === "1") {
       clearSession();
       history.replaceState(null, "", location.pathname);
-      return;
-    }
-
-    const session = window.EnterpriseCore?.getSession?.();
-    if (!session?.tenantId || !["org_admin", "admin", "manager", "staff"].includes(String(session.role || "").toLowerCase())) return;
-
-    try {
-      window.EnterpriseCore?.setTenant?.(session.tenantId);
-      const res = await fetch("/api/org-admin", { method: "GET" });
-      const data = await res.json().catch(() => null);
-      if (!res.ok || !data?.ok) return;
-      const tenant = encodeURIComponent(session.tenantId);
-      const settings = data.settings || {};
-      if (settings.agreementAccepted !== true) {
-        location.replace(`organization-agreement.html?tenant=${tenant}`);
-      } else if (Array.isArray(settings.installedPortals) && settings.installedPortals.length) {
-        location.replace(`organization-workspace.html?tenant=${tenant}`);
-      } else {
-        location.replace(`portal-selection.html?tenant=${tenant}`);
-      }
-    } catch {
-      // Keep the public homepage available when offline or unauthenticated.
     }
   };
 
@@ -452,7 +430,7 @@
   };
 
   document.addEventListener("DOMContentLoaded", () => {
-    redirectActiveOrganization();
+    handlePublicLogout();
     setupServicePage();
     setActivePageLink();
 
