@@ -621,6 +621,8 @@
           {
             role: "org_admin",
             email: body.adminEmail || body.email,
+            userId: sessionData?.session?.userId || "organization-admin",
+            permissions: sessionData?.session?.permissions || ["*"],
             tenantId: data.tenantId,
             token: sessionData?.token || `local-${Date.now()}-${Math.random().toString(16).slice(2)}`,
             organizationId: data.organizationId,

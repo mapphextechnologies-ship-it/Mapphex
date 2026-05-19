@@ -1,7 +1,7 @@
 const crypto = require("crypto");
 const { sendJson, readJsonBody } = require("../../api/_lib/http");
 const { getTenantId } = require("../../api/_lib/tenant");
-const { verifyOrganizationAdmin } = require("../organizations");
+const { verifyOrganizationAdmin, verifyOrganizationUser } = require("../organizations");
 const { decodeSessionToken } = require("../../api/_lib/security");
 
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
@@ -29,14 +29,22 @@ module.exports = async (req, res) => {
         return sendJson(res, 400, { ok: false, error: "Organization name, organization email or ID, and password are required" });
       }
       let tenantId = getTenantId(req, body);
-      let organization = null;
-      organization = await verifyOrganizationAdmin(identifier || tenantId, email, body?.password, organizationName);
+      let organization = await verifyOrganizationAdmin(identifier || tenantId, email, body?.password, organizationName);
+      let user = null;
+      if (!organization) {
+        const userMatch = await verifyOrganizationUser(identifier || tenantId, email, body?.password, organizationName);
+        organization = userMatch?.organization || null;
+        user = userMatch?.user || null;
+      }
       if (!organization) return sendJson(res, 401, { ok: false, error: "Invalid organization credentials" });
       tenantId = organization.id;
       const now = Date.now();
+      const effectiveRole = user?.role || role;
       const claims = {
-        sub: organization?.admin?.email || email || identifier.toLowerCase(),
-        role,
+        sub: user?.email || organization?.admin?.email || email || identifier.toLowerCase(),
+        userId: user?.id || "organization-admin",
+        role: effectiveRole,
+        permissions: Array.isArray(user?.permissions) ? user.permissions : effectiveRole === "org_admin" ? ["*"] : [],
         tenantId,
         organizationId: organization?.organizationId,
         iat: now,

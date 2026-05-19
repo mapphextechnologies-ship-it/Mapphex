@@ -335,3 +335,29 @@ module.exports.verifyOrganizationAdmin = async (identifier, email, password, org
   if (!org || org.status !== "active" || !verifySecret(password, org.adminPasswordHash)) return null;
   return publicOrg(org);
 };
+
+module.exports.verifyOrganizationUser = async (identifier, email, password, organizationName = "") => {
+  const store = getStore();
+  const rows = await loadOrganizations(store);
+  const ident = String(identifier || "").trim().toLowerCase();
+  const cleanIdent = cleanTenantId(ident);
+  const mail = String(email || ident || "").trim().toLowerCase();
+  const name = String(organizationName || "").trim().toLowerCase();
+  const org = rows.find(
+    (row) =>
+      (!name || String(row.name || "").trim().toLowerCase() === name) &&
+      (row.id === cleanIdent ||
+        String(row.organizationId || "").toLowerCase() === ident ||
+        String(row.referenceCode || "").toLowerCase() === ident ||
+        String(row.admin?.email || "").toLowerCase() === mail ||
+        String(row.contact?.email || "").toLowerCase() === mail),
+  );
+  if (!org || org.status !== "active") return null;
+  const usersKey = scopeTenantKey(org.id, USERS_KEY);
+  const users = (await store.get(usersKey)) || [];
+  const user = (Array.isArray(users) ? users : []).find((row) => String(row.email || "").trim().toLowerCase() === mail);
+  if (!user || String(user.status || "active").toLowerCase() !== "active" || !user.passwordHash || !verifySecret(password, user.passwordHash)) return null;
+  return { organization: publicOrg(org), user };
+};
+
+module.exports.hashOrganizationSecret = hashSecret;

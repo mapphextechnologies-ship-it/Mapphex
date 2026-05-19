@@ -61,6 +61,22 @@ const requireTenantSession = (req, tenantId) => {
   return session;
 };
 
+const normalizeRole = (role) => String(role || "").trim().toLowerCase();
+
+const elevatedOrgRoles = new Set(["org_admin", "admin"]);
+
+const requireOrgRole = (req, tenantId, roles = []) => {
+  const session = requireTenantSession(req, tenantId);
+  const allowed = new Set((Array.isArray(roles) ? roles : [roles]).map(normalizeRole).filter(Boolean));
+  const role = normalizeRole(session.role);
+  if (!allowed.size || allowed.has(role) || (allowed.has("admin") && elevatedOrgRoles.has(role))) return session;
+  const err = new Error("Access denied");
+  err.statusCode = 403;
+  throw err;
+};
+
+const requireOrgAdmin = (req, tenantId) => requireOrgRole(req, tenantId, ["org_admin", "admin"]);
+
 const rateLimit = (req, opts = {}) => {
   const limit = Number(opts.limit || 180);
   const windowMs = Number(opts.windowMs || 60_000);
@@ -137,6 +153,8 @@ module.exports = {
   decodeSessionToken,
   getBearerSession,
   requireTenantSession,
+  requireOrgRole,
+  requireOrgAdmin,
   rateLimit,
   assertSameOrigin,
   assertObject,

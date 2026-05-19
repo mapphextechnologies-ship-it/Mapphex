@@ -1,4 +1,4 @@
-const CACHE_NAME = "enterprise-erp-v62";
+const CACHE_NAME = "enterprise-erp-v63";
 const APP_SHELL = [
   "./",
   "./manifest.webmanifest",
@@ -79,6 +79,21 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(req.url);
   if (url.pathname.startsWith("/api/")) return;
   if (req.method !== "GET") return;
+  const protectedShell = [
+    "/organization-agreement.html",
+    "/portal-selection.html",
+    "/organization-workspace.html",
+    "/organization-module.html",
+    "/organization-admin.html",
+    "/Agent.html",
+    "/Branch.html",
+    "/Director.html",
+    "/TeamLeader.html",
+  ].some((path) => url.pathname.endsWith(path));
+  if (protectedShell) {
+    event.respondWith(fetch(req).catch(() => caches.match("./organization-login.html")));
+    return;
+  }
   event.respondWith(
     fetch(req)
       .then((res) => {

@@ -97,6 +97,16 @@
     return summaries[portal.id] || "Workspace module ready";
   };
 
+  const canOpenPortal = (portalId) => {
+    const session = window.EnterpriseCore?.getSession?.() || {};
+    const role = String(session.role || "").toLowerCase();
+    if (["org_admin", "admin", "director"].includes(role)) return true;
+    return (
+      window.EnterpriseCore?.hasPermission?.(`${portalId}.read`, session) ||
+      window.EnterpriseCore?.hasPermission?.(`${portalId}.manage`, session)
+    );
+  };
+
   const renderPortals = (query = "", org = null) => {
     const target = $("#installed-portals");
     const empty = $("#portal-empty");
@@ -133,7 +143,7 @@
     settingsState = settings || {};
     const installed = new Set((settingsState.installedPortals || []).filter((id) => VALID_PORTAL_IDS.has(id)));
     portals = (settingsState.portalCatalog || PORTAL_CATALOG)
-      .filter((portal) => installed.has(portal.id))
+      .filter((portal) => installed.has(portal.id) && canOpenPortal(portal.id))
       .map((portal) => ({ ...portal, summary: portalSummary(portal, settingsState) }));
     $("#hub-kpi-portals").textContent = portals.length;
     renderPortals($("#portal-search")?.value || "", org);

@@ -2,7 +2,8 @@ const { sendJson, readJsonBody } = require("../api/_lib/http");
 const { getStore } = require("../api/_lib/kv-store");
 const { getTenantId, scopeTenantKey } = require("../api/_lib/tenant");
 const { appendEvent } = require("../api/_lib/events");
-const { assertIdempotent, assertObject, assertSameOrigin, rateLimit, requireTenantSession, safeString } = require("../api/_lib/security");
+const { assertIdempotent, assertObject, assertSameOrigin, rateLimit, requireOrgAdmin, requireTenantSession, safeString } = require("../api/_lib/security");
+const { hashOrganizationSecret } = require("./organizations");
 
 const USERS_KEY = "enterprise_org_users_v1";
 const SETTINGS_KEY = "enterprise_org_settings_v1";
@@ -17,43 +18,54 @@ const sanitizeSettings = (settings = {}) => ({
   modulePermissions: Object.fromEntries(Object.entries(settings.modulePermissions || {}).filter(([id]) => VALID_PORTAL_IDS.has(id))),
 });
 
+const publicUser = (user = {}) => {
+  const { passwordHash, ...safe } = user;
+  return safe;
+};
+
 module.exports = async (req, res) => {
   try {
     rateLimit(req, { scope: "org-admin", limit: 180, windowMs: 60_000 });
     const store = getStore();
     const body = req.method === "POST" ? assertObject(await readJsonBody(req)) : null;
     const tenantId = getTenantId(req, body);
-    requireTenantSession(req, tenantId);
+    const session = requireTenantSession(req, tenantId);
     assertSameOrigin(req);
     const usersKey = scopeTenantKey(tenantId, USERS_KEY);
     const settingsKey = scopeTenantKey(tenantId, SETTINGS_KEY);
 
     if (req.method === "GET") {
-      const users = (await store.get(usersKey)) || [];
+      const role = String(session.role || "").toLowerCase();
+      const canManageUsers = ["org_admin", "admin"].includes(role);
+      const users = canManageUsers ? (await store.get(usersKey)) || [] : [];
       const settings = sanitizeSettings((await store.get(settingsKey)) || {});
-      return sendJson(res, 200, { ok: true, tenantId, users: Array.isArray(users) ? users : [], settings, portalCatalog: PORTAL_CATALOG });
+      return sendJson(res, 200, { ok: true, tenantId, users: Array.isArray(users) ? users.map(publicUser) : [], settings, portalCatalog: PORTAL_CATALOG });
     }
 
     if (req.method !== "POST") return sendJson(res, 405, { ok: false, error: "Method not allowed" });
+    requireOrgAdmin(req, tenantId);
     assertIdempotent(req, body);
     const users = (await store.get(usersKey)) || [];
     const settings = sanitizeSettings((await store.get(settingsKey)) || {});
 
     if (body.action === "add-user") {
+      const password = safeString(body.password || body.tempPassword || "", 240);
       const user = {
         id: `user-${Date.now()}-${Math.random().toString(16).slice(2)}`,
         name: safeString(body.name, 120),
         email: safeString(body.email, 160).toLowerCase(),
         role: safeString(body.role || "staff", 80),
         permissions: Array.isArray(body.permissions) ? body.permissions.map((p) => safeString(p, 80)).filter(Boolean) : [],
+        passwordHash: password ? hashOrganizationSecret(password) : "",
         status: "active",
         createdAt: new Date().toISOString(),
       };
       if (!user.name || !user.email) return sendJson(res, 400, { ok: false, error: "Name and email are required" });
+      if (password.length < 6) return sendJson(res, 400, { ok: false, error: "A 6+ character user password is required" });
       const next = [user, ...(Array.isArray(users) ? users : [])].slice(0, 2000);
       await store.set(usersKey, next);
       await appendEvent(store, tenantId, "org.user.created", { userId: user.id, role: user.role });
-      return sendJson(res, 200, { ok: true, user, users: next });
+      return sendJson(res, 200, { ok: true, user: publicUser(user), users: next.map(publicUser) });
     }
 
     if (body.action === "save-settings") {
