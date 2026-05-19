@@ -28,16 +28,35 @@ const decodeSuperAdminToken = (token) => {
   }
 };
 
-const configuredIdentity = () => ({
-  username: String(process.env.SUPER_ADMIN_USERNAME || process.env.SUPER_ADMIN_EMAIL || "platform-admin").trim().toLowerCase(),
-  password: String(process.env.SUPER_ADMIN_PASSWORD || process.env.SUPER_ADMIN_KEY || process.env.INTERNAL_ADMIN_KEY || "mapphex-internal"),
-});
+const configuredIdentity = () => {
+  const usernames = [
+    process.env.SUPER_ADMIN_USERNAME,
+    process.env.SUPER_ADMIN_EMAIL,
+    !process.env.SUPER_ADMIN_USERNAME && !process.env.SUPER_ADMIN_EMAIL ? "platform-admin" : "",
+  ]
+    .map((value) => String(value || "").trim().toLowerCase())
+    .filter(Boolean);
+  const passwords = [
+    process.env.SUPER_ADMIN_PASSWORD,
+    process.env.SUPER_ADMIN_KEY,
+    process.env.INTERNAL_ADMIN_KEY,
+    !process.env.SUPER_ADMIN_PASSWORD && !process.env.SUPER_ADMIN_KEY && !process.env.INTERNAL_ADMIN_KEY ? "mapphex-internal" : "",
+  ]
+    .map((value) => String(value || ""))
+    .filter(Boolean);
+  return {
+    username: usernames[0] || "platform-admin",
+    usernames,
+    password: passwords[0] || "mapphex-internal",
+    passwords,
+  };
+};
 
 const verifySuperAdminCredentials = (username, password) => {
   const configured = configuredIdentity();
   const providedUser = String(username || "").trim().toLowerCase();
   const providedPassword = String(password || "");
-  return providedUser === configured.username && providedPassword === configured.password;
+  return configured.usernames.includes(providedUser) && configured.passwords.includes(providedPassword);
 };
 
 const createSuperAdminSession = (username) => {
