@@ -243,8 +243,16 @@
           ? "Pick from the portals that match this organization's registered service."
           : "All portals for this registered service are already installed.";
     }
-    if (installBtn) installBtn.disabled = count === 0;
-    if (clearBtn) clearBtn.disabled = count === 0;
+    if (installBtn) {
+      installBtn.disabled = count === 0;
+      installBtn.classList.toggle("is-disabled", count === 0);
+      installBtn.setAttribute("aria-disabled", String(count === 0));
+      installBtn.textContent = count === 0 ? "Select Portals First" : "Install Selected Portals";
+    }
+    if (clearBtn) {
+      clearBtn.disabled = count === 0;
+      clearBtn.setAttribute("aria-disabled", String(count === 0));
+    }
   };
 
   const toggleSelection = (portalId, force) => {
@@ -472,7 +480,12 @@
     });
     $("#portal-install-selected")?.addEventListener("click", (event) => {
       const btn = event.currentTarget;
-      if (!selected.size) return;
+      if (!selected.size) {
+        const progress = $("#portal-progress");
+        if (progress) progress.textContent = "Select at least one portal before installing.";
+        renderBulkBar();
+        return;
+      }
       btn.disabled = true;
       btn.textContent = "Installing portals...";
       install([...selected], { installPwa: false })

@@ -34,6 +34,10 @@
     supported: "serviceWorker" in navigator,
   });
 
+  const allowAutoInstallBanner = () =>
+    document.body?.dataset?.pwaAutoInstall !== "false" &&
+    document.body?.dataset?.page !== "portal-selection";
+
   const registerServiceWorker = () => {
     if (!("serviceWorker" in navigator)) return Promise.resolve(false);
     if (!serviceWorkerReady) {
@@ -172,7 +176,7 @@
     deferredPrompt = event;
     setButtonState("Install Bytewave App", false);
     hideButtonIfInstalled();
-    showInstallBanner();
+    if (allowAutoInstallBanner()) showInstallBanner();
     emitStatus();
   });
 

@@ -18,8 +18,12 @@
     }
   };
 
-  const fetchJson = async (url) => {
-    const res = await fetch(url);
+  const writeJson = (key, value) => {
+    localStorage.setItem(key, JSON.stringify(value ?? null));
+  };
+
+  const fetchJson = async (url, opts) => {
+    const res = await fetch(url, opts);
     const text = await res.text();
     try {
       return { res, data: text ? JSON.parse(text) : null };
@@ -44,6 +48,8 @@
   };
 
   let portals = [];
+  let settingsState = {};
+  let orgState = null;
 
   const portalUrl = (portal, org) => {
     const tenant = window.EnterpriseCore?.currentTenantId?.() || "";
@@ -113,11 +119,59 @@
             <ul class="portal-feature-list">
               ${(portal.features || []).slice(0, 3).map((feature) => `<li>${escapeHtml(feature)}</li>`).join("")}
             </ul>
-            <a class="btn primary" href="${escapeHtml(portalUrl(portal, org))}">Open Portal</a>
+            <div class="portal-card-actions">
+              <a class="btn primary" href="${escapeHtml(portalUrl(portal, org))}">Open Portal</a>
+              <button class="btn" type="button" data-portal-uninstall="${escapeHtml(portal.id)}">Uninstall</button>
+            </div>
           </article>`,
       )
       .join("");
     target.innerHTML = installedCards;
+  };
+
+  const refreshPortalState = (settings, org = orgState) => {
+    settingsState = settings || {};
+    const installed = new Set((settingsState.installedPortals || []).filter((id) => VALID_PORTAL_IDS.has(id)));
+    portals = (settingsState.portalCatalog || PORTAL_CATALOG)
+      .filter((portal) => installed.has(portal.id))
+      .map((portal) => ({ ...portal, summary: portalSummary(portal, settingsState) }));
+    $("#hub-kpi-portals").textContent = portals.length;
+    renderPortals($("#portal-search")?.value || "", org);
+  };
+
+  const uninstallPortal = async (portalId) => {
+    if (!portalId) return;
+    const portal = portals.find((item) => item.id === portalId);
+    const name = portal?.title || portalId;
+    const ok = window.confirm(`Uninstall ${name} from this Bytewave workspace? You can install it again later from Portal Manager.`);
+    if (!ok) return;
+    try {
+      const response = await fetchJson("/api/org-admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "uninstall-portal", portalId }),
+      });
+      if (!response.res.ok || !response.data?.ok) throw new Error(response.data?.error || "Uninstall failed");
+      refreshPortalState({ ...(response.data.settings || {}), portalCatalog: settingsState.portalCatalog }, orgState);
+    } catch (apiErr) {
+      if (!isLocalDevelopment()) throw apiErr;
+      const modulePermissions = { ...(settingsState.modulePermissions || {}) };
+      delete modulePermissions[portalId];
+      const next = {
+        ...settingsState,
+        installedPortals: (settingsState.installedPortals || []).filter((id) => id !== portalId),
+        modules: (settingsState.modules || []).filter((id) => id !== portalId),
+        navigation: (settingsState.navigation || []).filter((id) => id !== portalId),
+        modulePermissions,
+        updatedAt: new Date().toISOString(),
+      };
+      writeJson(SETTINGS_KEY, next);
+      refreshPortalState(next, orgState);
+    }
+    window.EnterpriseCore?.notify?.("Portal uninstalled", `${name} was removed from the workspace`);
+    if (!portals.length) {
+      location.href = `portal-selection.html?tenant=${encodeURIComponent(window.EnterpriseCore?.currentTenantId?.() || "")}`;
+    }
   };
 
   const isLocalDevelopment = () => ["localhost", "127.0.0.1", ""].includes(location.hostname);
@@ -163,10 +217,8 @@
       }
 
       const org = mine?.organization;
-      const installed = new Set((settings.installedPortals || []).filter((id) => VALID_PORTAL_IDS.has(id)));
-      portals = (admin.portalCatalog || [])
-        .filter((portal) => installed.has(portal.id))
-        .map((portal) => ({ ...portal, summary: portalSummary(portal, settings) }));
+      orgState = org || null;
+      settingsState = { ...settings, portalCatalog: admin.portalCatalog || PORTAL_CATALOG };
 
       const orgName = org?.name || "Organization";
       $("#workspace-title").textContent = "Bytewave";
@@ -176,15 +228,21 @@
       $("#profile-name").textContent = orgName;
       const monthly = Number(settings.monthlyAmount || settings.estimatedTotal || org?.monthlyAmount || org?.estimatedTotal || 0) || 0;
       $("#subscription-status").textContent = `${org?.subscriptionStatus ? `Subscription: ${org.subscriptionStatus}` : "Subscription: active"}${monthly ? ` • KSh ${monthly.toLocaleString("en-KE")} / month` : ""}`;
-      $("#notification-badge").textContent = `${Math.max(1, portals.length)} notifications`;
-      $("#hub-kpi-portals").textContent = portals.length;
+      $("#notification-badge").textContent = `${Math.max(1, (settings.installedPortals || []).length)} notifications`;
       $("#hub-kpi-branches").textContent = settings.branches?.length || org?.metrics?.branches || 0;
       $("#hub-kpi-departments").textContent = settings.departments?.length || 0;
       $("#hub-kpi-session").textContent = `${tenantId} isolated`;
       $("#manage-portals-link").href = `portal-selection.html?tenant=${encodeURIComponent(tenantId)}`;
 
-      renderPortals("", org);
+      refreshPortalState(settingsState, org);
       $("#portal-search")?.addEventListener("input", (event) => renderPortals(event.currentTarget.value, org));
+      $("#installed-portals")?.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-portal-uninstall]");
+        if (!button) return;
+        uninstallPortal(button.dataset.portalUninstall).catch((err) => {
+          window.EnterpriseCore?.notify?.("Uninstall failed", err.message, "error");
+        });
+      });
     } catch (err) {
       window.EnterpriseCore?.notify?.("Portal Hub", err.message, "error");
     }
