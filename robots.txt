@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+
+Disallow: /super-admin.html
+Disallow: /super-admin-login.html
+Disallow: /Director.html
+Disallow: /Branch.html
+Disallow: /Agent.html
+Disallow: /TeamLeader.html
+Disallow: /organization-admin.html
+Disallow: /organization-workspace.html
+Disallow: /organization-module.html
+Disallow: /portal-selection.html
+Disallow: /access-denied.html
+
+Sitemap: https://mapphex.vercel.app/sitemap.xml
