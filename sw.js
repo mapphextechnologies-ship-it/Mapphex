@@ -1,4 +1,4 @@
-const CACHE_NAME = "enterprise-erp-v47";
+const CACHE_NAME = "enterprise-erp-v48";
 const APP_SHELL = [
   "./",
   "./manifest.webmanifest",

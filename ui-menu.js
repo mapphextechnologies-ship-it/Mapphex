@@ -3,22 +3,29 @@
 
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+  const isMobileMenu = () => window.matchMedia("(max-width: 980px)").matches;
+  const getSidebar = () => $("#portal-sidebar") || $("#agent-sidebar") || $("#branch-sidebar");
 
   const setMenuOpen = (open) => {
-    const mobile = window.innerWidth <= 980;
+    const mobile = isMobileMenu();
+    const toggle = $("#menu-toggle");
+    const sidebar = getSidebar();
+    const backdrop = $("#menu-backdrop");
+
     if (mobile) {
       document.body.classList.toggle("menu-open", !!open);
       document.body.classList.remove("portal-sidebar-collapsed");
+      toggle?.setAttribute("aria-expanded", open ? "true" : "false");
+      sidebar?.setAttribute("aria-hidden", open ? "false" : "true");
+      backdrop?.setAttribute("aria-hidden", open ? "false" : "true");
     } else {
       document.body.classList.remove("menu-open");
       document.body.classList.toggle("portal-sidebar-collapsed", !!open);
+      toggle?.setAttribute("aria-expanded", open ? "false" : "true");
+      sidebar?.setAttribute("aria-hidden", "false");
+      backdrop?.setAttribute("aria-hidden", "true");
     }
-    const toggle = $("#menu-toggle");
-    if (toggle) toggle.setAttribute("aria-expanded", mobile ? (open ? "true" : "false") : (!open ? "true" : "false"));
-    const sidebar = $("#portal-sidebar");
-    if (sidebar) sidebar.setAttribute("aria-hidden", open || window.innerWidth > 980 ? "false" : "true");
-    const backdrop = $("#menu-backdrop");
-    if (backdrop) backdrop.setAttribute("aria-hidden", mobile && open ? "false" : "true");
+
     if (mobile && open) $("#menu-close")?.focus?.({ preventScroll: true });
   };
 
@@ -38,8 +45,9 @@
     const backdrop = $("#menu-backdrop");
 
     if (toggle) {
-      toggle.addEventListener("click", () => {
-        const open = window.innerWidth <= 980
+      toggle.addEventListener("click", (event) => {
+        event.preventDefault();
+        const open = isMobileMenu()
           ? !document.body.classList.contains("menu-open")
           : !document.body.classList.contains("portal-sidebar-collapsed");
         setMenuOpen(open);
@@ -49,7 +57,7 @@
     if (backdrop) backdrop.addEventListener("click", () => setMenuOpen(false));
     document.addEventListener("click", (e) => {
       const link = e.target?.closest?.(".sidebar-link");
-      if (!link || window.innerWidth > 980) return;
+      if (!link || !isMobileMenu()) return;
       setMenuOpen(false);
     });
 
@@ -57,8 +65,13 @@
       if (e.key === "Escape") setMenuOpen(false);
     });
     window.addEventListener("resize", () => {
-      if (window.innerWidth > 980) document.body.classList.remove("menu-open");
-      else document.body.classList.remove("portal-sidebar-collapsed");
+      if (isMobileMenu()) {
+        document.body.classList.remove("portal-sidebar-collapsed");
+        setMenuOpen(false);
+      } else {
+        document.body.classList.remove("menu-open");
+        setMenuOpen(document.body.classList.contains("portal-sidebar-collapsed"));
+      }
     });
     window.addEventListener("hashchange", setActiveLink);
     setActiveLink();

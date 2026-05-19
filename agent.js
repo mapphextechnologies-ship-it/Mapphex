@@ -409,9 +409,14 @@
       saveJson(ERP_KEY, erp);
     };
 
+    const isMobileMenu = () => window.matchMedia("(max-width: 980px)").matches;
+
     const setMenuOpen = (open) => {
-      document.body.classList.toggle("menu-open", !!open);
-      if (menuToggle) menuToggle.setAttribute("aria-expanded", open ? "true" : "false");
+      const shouldOpen = !!open && isMobileMenu();
+      document.body.classList.toggle("menu-open", shouldOpen);
+      if (menuToggle) menuToggle.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
+      if (sidebar) sidebar.setAttribute("aria-hidden", shouldOpen || !isMobileMenu() ? "false" : "true");
+      if (menuBackdrop) menuBackdrop.setAttribute("aria-hidden", shouldOpen ? "false" : "true");
     };
 
     const navigateTo = (key) => {
@@ -422,7 +427,7 @@
       document.querySelectorAll("[data-nav]").forEach((a) => {
         a.classList.toggle("active", a.getAttribute("data-nav") === k);
       });
-      if (window.innerWidth <= 980) setMenuOpen(false);
+      if (isMobileMenu()) setMenuOpen(false);
     };
 
     const renderKPIs = () => {
@@ -940,15 +945,21 @@
 
     if (syncBtn) syncBtn.addEventListener("click", () => sync());
 
-    if (menuToggle) menuToggle.addEventListener("click", () => setMenuOpen(true));
+    if (menuToggle) {
+      menuToggle.addEventListener("click", (event) => {
+        event.preventDefault();
+        setMenuOpen(!document.body.classList.contains("menu-open"));
+      });
+    }
     if (menuClose) menuClose.addEventListener("click", () => setMenuOpen(false));
     if (menuBackdrop) menuBackdrop.addEventListener("click", () => setMenuOpen(false));
     window.addEventListener("keydown", (e) => {
       if (e.key === "Escape") setMenuOpen(false);
     });
     window.addEventListener("resize", () => {
-      if (window.innerWidth > 980) setMenuOpen(false);
+      if (!isMobileMenu()) setMenuOpen(false);
     });
+    setMenuOpen(false);
     if (sidebar) {
       sidebar.addEventListener("click", (e) => {
         const a = e.target?.closest?.("[data-nav]");

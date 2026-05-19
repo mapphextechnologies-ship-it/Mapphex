@@ -327,13 +327,16 @@
     const backdrop = $("#module-menu-backdrop");
     const mobile = window.matchMedia("(max-width: 980px)").matches;
     if (mobile) {
-      sidebar?.classList.toggle("is-open", open);
-      document.body.classList.toggle("module-menu-open", open);
-      backdrop?.setAttribute("aria-hidden", open ? "false" : "true");
+      const shouldOpen = !!open;
+      sidebar?.classList.toggle("is-open", shouldOpen);
+      document.body.classList.toggle("module-menu-open", shouldOpen);
+      backdrop?.setAttribute("aria-hidden", shouldOpen ? "false" : "true");
+      sidebar?.setAttribute("aria-hidden", shouldOpen ? "false" : "true");
     } else {
-      sidebar?.classList.toggle("is-collapsed", open === false ? false : !sidebar.classList.contains("is-collapsed"));
+      sidebar?.classList.toggle("is-collapsed", !!open);
       document.body.classList.remove("module-menu-open");
       backdrop?.setAttribute("aria-hidden", "true");
+      sidebar?.setAttribute("aria-hidden", "false");
     }
     $("#module-menu-toggle")?.setAttribute("aria-expanded", String(mobile ? open : !sidebar?.classList.contains("is-collapsed")));
   };
@@ -871,7 +874,7 @@
       $("#module-menu-toggle")?.addEventListener("click", () => {
         const mobile = window.matchMedia("(max-width: 980px)").matches;
         if (mobile) setMenuOpen(!$("#module-sidebar")?.classList.contains("is-open"));
-        else setMenuOpen(true);
+        else setMenuOpen(!$("#module-sidebar")?.classList.contains("is-collapsed"));
       });
       $("#module-menu-close")?.addEventListener("click", () => setMenuOpen(false));
       $("#module-menu-backdrop")?.addEventListener("click", () => setMenuOpen(false));
@@ -904,6 +907,7 @@
           $("#module-sidebar")?.classList.remove("is-open");
           document.body.classList.remove("module-menu-open");
           $("#module-menu-backdrop")?.setAttribute("aria-hidden", "true");
+          $("#module-sidebar")?.setAttribute("aria-hidden", "false");
         }
       });
       setActivePortalNav();
