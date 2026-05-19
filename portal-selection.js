@@ -307,7 +307,8 @@
   };
 
   const promptWorkspacePwa = async () => {
-    return { ok: false, reason: "pwa-disabled-on-portal-manager" };
+    if (!window.MapphexPWA?.promptInstall) return { ok: false, reason: "pwa-unavailable" };
+    return window.MapphexPWA.promptInstall();
   };
 
   const promptPortalApp = async (portalId) => {
@@ -513,7 +514,7 @@
       }
       btn.disabled = true;
       btn.textContent = "Installing portals...";
-      install([...selected], { installPwa: false })
+      install([...selected], { installPwa: true })
         .catch((err) => {
           const progress = $("#portal-progress");
           if (progress) progress.textContent = "Installation failed. Try again.";
