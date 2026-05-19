@@ -30,6 +30,47 @@
     $("#tenant-input").value = tenantId;
   };
 
+  const visibleEvent = (event) => !String(event?.type || "").startsWith("kv.");
+
+  const eventLabel = (event) => {
+    const type = String(event?.type || "");
+    const labels = {
+      "organization.workspace.created": "Workspace created",
+      "org.agreement.accepted": "Agreement accepted",
+      "org.modules.enabled": "Portals installed",
+      "org.modules.disabled": "Portal uninstalled",
+      "org.user.created": "User added",
+      "org.settings.updated": "Settings updated",
+      "erp.message.sent": "Department message sent",
+      "admin.announcement.sent": "Announcement sent",
+    };
+    return labels[type] || type.replace(/\./g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+  };
+
+  const eventDetail = (event) => {
+    const payload = event?.payload || {};
+    switch (event?.type) {
+      case "organization.workspace.created":
+        return `${payload.name || "Organization"} workspace is ready.`;
+      case "org.agreement.accepted":
+        return `Subscription plan: ${payload.subscriptionPlan || "selected plan"}.`;
+      case "org.modules.enabled":
+        return `${payload.count || payload.portalIds?.length || 0} portal${Number(payload.count || payload.portalIds?.length || 0) === 1 ? "" : "s"} installed: ${(payload.titles || payload.portalIds || []).join(", ")}.`;
+      case "org.modules.disabled":
+        return `Removed ${(payload.portalIds || []).join(", ") || "selected portal"} from the workspace.`;
+      case "org.user.created":
+        return `Added ${payload.role || "user"} account.`;
+      case "org.settings.updated":
+        return `Organization settings updated.`;
+      case "erp.message.sent":
+        return `Message sent from ${payload.from || "one department"} to ${payload.to || "another department"}.`;
+      case "admin.announcement.sent":
+        return payload.message || "Announcement sent.";
+      default:
+        return payload.message || payload.detail || "Activity recorded.";
+    }
+  };
+
   const render = () => {
     const session = window.EnterpriseCore?.getSession?.() || {};
     const badge = $("#internal-mode-badge");
@@ -46,11 +87,11 @@
     $("#org-users-table").innerHTML = state.users
       .map((user) => `<tr><td>${escapeHtml(user.name)}</td><td>${escapeHtml(user.email)}</td><td>${escapeHtml(user.role)}</td><td>${escapeHtml(user.status)}</td></tr>`)
       .join("");
-    $("#org-activity-table").innerHTML = state.events
-      .slice(-40)
+    const events = state.events.filter(visibleEvent).slice(-40);
+    $("#org-activity-table").innerHTML = events.length ? events
       .reverse()
-      .map((event) => `<tr><td>${escapeHtml(new Date(event.at).toLocaleString())}</td><td>${escapeHtml(event.type)}</td><td>${escapeHtml(JSON.stringify(event.payload || {}))}</td></tr>`)
-      .join("");
+      .map((event) => `<tr><td>${escapeHtml(new Date(event.at).toLocaleString())}</td><td>${escapeHtml(eventLabel(event))}</td><td>${escapeHtml(eventDetail(event))}</td></tr>`)
+      .join("") : `<tr><td colspan="3" class="muted">No important activity yet.</td></tr>`;
   };
 
   const load = async () => {
@@ -103,7 +144,7 @@
       await load();
     });
     $("#export-admin-audit")?.addEventListener("click", () => {
-      const rows = state.events.map((event) => [event.at, event.type, JSON.stringify(event.payload || {})]);
+      const rows = state.events.filter(visibleEvent).map((event) => [event.at, eventLabel(event), eventDetail(event)]);
       downloadText("organization-audit.csv", rows.map((row) => row.map((cell) => `"${String(cell || "").replace(/"/g, '""')}"`).join(",")).join("\n"), "text/csv");
       window.EnterpriseCore?.audit?.("admin.audit.exported", { count: rows.length });
     });
