@@ -18,6 +18,11 @@
   };
 
   const isLocalDevelopment = () => ["localhost", "127.0.0.1", ""].includes(location.hostname);
+  const pricingApi = () => window.BytewavePricing || {
+    labelFor: (id) => String(id || "").replace(/-/g, " "),
+    priceFor: () => 0,
+    formatMonthly: (amount) => `KSh ${Number(amount || 0).toLocaleString("en-KE")} / month`,
+  };
 
   const postJson = async (url, body) => {
     const res = await fetch(url, {
@@ -35,6 +40,16 @@
       throw err;
     }
     return { res, data };
+  };
+
+  const fetchJson = async (url) => {
+    const res = await fetch(url);
+    const text = await res.text();
+    try {
+      return { res, data: text ? JSON.parse(text) : null };
+    } catch {
+      return { res, data: null };
+    }
   };
 
   const saveLocalAgreement = (data) => {
@@ -66,6 +81,38 @@
     return { tenant, session };
   };
 
+  const renderSubscriptionSummary = (settings = {}) => {
+    const portals = settings.selectedComponents?.length
+      ? settings.selectedComponents
+      : settings.allowedPortals?.length
+        ? settings.allowedPortals
+        : settings.recommendedPortals || [];
+    const monthly = Math.max(0, Number(settings.monthlyAmount || settings.estimatedTotal || 0) || 0);
+    const priceApi = pricingApi();
+    $("#subscription-summary-title").textContent = settings.serviceTitle || "Workspace subscription";
+    $("#subscription-summary-copy").textContent = portals.length
+      ? `${portals.length} portal${portals.length === 1 ? "" : "s"} selected for this organization.`
+      : "No portals selected yet. You can choose portals after accepting the agreement.";
+    $("#subscription-summary-total").textContent = priceApi.formatMonthly(monthly || portals.reduce((sum, id) => sum + priceApi.priceFor(id), 0));
+    $("#subscription-summary-portals").innerHTML = portals.length
+      ? portals.map((id) => {
+          const amount = Number(settings.portalPricing?.[id] ?? priceApi.priceFor(id)) || 0;
+          return `<span>${priceApi.labelFor(id)}: ${amount ? priceApi.formatMonthly(amount) : "Included"}</span>`;
+        }).join("")
+      : "<span>Portal manager opens after agreement</span>";
+  };
+
+  const loadSubscriptionSummary = async () => {
+    let settings = readJson(SETTINGS_KEY, {});
+    try {
+      const response = await fetchJson("/api/org-admin");
+      if (response.res.ok && response.data?.ok) settings = response.data.settings || settings;
+    } catch {
+      // Keep local summary.
+    }
+    renderSubscriptionSummary(settings);
+  };
+
   document.addEventListener("DOMContentLoaded", () => {
     const { tenant, session } = resolveTenant();
     if (!session?.tenantId) {
@@ -84,6 +131,8 @@
       submit.classList.toggle("is-disabled", !ready);
       submit.setAttribute("aria-disabled", String(!ready));
     };
+
+    loadSubscriptionSummary().catch(() => renderSubscriptionSummary(readJson(SETTINGS_KEY, {})));
 
     accepted?.addEventListener("change", syncSubmit);
     accepted?.addEventListener("input", syncSubmit);

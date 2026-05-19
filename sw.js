@@ -1,4 +1,4 @@
-const CACHE_NAME = "enterprise-erp-v55";
+const CACHE_NAME = "enterprise-erp-v56";
 const APP_SHELL = [
   "./",
   "./manifest.webmanifest",
@@ -34,6 +34,7 @@ const APP_SHELL = [
   "./enterprise-modules.js",
   "./kv-client.js",
   "./enterprise-store.js",
+  "./bytewave-pricing.js",
   "./erp-client.js",
   "./pwa.js",
   "./ui-menu.js",

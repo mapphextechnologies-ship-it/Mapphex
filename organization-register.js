@@ -326,7 +326,26 @@
 
   const isLocalDevelopment = () => ["localhost", "127.0.0.1", ""].includes(location.hostname);
 
-  const formatKsh = (amount) => `KSh ${Number(amount || 0).toLocaleString("en-KE")} / month`;
+  const pricing = () => window.BytewavePricing || {
+    formatMonthly: (amount) => `KSh ${Number(amount || 0).toLocaleString("en-KE")} / month`,
+    totalFor: () => 0,
+    breakdownFor: () => [],
+    pricingMapFor: () => ({}),
+    labelFor: (id) => PORTAL_LABELS[id] || id,
+  };
+
+  const formatKsh = (amount) => pricing().formatMonthly(amount);
+
+  const renderPortalPriceChips = (ids, names = []) => {
+    const priceApi = pricing();
+    const breakdown = priceApi.breakdownFor(ids);
+    if (breakdown.length) {
+      return breakdown.map((item) => `<span>${item.title}: ${item.formattedMonthly}</span>`).join("");
+    }
+    return names.length
+      ? names.map((name) => `<span>${name}</span>`).join("")
+      : "<span>Portal manager will be configured after registration</span>";
+  };
 
   const readSelectedPackage = () => {
     const params = new URLSearchParams(location.search);
@@ -345,7 +364,9 @@
     const estimate = Number(params.get("estimate") || stored?.estimatedTotal || 0) || 0;
     const serviceCategory = stored?.serviceId === serviceId ? stored.serviceCategory : "Selected Service";
     const componentNames = stored?.serviceId === serviceId && Array.isArray(stored.componentNames) ? stored.componentNames : components.map((id) => PORTAL_LABELS[id] || id.replace(/-/g, " "));
-    return { serviceId, serviceTitle, serviceCategory, components, componentNames, estimate };
+    const fallbackComponents = components.length ? components : SERVICE_PORTALS[serviceId] || BASE_PORTALS;
+    const computedEstimate = estimate || pricing().totalFor(fallbackComponents);
+    return { serviceId, serviceTitle, serviceCategory, components: fallbackComponents, componentNames, estimate: computedEstimate };
   };
 
   const renderSelectedPackage = () => {
@@ -361,9 +382,7 @@
         ? "No service package has been selected yet. You can still register, then choose portals from the portal manager."
         : "This package was selected from the service page. The organization will use these components as its allowed portal choices.";
     $("#selected-service-total").textContent = pkg.estimate ? formatKsh(pkg.estimate) : "To be confirmed";
-    $("#selected-service-components").innerHTML = pkg.componentNames.length
-      ? pkg.componentNames.map((name) => `<span>${name}</span>`).join("")
-      : "<span>Portal manager will be configured after registration</span>";
+    $("#selected-service-components").innerHTML = renderPortalPriceChips(pkg.components, pkg.componentNames);
     return pkg;
   };
 
@@ -384,7 +403,7 @@
     $("#business-type-subscription").textContent = detail.subscription;
     const portalTarget = $("#business-type-portals");
     if (portalTarget) {
-      portalTarget.innerHTML = portalIds.map((id) => `<span>${PORTAL_LABELS[id] || id}</span>`).join(" ");
+      portalTarget.innerHTML = pricing().breakdownFor(portalIds).map((item) => `<span>${item.title}: ${item.formattedMonthly}</span>`).join(" ");
     }
   };
 
@@ -393,15 +412,25 @@
     if (selectedInput) {
       const pkg = readSelectedPackage();
       const serviceId = body.businessType || pkg.serviceId || "company";
+      const portals = pkg.components.length ? pkg.components : SERVICE_PORTALS[serviceId] || BASE_PORTALS;
+      const estimatedTotal = pkg.estimate || pricing().totalFor(portals);
       const detail = {
-        cost: pkg.estimate ? `From ${formatKsh(pkg.estimate)}` : "Custom by selected components",
+        cost: formatKsh(estimatedTotal),
         plan: "Selected package",
         setup: "Component setup included",
         summary: `${pkg.serviceTitle} workspace with selected components and portal choices.`,
         subscription: "Subscription is calculated from the selected service components. More components can be added later from the portal manager.",
       };
-      const portals = pkg.components.length ? pkg.components : SERVICE_PORTALS[serviceId] || BASE_PORTALS;
-      return { category: pkg.serviceCategory || "Selected Service", serviceId, serviceTitle: pkg.serviceTitle || serviceId, detail, portals, selectedComponents: pkg.components, estimatedTotal: pkg.estimate };
+      return {
+        category: pkg.serviceCategory || "Selected Service",
+        serviceId,
+        serviceTitle: pkg.serviceTitle || serviceId,
+        detail,
+        portals,
+        selectedComponents: portals,
+        estimatedTotal,
+        portalPricing: pricing().pricingMapFor(portals),
+      };
     }
     const categorySelect = $("#business-type-category-select");
     const category = categorySelect?.value || "General & Setup";
@@ -409,7 +438,8 @@
     const base = CATEGORY_DETAILS[category] || CATEGORY_DETAILS["General & Setup"];
     const detail = { ...base, ...(SERVICE_OVERRIDES[serviceId] || {}) };
     const portals = Array.from(new Set(SERVICE_PORTALS[serviceId] || BASE_PORTALS));
-    return { category, serviceId, serviceTitle, detail, portals, selectedComponents: portals, estimatedTotal: 0 };
+    const estimatedTotal = pricing().totalFor(portals);
+    return { category, serviceId, serviceTitle, detail: { ...detail, cost: formatKsh(estimatedTotal) }, portals, selectedComponents: portals, estimatedTotal, portalPricing: pricing().pricingMapFor(portals) };
   };
 
   const populateBusinessTypePicker = () => {
@@ -484,6 +514,8 @@
       servicePricing: selected.detail,
       selectedComponents: selected.selectedComponents || selected.portals,
       estimatedTotal: selected.estimatedTotal || 0,
+      monthlyAmount: selected.estimatedTotal || 0,
+      portalPricing: selected.portalPricing || pricing().pricingMapFor(selected.portals),
       contact: {
         email: String(body.email || adminEmail).trim().toLowerCase(),
         phone: String(body.phone || "").trim(),
@@ -527,6 +559,8 @@
       servicePricing: selected.detail,
       selectedComponents: selected.selectedComponents || selected.portals,
       estimatedTotal: selected.estimatedTotal || 0,
+      monthlyAmount: selected.estimatedTotal || 0,
+      portalPricing: selected.portalPricing || pricing().pricingMapFor(selected.portals),
       branches: Array.from({ length: organization.metrics.branches }, (_, idx) => `Branch ${idx + 1}`),
       departments: ["technology-services", "technology-devices", "software-company", "it-support", "digital-agency"].includes(selected.serviceId) ? ["Sales", "Operations", "Finance", "HR", "Technology", "Support"] : [],
       createdAt: now,
@@ -554,6 +588,8 @@
       body.recommendedPortals = selected.portals;
       body.selectedComponents = selected.selectedComponents || selected.portals;
       body.estimatedTotal = selected.estimatedTotal || 0;
+      body.monthlyAmount = selected.estimatedTotal || 0;
+      body.portalPricing = selected.portalPricing || pricing().pricingMapFor(selected.portals);
       try {
         let data;
         try {

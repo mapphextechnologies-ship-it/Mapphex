@@ -27,6 +27,18 @@
           <article><h2>Security & Hosting</h2><p>Cloud hosting, encryption-ready storage, protected admin routes, and monitored platform APIs.</p></article>
           <article><h2>Support Packages</h2><p>Standard, Business, and Enterprise support packages are available for different operational needs.</p></article>
         </div>
+        <section id="subscription-summary" class="selected-package-summary" aria-live="polite">
+          <div>
+            <span>Selected portals</span>
+            <h2 id="subscription-summary-title">Workspace subscription</h2>
+            <p id="subscription-summary-copy">Your selected portals and monthly subscription estimate will appear here.</p>
+          </div>
+          <div class="selected-package-total">
+            <strong id="subscription-summary-total">KSh 0 / month</strong>
+            <span>Monthly amount to pay</span>
+          </div>
+          <div id="subscription-summary-portals" class="selected-service-components"></div>
+        </section>
         <form id="agreement-form" class="agreement-form">
           <label class="field"><span>Subscription plan</span><select name="subscriptionPlan"><option value="starter-monthly">Starter Monthly</option><option value="business-monthly">Business Monthly</option><option value="business-yearly">Business Yearly</option><option value="enterprise">Enterprise</option></select></label>
           <label class="field"><span>Support package</span><select name="supportPackage"><option value="standard">Standard</option><option value="priority">Priority</option><option value="enterprise">Enterprise Support</option></select></label>
@@ -40,7 +52,8 @@
     <script src="auth-guard.js"></script>
     <script src="kv-client.js"></script>
     <script src="enterprise-store.js"></script>
+    <script src="bytewave-pricing.js"></script>
     <script src="pwa.js"></script>
-    <script src="organization-agreement.js?v=4"></script>
+    <script src="organization-agreement.js?v=5"></script>
   </body>
 </html>

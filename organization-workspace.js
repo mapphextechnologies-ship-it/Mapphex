@@ -174,7 +174,8 @@
       $("#portal-hub-heading").textContent = `Bytewave - ${orgName}`;
       $("#portal-hub-summary").textContent = `One installed workspace app for ${orgName}'s selected modules, organization data, and secure workflows.`;
       $("#profile-name").textContent = orgName;
-      $("#subscription-status").textContent = org?.subscriptionStatus ? `Subscription: ${org.subscriptionStatus}` : "Subscription: active";
+      const monthly = Number(settings.monthlyAmount || settings.estimatedTotal || org?.monthlyAmount || org?.estimatedTotal || 0) || 0;
+      $("#subscription-status").textContent = `${org?.subscriptionStatus ? `Subscription: ${org.subscriptionStatus}` : "Subscription: active"}${monthly ? ` • KSh ${monthly.toLocaleString("en-KE")} / month` : ""}`;
       $("#notification-badge").textContent = `${Math.max(1, portals.length)} notifications`;
       $("#hub-kpi-portals").textContent = portals.length;
       $("#hub-kpi-branches").textContent = settings.branches?.length || org?.metrics?.branches || 0;

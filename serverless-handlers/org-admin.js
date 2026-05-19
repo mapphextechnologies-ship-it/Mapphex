@@ -8,6 +8,7 @@ const USERS_KEY = "enterprise_org_users_v1";
 const SETTINGS_KEY = "enterprise_org_settings_v1";
 
 const { PORTAL_CATALOG, VALID_PORTAL_IDS } = require("../api/_lib/portal-catalog");
+const pricing = require("../bytewave-pricing");
 const sanitizeSettings = (settings = {}) => ({
   ...settings,
   installedPortals: (settings.installedPortals || []).filter((id) => VALID_PORTAL_IDS.has(id)),
@@ -97,12 +98,21 @@ module.exports = async (req, res) => {
         modulePermissions[portalId] = Array.from(new Set([`${portalId}.read`, `${portalId}.manage`]));
       });
       const navigation = Array.from(new Set([...(settings.navigation || []), ...portalIds]));
+      const portalPricing = {
+        ...(settings.portalPricing || {}),
+        ...Object.fromEntries(portalIds.map((id) => [id, Math.max(0, Number(body.portalPricing?.[id] ?? pricing.priceFor(id)) || 0)])),
+      };
+      const monthlyAmount = installedPortals.reduce((sum, id) => sum + Math.max(0, Number(portalPricing[id] ?? pricing.priceFor(id)) || 0), 0);
       const next = {
         ...settings,
         installedPortals,
         modules,
         modulePermissions,
         navigation,
+        selectedComponents: installedPortals,
+        portalPricing,
+        monthlyAmount,
+        estimatedTotal: monthlyAmount,
         onboardingComplete: installedPortals.length > 0,
         updatedAt: new Date().toISOString(),
       };
@@ -131,6 +141,9 @@ module.exports = async (req, res) => {
         modulePermissions,
         updatedAt: new Date().toISOString(),
       };
+      next.selectedComponents = next.installedPortals;
+      next.monthlyAmount = next.installedPortals.reduce((sum, id) => sum + Math.max(0, Number(next.portalPricing?.[id] ?? pricing.priceFor(id)) || 0), 0);
+      next.estimatedTotal = next.monthlyAmount;
       await store.set(settingsKey, next);
       await appendEvent(store, tenantId, "org.modules.disabled", { portalIds, count: portalIds.length });
       return sendJson(res, 200, { ok: true, settings: next });

@@ -7,6 +7,7 @@ const crypto = require("crypto");
 const { requireTenantSession, setSecurityHeaders } = require("../api/_lib/security");
 const { decodeSuperAdminToken } = require("../api/_lib/super-admin-auth");
 const { allPublicKvKeys, isPublicKvKey } = require("../api/_lib/public-kv-keys");
+require("../bytewave-pricing");
 
 const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || "127.0.0.1";

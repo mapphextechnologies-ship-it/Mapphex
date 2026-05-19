@@ -6,6 +6,7 @@ const { appendEvent, listEvents } = require("../api/_lib/events");
 const { assertIdempotent, assertObject, assertSameOrigin, rateLimit, requireTenantSession, safeString } = require("../api/_lib/security");
 const { requireSuperAdmin } = require("../api/_lib/super-admin-auth");
 const { VALID_PORTAL_IDS } = require("../api/_lib/portal-catalog");
+const pricing = require("../bytewave-pricing");
 
 const ORGS_KEY = "platform_organizations_v1";
 const USERS_KEY = "enterprise_org_users_v1";
@@ -130,8 +131,14 @@ const createOrganization = async (req, res, body) => {
   const selectedComponents = Array.isArray(body.selectedComponents)
     ? body.selectedComponents.map((id) => safeString(id, 40)).filter(Boolean)
     : safeString(body.selectedComponents || "", 500).split(",").map((id) => safeString(id, 40)).filter(Boolean);
-  const estimatedTotal = Math.max(0, Number(body.estimatedTotal || body.serviceEstimate || 0) || 0);
+  const requestedPortalPricing = body.portalPricing && typeof body.portalPricing === "object" && !Array.isArray(body.portalPricing) ? body.portalPricing : {};
   const servicePortals = Array.from(new Set(Array.isArray(body.recommendedPortals) && body.recommendedPortals.length ? body.recommendedPortals.map((id) => safeString(id, 40)).filter(Boolean) : SERVICE_PORTALS[businessType] || BASE_PORTALS));
+  const billablePortals = selectedComponents.length ? selectedComponents : servicePortals;
+  const portalPricing = Object.fromEntries(
+    billablePortals.map((id) => [id, Math.max(0, Number(requestedPortalPricing[id] ?? pricing.priceFor(id)) || 0)]),
+  );
+  const estimatedTotal = Math.max(0, Number(body.estimatedTotal || body.monthlyAmount || body.serviceEstimate || 0) || 0) || Object.values(portalPricing).reduce((sum, amount) => sum + amount, 0);
+  const monthlyAmount = Math.max(0, Number(body.monthlyAmount || estimatedTotal) || 0);
   const adminName = safeString(body.adminName || "Organization Admin", 120);
   const adminEmail = safeString(body.adminEmail || body.email, 160).toLowerCase();
   const orgEmail = safeString(body.email || body.organizationEmail || adminEmail, 160).toLowerCase();
@@ -160,6 +167,8 @@ const createOrganization = async (req, res, body) => {
     servicePricing,
     selectedComponents,
     estimatedTotal,
+    monthlyAmount,
+    portalPricing,
     contact: { email: orgEmail, phone, location },
     companySize,
     status: "active",
@@ -199,6 +208,8 @@ const createOrganization = async (req, res, body) => {
     servicePricing,
     selectedComponents,
     estimatedTotal,
+    monthlyAmount,
+    portalPricing,
     branches: Array.from({ length: branchCount }, (_, idx) => `Branch ${idx + 1}`),
     departments: ["technology-services", "technology-devices", "software-company", "it-support", "digital-agency"].includes(businessType) ? ["Sales", "Operations", "Finance", "HR", "Technology", "Support"] : [],
     createdAt: now,

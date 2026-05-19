@@ -8,6 +8,12 @@
   const SETTINGS_KEY = "enterprise_org_settings_v1";
   const PORTAL_CATALOG = window.EnterpriseModules?.catalog || [];
   const VALID_PORTAL_IDS = window.EnterpriseModules?.validIds || new Set(PORTAL_CATALOG.map((portal) => portal.id));
+  const pricingApi = () => window.BytewavePricing || {
+    priceFor: () => 0,
+    totalFor: () => 0,
+    formatMonthly: (amount) => `KSh ${Number(amount || 0).toLocaleString("en-KE")} / month`,
+    pricingMapFor: () => ({}),
+  };
 
   const readJson = (key, fallback) => {
     try {
@@ -80,19 +86,13 @@
   const TECHNOLOGY_DEVICE_PORTALS = ["admin", "technology", "branch", "inventory", "customer", "sales", "finance", "staff", "reporting", "analytics", "agent"];
 
   const portalPricing = (portal) => {
-    const serviceCost = settings.servicePricing?.cost || "From KSh 2,500 / month";
+    const monthly = Math.max(0, Number(settings.portalPricing?.[portal.id] ?? pricingApi().priceFor(portal.id)) || 0);
+    const serviceCost = monthly ? pricingApi().formatMonthly(monthly) : "Included";
     const servicePlan = settings.servicePricing?.plan || "Starter or Business";
-    const devicePrices = {
-      director: ["From KSh 2,500 / month", "Business"],
-      "device-branch": ["From KSh 2,000 / month", "Business"],
-      "team-leader": ["From KSh 1,500 / month", "Business"],
-      agent: ["From KSh 1,000 / month", "Starter or Business"],
-      "device-departments": ["From KSh 2,000 / month", "Business"],
-    };
-    const [cost, plan] = devicePrices[portal.id] || [serviceCost, servicePlan];
     return {
-      cost,
-      plan,
+      cost: serviceCost,
+      plan: ["director", "device-branch", "team-leader", "device-departments"].includes(portal.id) ? "Business" : servicePlan,
+      monthly,
       subscription: `${portal.title} runs inside the registered ${settings.serviceTitle || "organization"} workspace. Install only this portal when that role is needed; more portals can be added later under the same organization subscription.`,
     };
   };
@@ -236,8 +236,9 @@
     const clearBtn = $("#portal-clear-selection");
     if (countEl) countEl.textContent = `${count} selected`;
     if (summaryEl) {
+      const monthlyTotal = pricingApi().totalFor([...selected]);
       summaryEl.textContent = count
-        ? `${names.join(", ")}${count > names.length ? ` and ${count - names.length} more` : ""} will install as one Bytewave app.`
+        ? `${names.join(", ")}${count > names.length ? ` and ${count - names.length} more` : ""} will install as one Bytewave app. Monthly total: ${pricingApi().formatMonthly(monthlyTotal)}.`
         : available.length
           ? "Pick from the portals that match this organization's registered service."
           : "All portals for this registered service are already installed.";
@@ -337,7 +338,12 @@
       const response = await fetchJson("/api/org-admin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "install-portals", portalIds: ids }),
+        body: JSON.stringify({
+          action: "install-portals",
+          portalIds: ids,
+          portalPricing: pricingApi().pricingMapFor(ids),
+          monthlyAmount: pricingApi().totalFor(ids),
+        }),
       });
       data = response.data;
       if (!response.res.ok || !data?.ok) throw new Error(data?.error || "Install failed");
@@ -356,6 +362,10 @@
         modules: Array.from(new Set([...(settings.modules || []), ...ids])),
         navigation: Array.from(new Set([...(settings.navigation || []), ...ids])),
         modulePermissions,
+        selectedComponents: installedPortals,
+        portalPricing: { ...(settings.portalPricing || {}), ...pricingApi().pricingMapFor(ids) },
+        monthlyAmount: pricingApi().totalFor(installedPortals),
+        estimatedTotal: pricingApi().totalFor(installedPortals),
         onboardingComplete: true,
         updatedAt: new Date().toISOString(),
       };
