@@ -13,16 +13,22 @@ const catalog = [
   { id: "orders", label: "Orders & Fulfillment", sectors: ["company", "online", "logistics", "retail", "restaurant"], permissions: ["orders.manage"] },
   { id: "logistics", label: "Fleet & Delivery Tracking", sectors: ["logistics", "warehouse", "online"], permissions: ["logistics.manage"] },
   { id: "pharmacy", label: "Pharmacy Controls", sectors: ["pharmacy"], permissions: ["pharmacy.manage"] },
+  { id: "procurement", label: "Procurement & Suppliers", sectors: ["all"], permissions: ["procurement.manage"] },
+  { id: "technology", label: "Technology Services", sectors: ["technology", "software", "agency", "all"], permissions: ["technology.manage"] },
   { id: "finance", label: "Finance & Payments", sectors: ["all"], permissions: ["finance.manage"] },
   { id: "hr", label: "HR & Staff", sectors: ["all"], permissions: ["hr.manage"] },
   { id: "crm", label: "Customers & CRM", sectors: ["all"], permissions: ["customers.manage"] },
+  { id: "academic", label: "Academic & School", sectors: ["school", "education"], permissions: ["academic.manage"] },
+  { id: "hospital", label: "Hospital Operations", sectors: ["hospital", "clinic", "healthcare"], permissions: ["hospital.manage"] },
+  { id: "restaurant", label: "Restaurant Operations", sectors: ["restaurant", "fast-food"], permissions: ["restaurant.manage"] },
+  { id: "real-estate", label: "Real Estate Operations", sectors: ["real-estate", "property"], permissions: ["real-estate.manage"] },
   { id: "documents", label: "Files & Documents", sectors: ["all"], permissions: ["documents.manage"] },
   { id: "service", label: "Service Desk", sectors: ["company", "service", "agency", "corporate"], permissions: ["service.manage"] },
 ];
 
 const defaultConfig = {
   businessType: "company",
-  enabled: ["dashboard", "inventory", "pos", "orders", "finance", "hr", "crm", "documents"],
+  enabled: ["dashboard", "inventory", "pos", "orders", "finance", "hr", "procurement", "crm", "documents", "technology"],
   catalog,
 };
 

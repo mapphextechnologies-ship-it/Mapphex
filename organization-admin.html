@@ -4,9 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Organization Admin • MAPPHEX</title>
-    <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="icon" href="images/bytewave-icon-192.png" type="image/png" />
-    <link rel="apple-touch-icon" href="images/bytewave-icon-192.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/images/bytewave-icon-192.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/images/bytewave-icon-192.png" />
     <meta name="theme-color" content="#06101f" />
     <link rel="stylesheet" href="director.css" />
     <link rel="stylesheet" href="portal.css" />
@@ -17,7 +17,7 @@
     <header class="topbar">
       <div class="brand">
         <button id="menu-toggle" class="icon-btn" type="button" aria-label="Open menu" aria-expanded="false"><span class="icon-hamburger" aria-hidden="true"></span></button>
-        <img class="logo-img" src="images/enterprise-logo.png" alt="" />
+        <img class="logo-img" src="/images/enterprise-logo.png" alt="" />
         <div><div id="org-admin-title" class="brand-title">Organization Admin</div><div id="org-admin-sub" class="brand-subtitle muted">Tenant workspace</div></div>
       </div>
       <div class="topbar-actions"><span id="internal-mode-badge" class="badge" hidden>Internal assistance</span><a id="workspace-link" class="btn" href="organization-workspace.html">Workspace</a><a class="btn" href="index.html?logout=1">Logout</a></div>
@@ -26,10 +26,14 @@
       <aside id="portal-sidebar" class="portal-sidebar" aria-label="Organization menu">
         <div class="sidebar-header"><div class="sidebar-title">Organization</div><button id="menu-close" class="icon-btn" type="button" aria-label="Close menu"><span class="icon-close" aria-hidden="true"></span></button></div>
         <nav class="sidebar-nav">
-          <a class="sidebar-link active" href="#dashboard">Dashboard</a>
-          <a class="sidebar-link" href="#users">Users</a>
-          <a class="sidebar-link" href="#settings">Settings</a>
-          <a class="sidebar-link" href="#activity">Activity</a>
+          <a class="sidebar-link active" href="#dashboard" data-icon="D">Dashboard</a>
+          <a class="sidebar-link" href="#users" data-icon="U">Users</a>
+          <a class="sidebar-link" href="#roles" data-icon="R">Roles</a>
+          <a class="sidebar-link" href="#branches" data-icon="B">Branches</a>
+          <a class="sidebar-link" href="#modules" data-icon="M">Modules</a>
+          <a class="sidebar-link" href="#tenant-controls" data-icon="S">Settings</a>
+          <a class="sidebar-link" href="#notifications" data-icon="N">Notifications</a>
+          <a class="sidebar-link" href="#activity" data-icon="A">Audit Logs</a>
         </nav>
       </aside>
       <div id="menu-backdrop" class="menu-backdrop" aria-hidden="true"></div>
@@ -45,12 +49,53 @@
         </section>
         <section class="panel" id="users">
           <div class="panel-header"><h2>Users & Roles</h2><div class="panel-actions muted">Organization scoped only</div></div>
-          <form id="org-user-form" class="super-form"><label class="field"><span>Name</span><input name="name" required /></label><label class="field"><span>Email</span><input name="email" type="email" required /></label><label class="field"><span>Role</span><select name="role"><option>staff</option><option>manager</option><option>finance</option><option>inventory</option><option>org_admin</option></select></label><button class="btn primary" type="submit">Add user</button></form>
+          <form id="org-user-form" class="super-form"><label class="field"><span>Name</span><input name="name" required /></label><label class="field"><span>Email</span><input name="email" type="email" required /></label><label class="field"><span>Role</span><select name="role"><option>staff</option><option>manager</option><option>finance</option><option>hr</option><option>procurement</option><option>inventory</option><option>pharmacy</option><option>sales</option><option>customer_service</option><option>academic</option><option>hospital</option><option>restaurant</option><option>real_estate</option><option>org_admin</option></select></label><button class="btn primary" type="submit">Add user</button></form>
           <div class="table-wrap"><table class="table"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th></tr></thead><tbody id="org-users-table"></tbody></table></div>
+        </section>
+        <section class="panel" id="tenant-controls">
+          <div class="panel-header"><h2>Organization Controls</h2><div class="panel-actions"><button id="export-admin-audit" class="btn" type="button">Export Audit</button><button id="send-global-announcement" class="btn primary" type="button">Send Announcement</button></div></div>
+          <div class="module-shared-grid">
+            <article><strong>Company Profile</strong><span>Manage this organization, branches, departments, and active modules only.</span></article>
+            <article><strong>Permissions</strong><span>Assign company users to portal roles and department access inside this tenant.</span></article>
+            <article><strong>Security Logs</strong><span>Review this organization audit trail, session activity, and suspicious changes.</span></article>
+            <article><strong>Backup Requests</strong><span>Prepare tenant backup requests for platform review.</span></article>
+          </div>
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>Control</th><th>Owner</th><th>Status</th><th>Next Action</th></tr></thead>
+              <tbody>
+                <tr><td>Department approval queue</td><td>Admin</td><td>Open</td><td>Review pending departments</td></tr>
+                <tr><td>Subscription package</td><td>Finance/Admin</td><td>Active</td><td>Monitor renewal</td></tr>
+                <tr><td>Company announcement</td><td>Organization Admin</td><td>Ready</td><td>Send to company portals</td></tr>
+                <tr><td>Security audit</td><td>Organization</td><td>Live</td><td>Review company activity</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+        <section class="panel" id="roles">
+          <div class="panel-header"><h2>Roles & Permissions</h2><div class="panel-actions muted">Company-level RBAC</div></div>
+          <div class="module-shared-grid">
+            <article><strong>Admin</strong><span>Users, modules, branches, settings, audit.</span></article>
+            <article><strong>Managers</strong><span>Department records, approvals, reports.</span></article>
+            <article><strong>Employees</strong><span>Assigned portal work and notifications.</span></article>
+            <article><strong>Agents</strong><span>Field sales, onboarding, allocated work.</span></article>
+          </div>
+        </section>
+        <section class="panel" id="branches">
+          <div class="panel-header"><h2>Branches</h2><div class="panel-actions muted">Locations and operating units</div></div>
+          <p class="muted">Manage branch names in Settings. Branch users inherit this organization scope.</p>
+        </section>
+        <section class="panel" id="modules">
+          <div class="panel-header"><h2>Modules</h2><div class="panel-actions muted">Activated portal list</div></div>
+          <p class="muted">Enabled modules are listed in Settings and installed through the portal manager.</p>
         </section>
         <section class="panel" id="settings">
           <div class="panel-header"><h2>Branches, Departments & Modules</h2><div class="panel-actions"><button id="save-org-settings" class="btn primary" type="button">Save settings</button></div></div>
           <div class="super-form"><label class="field"><span>Branches</span><input id="org-branches" placeholder="HQ, Branch 1, Branch 2" /></label><label class="field"><span>Departments</span><input id="org-departments" placeholder="Sales, Finance, HR" /></label><label class="field"><span>Modules</span><input id="org-modules" placeholder="inventory, orders, finance" /></label></div>
+        </section>
+        <section class="panel" id="notifications">
+          <div class="panel-header"><h2>Notifications</h2><div class="panel-actions muted">Company announcements and alerts</div></div>
+          <p class="muted">Use Organization Controls to send company announcements. Workflow alerts continue to use the shared notification center.</p>
         </section>
         <section class="panel" id="activity"><div class="panel-header"><h2>Live Activity</h2><div class="panel-actions muted">Tenant events</div></div><div class="table-wrap"><table class="table"><thead><tr><th>Time</th><th>Event</th><th>Detail</th></tr></thead><tbody id="org-activity-table"></tbody></table></div></section>
       </main>

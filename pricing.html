@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pricing | MAPPHEX</title>
     <meta name="description" content="Review MAPPHEX subscription plans for small teams, growing operations, and enterprises." />
-    <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="icon" href="images/enterprise-icon-192.png" type="image/png" />
-    <link rel="apple-touch-icon" href="images/enterprise-icon-192.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/images/enterprise-icon-192.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/images/enterprise-icon-192.png" />
     <meta name="theme-color" content="#06101f" />
     <link rel="stylesheet" href="director.css" />
     <link rel="stylesheet" href="home.css" />
@@ -15,7 +15,7 @@
   <body data-page="pricing" class="mapphex-home">
     <header class="site-nav" data-nav>
       <a class="site-brand" href="index.html" aria-label="MAPPHEX home">
-        <img class="logo-img" src="images/enterprise-logo.png" alt="MAPPHEX logo" />
+        <img class="logo-img" src="/images/enterprise-logo.png" alt="MAPPHEX logo" />
         <span>MAPPHEX</span>
       </a>
       <button class="nav-toggle" type="button" aria-label="Open navigation" aria-expanded="false" data-nav-toggle>
@@ -25,47 +25,63 @@
         <a href="index.html">Home</a>
         <a href="about.html">About</a>
         <div class="nav-dropdown">
-          <a class="nav-dropdown-trigger" href="services.html">Services</a>
+          <a class="nav-dropdown-trigger" href="services.html#services">Services</a>
           <div class="services-mega" aria-label="MAPPHEX services and applications">
             <div class="mega-column">
-              <h3>Services</h3>
-              <a href="services.html#business-onboarding">Business Onboarding</a>
-              <a href="services.html#organization-setup">Organization Setup</a>
-              <a href="services.html#licensing-subscriptions">Licensing & Subscriptions</a>
-              <a href="services.html#security-services">Security Services</a>
-              <a href="services.html#support-training">Support & Training</a>
-              <a href="services.html#cloud-hosting">Cloud Hosting Setup</a>
-              <a href="services.html#data-migration">Data Migration</a>
+              <h3>Business Setup</h3>
+              <a href="service-detail.html?id=business-onboarding">Business Onboarding</a>
+              <a href="service-detail.html?id=organization-setup">Organization Setup</a>
+              <a href="service-detail.html?id=licensing-subscriptions">Licensing & Subscriptions</a>
+              <a href="service-detail.html?id=security-services">Security Services</a>
+              <a href="service-detail.html?id=support-training">Support & Training</a>
+              <a href="service-detail.html?id=cloud-hosting">Cloud Hosting Setup</a>
+              <a href="service-detail.html?id=data-migration">Data Migration</a>
             </div>
             <div class="mega-column">
               <h3>Business Apps</h3>
-              <a href="services.html#finance-management">Finance Management</a>
-              <a href="services.html#hr-staff-access">HR & Staff Access</a>
-              <a href="services.html#retail-pos">Retail & POS</a>
-              <a href="services.html#inventory-control">Inventory Control</a>
-              <a href="services.html#crm-workflows">CRM Workflows</a>
-              <a href="services.html#document-management">Document Management</a>
-              <a href="services.html#reporting-tools">Reporting Tools</a>
-            </div>
-            <div class="mega-column">
-              <h3>Industry Apps</h3>
-              <a href="services.html#pharmacy-operations">Pharmacy Operations</a>
-              <a href="services.html#school-management">School Management</a>
-              <a href="services.html#logistics-tracking">Logistics Tracking</a>
-              <a href="services.html#branch-management">Branch Management</a>
-              <a href="services.html#warehouse-control">Warehouse Control</a>
-              <a href="services.html#supplier-records">Supplier Records</a>
-              <a href="services.html#analytics-dashboard">Analytics Dashboard</a>
+              <a href="service-detail.html?id=finance-management">Finance Management</a>
+              <a href="service-detail.html?id=hr-staff-access">HR & Staff Access</a>
+              <a href="service-detail.html?id=retail-pos">Retail & POS</a>
+              <a href="service-detail.html?id=inventory-control">Inventory Control</a>
+              <a href="service-detail.html?id=crm-workflows">CRM Workflows</a>
+              <a href="service-detail.html?id=document-management">Document Management</a>
+              <a href="service-detail.html?id=reporting-tools">Reporting Tools</a>
             </div>
             <div class="mega-column">
               <h3>Operations Apps</h3>
-              <a href="services.html#task-management">Task Management</a>
-              <a href="services.html#role-permissions">Role Permissions</a>
-              <a href="services.html#audit-trails">Audit Trails</a>
-              <a href="services.html#notifications">Notifications</a>
-              <a href="services.html#multi-branch-reports">Multi-Branch Reports</a>
-              <a href="services.html#subscription-review">Subscription Review</a>
-              <a href="services.html#customer-support-desk">Customer Support Desk</a>
+              <a href="service-detail.html?id=task-management">Task Management</a>
+              <a href="service-detail.html?id=role-permissions">Role Permissions</a>
+              <a href="service-detail.html?id=audit-trails">Audit Trails</a>
+              <a href="service-detail.html?id=notifications">Notifications</a>
+              <a href="service-detail.html?id=multi-branch-reports">Multi-Branch Reports</a>
+              <a href="service-detail.html?id=subscription-review">Subscription Review</a>
+              <a href="service-detail.html?id=customer-support-desk">Customer Support Desk</a>
+            </div>
+            <div class="mega-column">
+              <h3>Retail</h3>
+              <a href="service-detail.html?id=book-store">Book Store</a>
+              <a href="service-detail.html?id=clothing-store">Clothing Store</a>
+              <a href="service-detail.html?id=furniture-store">Furniture Store</a>
+              <a href="service-detail.html?id=grocery-store">Grocery Store</a>
+              <a href="service-detail.html?id=technology-services">Technology Services</a>
+              <a href="service-detail.html?id=wholesale">Wholesale</a>
+              <a href="service-detail.html?id=mini-supermarket">Mini Supermarket</a>
+            </div>
+            <div class="mega-column">
+              <h3>Food & Hospitality</h3>
+              <a href="service-detail.html?id=restaurants">Restaurants</a>
+              <a href="service-detail.html?id=fast-food">Fast Food</a>
+              <a href="service-detail.html?id=hotels">Hotels</a>
+              <a href="service-detail.html?id=guest-house">Guest House</a>
+              <a href="service-detail.html?id=bar-pub">Bar & Pub</a>
+            </div>
+            <div class="mega-column">
+              <h3>Health & Fitness</h3>
+              <a href="service-detail.html?id=sports-club">Sports Club</a>
+              <a href="service-detail.html?id=pharmacy-store">Pharmacy</a>
+              <a href="service-detail.html?id=hair-salon">Hair Salon</a>
+              <a href="service-detail.html?id=gym">Gym</a>
+              <a href="service-detail.html?id=clinics">Clinics</a>
             </div>
           </div>
         </div>
@@ -176,10 +192,10 @@
           </div>
         </div>
         <div class="premium-grid four">
-          <article class="premium-card"><span class="card-icon">01</span><h3>Organization-based</h3><p>Every business subscribes under its own organization profile, so access and billing remain separate.</p></article>
-          <article class="premium-card"><span class="card-icon">02</span><h3>Module-based</h3><p>The organization activates only the tools it needs, which keeps the workspace focused and easier to manage.</p></article>
-          <article class="premium-card"><span class="card-icon">03</span><h3>Renewable</h3><p>Subscriptions can be renewed monthly or yearly, depending on the preferred billing arrangement.</p></article>
-          <article class="premium-card"><span class="card-icon">04</span><h3>Upgradeable</h3><p>A business can upgrade when it adds more staff, branches, departments, records, or support requirements.</p></article>
+          <article class="premium-card"><h3>Organization-based</h3><p>Every business subscribes under its own organization profile, so access and billing remain separate.</p></article>
+          <article class="premium-card"><h3>Module-based</h3><p>The organization activates only the tools it needs, which keeps the workspace focused and easier to manage.</p></article>
+          <article class="premium-card"><h3>Renewable</h3><p>Subscriptions can be renewed monthly or yearly, depending on the preferred billing arrangement.</p></article>
+          <article class="premium-card"><h3>Upgradeable</h3><p>A business can upgrade when it adds more staff, branches, departments, records, or support requirements.</p></article>
         </div>
       </section>
     </main>
@@ -196,10 +212,10 @@
       </div>
       <div class="footer-column">
         <h3>Explore All MAPPHEX Services</h3>
-        <a href="services.html#business-onboarding">Business Onboarding</a>
-        <a href="services.html">Platform Modules</a>
-        <a href="pricing.html">Subscription Plans</a>
-        <a href="services.html#security-services">Security Services</a>
+        <a href="service-detail.html?id=book-store">Retail</a>
+        <a href="service-detail.html?id=restaurants">Food & Hospitality</a>
+        <a href="service-detail.html?id=sports-club">Health & Fitness</a>
+        <a href="services.html#services">All Services</a>
       </div>
       <div class="footer-column">
         <h3>Company</h3>
@@ -215,7 +231,7 @@
         <a href="security.html">Privacy Policy</a>
         <a href="pricing.html">Terms of Use</a>
         <a href="security.html">Cookie Policy</a>
-        <a href="PRODUCTION-ARCHITECTURE.md">Platform Architecture</a>
+        <a href="/PRODUCTION-ARCHITECTURE.md">Platform Architecture</a>
         <a href="contact.html">Accessibility</a>
       </div>
       <div class="footer-column">
@@ -226,9 +242,9 @@
         <a href="contact.html">Events</a>
       </div>
       <div class="footer-summary">
-        <p>MAPPHEX is business management software for organizations that need one place to manage teams, branches, modules, and daily operations.</p>
-        <p>It helps businesses subscribe to the tools they need, activate secure workspaces, and keep operational records organized.</p>
-        <p>The platform is built for growing companies that want clear workflows, controlled access, reporting, and long-term scalability.</p>
+        <p>Register an organization, choose the service type, accept the subscription, and open the matching workspace tools.</p>
+        <p>Manage staff, branches, departments, products, services, stock, sales, finance, customers, documents, tasks, and reports.</p>
+        <p>Control access with roles, permissions, audit activity, secure records, renewals, upgrades, and support workflows.</p>
       </div>
     </footer>
     <script src="enterprise-core.js"></script>

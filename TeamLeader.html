@@ -4,16 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Team Leader Dashboard • MAPPHEX</title>
-    <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="icon" href="images/enterprise-icon-192.png" type="image/png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/images/enterprise-icon-192.png" type="image/png" />
     <link rel="stylesheet" href="director.css" />
-    <link rel="stylesheet" href="teamleader.css" />    <link rel="stylesheet" href="enterprise-platform.css" />
+    <link rel="stylesheet" href="teamleader.css" />
+    <link rel="stylesheet" href="enterprise-platform.css" />
 
   </head>
   <body data-page="teamleader-dashboard">
     <header class="topbar">
       <div class="brand">
-        <img class="logo-img" src="images/enterprise-logo.png" alt="" />
+        <img class="logo-img" src="/images/enterprise-logo.png" alt="" />
         <div>
           <div class="brand-title">MAPPHEX</div>
           <div class="brand-subtitle muted">Team Leader Dashboard</div>
@@ -37,12 +38,12 @@
         </div>
         <div class="kpis">
           <article class="kpi">
-            <div class="kpi-label">Available phones</div>
+            <div class="kpi-label">Available items/tasks</div>
             <div id="tl-kpi-available" class="kpi-value">0</div>
             <div class="kpi-foot muted">Not allocated</div>
           </article>
           <article class="kpi">
-            <div class="kpi-label">Allocated phones</div>
+            <div class="kpi-label">Allocated items/tasks</div>
             <div id="tl-kpi-allocated" class="kpi-value">0</div>
             <div class="kpi-foot muted">Assigned to agents</div>
           </article>
@@ -59,16 +60,16 @@
         </div>
       </section>
 
-      <section class="panel" id="allocate" aria-label="Allocate phone">
+      <section class="panel" id="allocate" aria-label="Allocate product, service, or task">
         <div class="panel-header">
-          <h2>Allocate Phone To Agent</h2>
-          <div class="panel-actions muted">IMEI / serial based allocation</div>
+          <h2>Allocate Work To Agent</h2>
+          <div class="panel-actions muted">SKU, service code, asset serial, or task based allocation</div>
         </div>
 
         <div class="teamleader-form">
           <label class="field">
-            <span>IMEI / Serial number</span>
-            <input id="alloc-serial" type="text" list="phone-serial-list" placeholder="Enter IMEI or serial" />
+            <span>Product / service / task reference</span>
+            <input id="alloc-serial" type="text" list="phone-serial-list" placeholder="Enter SKU, service code, serial, or task reference" />
             <datalist id="phone-serial-list"></datalist>
           </label>
 
@@ -83,7 +84,7 @@
           </label>
 
           <label class="field">
-            <span>Phone number</span>
+            <span>Agent contact</span>
             <input id="alloc-agent-phone" type="text" inputmode="tel" placeholder="e.g. 07..." />
           </label>
 
@@ -97,7 +98,7 @@
             <textarea id="alloc-notes" rows="2" placeholder="Optional notes"></textarea>
           </label>
 
-          <button id="alloc-save-btn" class="btn primary" type="button">Allocate phone</button>
+          <button id="alloc-save-btn" class="btn primary" type="button">Allocate work</button>
           <button id="alloc-clear-btn" class="btn" type="button">Clear</button>
         </div>
 
@@ -124,20 +125,20 @@
         </div>
       </section>
 
-      <section class="panel" aria-label="Phone allocations">
+      <section class="panel" aria-label="Work allocations">
         <div class="panel-header">
-          <h2>Phone Allocations</h2>
+          <h2>Product, Service & Task Allocations</h2>
           <div class="panel-actions muted">Branch inventory assignments</div>
         </div>
-        <div class="table-wrap" role="region" aria-label="Phone allocations table" tabindex="0">
+        <div class="table-wrap" role="region" aria-label="Work allocations table" tabindex="0">
           <table class="table teamleader-table">
             <thead>
               <tr>
-                <th>IMEI / Serial</th>
-                <th>Model</th>
+                <th>Reference</th>
+                <th>Product / Service / Task</th>
                 <th>Price</th>
                 <th>Agent</th>
-                <th>Phone</th>
+                <th>Contact</th>
                 <th>ID number</th>
                 <th>Allocated</th>
                 <th>Actions</th>
@@ -155,20 +156,11 @@
 
 
     <script src="enterprise-core.js"></script>
-<script src="kv-client.js"></script>
+    <script src="kv-client.js"></script>
     <script src="enterprise-store.js"></script>
+    <script src="erp-client.js"></script>
     <script src="enterprise-platform.js"></script>
-
-
-
-
-
-<script src="teamleader.js"></script>
-
-
-
-
-
-<script src="pwa.js"></script>
+    <script src="teamleader.js"></script>
+    <script src="pwa.js"></script>
   </body>
 </html>

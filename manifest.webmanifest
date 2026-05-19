@@ -1,7 +1,8 @@
 {
-  "name": "Byewave",
-  "short_name": "Byewave",
-  "description": "Install Byewave as one unified organization workspace app with selected modules for operations, finance, HR, logistics, reporting, and administration.",
+  "name": "BYTEWAAVE",
+  "short_name": "BYTEWAAVE",
+  "id": "/organization-login.html",
+  "description": "Install BYTEWAAVE as one unified organization workspace app with selected ERP modules for operations, finance, HR, logistics, reporting, and administration.",
   "start_url": "./organization-login.html",
   "scope": "./",
   "display": "standalone",

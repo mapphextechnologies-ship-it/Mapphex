@@ -3,18 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Portal Installation • Byewave</title>
-    <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="icon" href="images/bytewave-icon-192.png" type="image/png" />
-    <link rel="apple-touch-icon" href="images/bytewave-icon-192.png" />
+    <title>Portal Installation • BYTEWAAVE</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/images/bytewave-icon-192.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/images/bytewave-icon-192.png" />
     <meta name="theme-color" content="#06101f" />
     <link rel="stylesheet" href="director.css" />
     <link rel="stylesheet" href="management.css" />
     <link rel="stylesheet" href="onboarding.css" />
+    <link rel="stylesheet" href="enterprise-platform.css" />
   </head>
   <body data-page="portal-selection">
     <header class="topbar">
-      <div class="brand"><img class="logo-img" src="images/bytewave-logo.jpg" alt="" /><div><div id="portal-org-name" class="brand-title">Byewave</div><div class="brand-subtitle muted">Install only the portals your organization needs</div></div></div>
+      <div class="brand"><img class="logo-img" src="/images/bytewave-logo.jpg" alt="" /><div><div id="portal-org-name" class="brand-title">BYTEWAAVE</div><div id="portal-org-id" class="brand-subtitle muted">Install only the portals your organization needs</div></div></div>
       <div class="topbar-actions"><a id="portal-workspace-link" class="btn" href="organization-workspace.html">Workspace</a><a class="btn" href="index.html?logout=1">Logout</a></div>
     </header>
     <main class="layout onboarding-layout">
@@ -22,7 +23,8 @@
         <div class="panel-header portal-manager-header">
           <div>
             <h2>Portal Manager</h2>
-            <p class="portal-manager-subtitle">Select multiple modules and install them together as one Byewave app.</p>
+            <p id="portal-org-context" class="portal-manager-org muted">Organization workspace</p>
+            <p class="portal-manager-subtitle">Only portals that match the registered service are shown here.</p>
           </div>
           <div id="portal-progress" class="panel-actions muted">Choose portals to install</div>
         </div>
@@ -33,14 +35,14 @@
           </div>
           <div class="portal-bulk-actions">
             <button id="portal-select-core" class="btn" type="button">Select core set</button>
-            <button id="portal-select-all" class="btn" type="button">Select all modules</button>
+            <button id="portal-select-all" class="btn" type="button">Select all allowed</button>
             <button id="portal-clear-selection" class="btn" type="button">Clear</button>
-            <button id="portal-install-selected" class="btn primary" type="button" disabled>Install Selected as App</button>
+            <button id="portal-install-selected" class="btn primary" type="button" disabled>Install Selected Portals</button>
           </div>
         </div>
         <div id="pwa-install-help" class="pwa-install-help" hidden>
           <strong>Device app install</strong>
-          <p id="pwa-install-help-text">After modules are enabled, your browser may ask to install Byewave. If no prompt appears, the workspace will still open and you can install from your browser menu.</p>
+          <p id="pwa-install-help-text">After a portal is enabled, open that portal and install it from your browser menu if the install prompt does not appear.</p>
           <div class="portal-card-actions">
             <a id="pwa-open-workspace" class="btn primary" href="organization-workspace.html">Open Workspace</a>
             <button id="pwa-retry-install" class="btn" type="button">Try install prompt again</button>
@@ -50,10 +52,13 @@
       </section>
 
     </main>
+    <footer id="site-powered-footer" class="site-powered-footer">Powered by © Teams Technology</footer>
     <script src="enterprise-core.js"></script>
     <script src="kv-client.js"></script>
     <script src="enterprise-store.js"></script>
+    <script src="erp-client.js"></script>
     <script src="enterprise-modules.js"></script>
+    <script src="enterprise-platform.js"></script>
     <script src="pwa.js?v=4"></script>
     <script src="portal-selection.js?v=15"></script>
   </body>

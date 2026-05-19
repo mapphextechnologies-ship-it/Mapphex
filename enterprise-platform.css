@@ -90,6 +90,38 @@
   font-size: 12px;
 }
 
+.pwa-install-banner {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  z-index: 95;
+  width: min(560px, calc(100vw - 28px));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid rgba(173, 122, 82, 0.24);
+  border-radius: 16px;
+  background: rgba(17, 11, 8, 0.92);
+  color: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(14px);
+  transform: translateX(-50%);
+}
+
+.pwa-install-banner strong,
+.pwa-install-banner span {
+  display: block;
+}
+
+.pwa-install-banner span {
+  margin-top: 3px;
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
 @keyframes enterprise-in {
   from {
     opacity: 0;
@@ -110,6 +142,11 @@
 
   .enterprise-module-strip {
     width: calc(100% - 20px);
+  }
+
+  .pwa-install-banner {
+    grid-template-columns: 1fr;
+    bottom: 10px;
   }
 
   .enterprise-status,

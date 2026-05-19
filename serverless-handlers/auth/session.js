@@ -20,7 +20,8 @@ module.exports = async (req, res) => {
   try {
     if (req.method === "POST") {
       const body = await readJsonBody(req);
-      const role = String(body?.role || "org_admin").trim().toLowerCase();
+      const requestedRole = String(body?.role || "org_admin").trim().toLowerCase();
+      const role = ["super_admin", "platform_admin"].includes(requestedRole) ? "org_admin" : requestedRole;
       const identifier = String(body?.identifier || body?.tenantId || body?.email || body?.username || "").trim();
       const email = String(body?.email || body?.username || body?.identifier || "").trim().toLowerCase();
       const organizationName = String(body?.organizationName || body?.name || "").trim();
@@ -29,11 +30,9 @@ module.exports = async (req, res) => {
       }
       let tenantId = getTenantId(req, body);
       let organization = null;
-      if (body?.action === "organization-login" || role === "org_admin") {
-        organization = await verifyOrganizationAdmin(identifier || tenantId, email, body?.password, organizationName);
-        if (!organization) return sendJson(res, 401, { ok: false, error: "Invalid organization credentials" });
-        tenantId = organization.id;
-      }
+      organization = await verifyOrganizationAdmin(identifier || tenantId, email, body?.password, organizationName);
+      if (!organization) return sendJson(res, 401, { ok: false, error: "Invalid organization credentials" });
+      tenantId = organization.id;
       const now = Date.now();
       const claims = {
         sub: organization?.admin?.email || email || identifier.toLowerCase(),

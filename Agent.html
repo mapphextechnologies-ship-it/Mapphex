@@ -3,11 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Agent Dashboard • MAPPHEX</title>
-    <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="icon" href="images/enterprise-icon-192.png" type="image/png" />
+    <title>ERP Agent Portal • MAPPHEX</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/images/enterprise-icon-192.png" type="image/png" />
     <link rel="stylesheet" href="director.css" />
-    <link rel="stylesheet" href="agent.css" />    <link rel="stylesheet" href="enterprise-platform.css" />
+    <link rel="stylesheet" href="agent.css" />
+    <link rel="stylesheet" href="enterprise-platform.css" />
 
   </head>
   <body data-page="agent-dashboard">
@@ -16,10 +17,10 @@
         <button id="menu-toggle" class="icon-btn" type="button" aria-label="Open menu" aria-expanded="false">
           <span class="icon-hamburger" aria-hidden="true"></span>
         </button>
-        <img class="logo-img" src="images/enterprise-logo.png" alt="" />
+        <img class="logo-img" src="/images/enterprise-logo.png" alt="" />
         <div>
           <div class="brand-title">MAPPHEX</div>
-          <div class="brand-subtitle muted">Agent Sales Dashboard</div>
+          <div class="brand-subtitle muted">Multi-business onboarding, client success, subscriptions, and service operations</div>
         </div>
       </div>
 
@@ -39,13 +40,14 @@
         </div>
         <nav class="sidebar-nav">
           <a class="sidebar-link active" href="#overview" data-nav="overview">Overview</a>
-          <a class="sidebar-link" href="#sell" data-nav="sell">Sell phones</a>
+          <a class="sidebar-link" href="#onboarding" data-nav="onboarding">Organization onboarding</a>
+          <a class="sidebar-link" href="#sell" data-nav="sell">Products & services</a>
           <a class="sidebar-link" href="#credit-payments" data-nav="credit-payments">Credit repayment</a>
-          <a class="sidebar-link" href="#history" data-nav="history">Sales history</a>
-          <a class="sidebar-link" href="#inventory" data-nav="inventory">Inventory (view)</a>
+          <a class="sidebar-link" href="#history" data-nav="history">Client activity</a>
+          <a class="sidebar-link" href="#inventory" data-nav="inventory">Catalog (view)</a>
         </nav>
         <div class="sidebar-foot muted">
-          Agents sell phones. Inventory is managed by Branch.
+          Agents onboard organizations, support clients, track subscriptions, and coordinate branch or service operations.
           <div style="margin-top: 10px;">
             <a class="btn" href="Branch.html">Open Branch Portal</a>
           </div>
@@ -65,13 +67,13 @@
 
           <div class="kpis">
             <article class="kpi">
-              <div class="kpi-label">Phones in stock</div>
+              <div class="kpi-label">Products/services active</div>
               <div id="a-kpi-stock" class="kpi-value">0</div>
               <div class="kpi-foot muted">This branch</div>
             </article>
 
             <article class="kpi">
-              <div class="kpi-label">Phones sold</div>
+              <div class="kpi-label">Deals closed</div>
               <div id="a-kpi-sold" class="kpi-value">0</div>
               <div class="kpi-foot muted">This branch</div>
             </article>
@@ -83,28 +85,47 @@
             </article>
 
             <article class="kpi">
-              <div class="kpi-label">Top model</div>
+              <div class="kpi-label">Top category</div>
               <div id="a-kpi-top" class="kpi-value">—</div>
               <div class="kpi-foot muted">Highest sold</div>
             </article>
           </div>
         </section>
 
+        <section class="panel" id="onboarding" data-section="onboarding">
+          <div class="panel-header">
+            <h2>Organization Onboarding</h2>
+            <div class="panel-actions muted">Retail, pharmacy, school, hospital, restaurant, real estate, service, logistics, NGO, and technology clients</div>
+          </div>
+          <div class="agent-form">
+            <label class="field"><span>Organization / client</span><input id="agent-org-name" type="text" placeholder="e.g. Sunrise Pharmacy" /></label>
+            <label class="field"><span>Industry</span><select id="agent-org-industry"><option>Retail</option><option>Pharmacy</option><option>School</option><option>Hospital</option><option>Restaurant</option><option>Supermarket</option><option>Hardware shop</option><option>Technology company</option><option>Agency</option><option>Real estate</option><option>Service company</option><option>Logistics</option><option>NGO</option><option>Wholesale</option><option>Manufacturing</option></select></label>
+            <label class="field"><span>Subscription plan</span><select id="agent-org-plan"><option>Starter</option><option>Business</option><option>Enterprise</option></select></label>
+            <label class="field"><span>Status</span><select id="agent-org-status"><option>Lead</option><option>Demo scheduled</option><option>Onboarding</option><option>Active</option><option>Support needed</option></select></label>
+            <label class="field"><span>Contract value (KES)</span><input id="agent-org-value" type="number" min="0" step="1" placeholder="e.g. 25000" /></label>
+            <label class="field"><span>Next action</span><input id="agent-org-next" type="text" placeholder="e.g. Configure modules and train users" /></label>
+            <div class="report-buttons" style="justify-content:flex-start;"><button id="agent-org-save" class="btn primary" type="button">Save client</button><button id="agent-org-report" class="btn" type="button">Generate report</button></div>
+          </div>
+          <div class="table-wrap" role="region" aria-label="Agent onboarding pipeline" tabindex="0">
+            <table class="table"><thead><tr><th>Organization</th><th>Industry</th><th>Plan</th><th>Status</th><th class="num">Value</th><th>Next action</th></tr></thead><tbody id="agent-org-tbody"></tbody></table>
+          </div>
+        </section>
+
         <section class="panel" id="sell" data-section="sell">
           <div class="panel-header">
             <h2>Complete Transaction</h2>
-            <div class="panel-actions muted">Agent-only sales</div>
+            <div class="panel-actions muted">Products, services, subscriptions, contracts, and support billing</div>
           </div>
 
           <div class="agent-form">
             <label class="field">
-              <span>Serial number</span>
-              <input id="tx-serial" type="text" list="serial-list" placeholder="Start typing serial..." />
+              <span>Product / service code</span>
+              <input id="tx-serial" type="text" list="serial-list" placeholder="Start typing SKU, service code, or asset serial..." />
               <datalist id="serial-list"></datalist>
             </label>
 
             <label class="field">
-              <span>Customer phone</span>
+              <span>Client contact</span>
               <input id="tx-customer-phone" type="tel" inputmode="tel" placeholder="e.g. 07XXXXXXXX" />
             </label>
 
@@ -131,7 +152,7 @@
 
             <label class="field">
               <span>Amount (KES)</span>
-              <input id="tx-amount" type="number" min="0" step="1" placeholder="Auto from phone price" />
+              <input id="tx-amount" type="number" min="0" step="1" placeholder="Auto from product or service price" />
             </label>
 
             <label class="field">
@@ -164,8 +185,8 @@
 
           <div class="agent-form">
             <label class="field">
-              <span>Credit serial</span>
-              <input id="credit-serial" type="text" placeholder="Sold phone serial" />
+              <span>Credit sale reference</span>
+              <input id="credit-serial" type="text" placeholder="Sale, subscription, or asset reference" />
             </label>
             <label class="field">
               <span>Payment channel</span>
@@ -198,7 +219,7 @@
               <thead>
                 <tr>
                   <th>Date</th>
-                  <th>Model</th>
+                  <th>Product / Service</th>
                   <th>Serial</th>
                   <th>Customer</th>
                   <th>Channel</th>
@@ -216,18 +237,18 @@
 
         <section class="panel" id="inventory" data-section="inventory">
           <div class="panel-header">
-            <h2>Inventory (View)</h2>
-            <div class="panel-actions muted">Available phones</div>
+            <h2>Catalog (View)</h2>
+            <div class="panel-actions muted">Available products, services, assets, and subscriptions</div>
           </div>
 
-          <div class="table-wrap" role="region" aria-label="Branch phones list" tabindex="0">
+          <div class="table-wrap" role="region" aria-label="Branch catalog list" tabindex="0">
             <table class="table">
               <thead>
                 <tr>
                   <th>Serial</th>
-                  <th>Model</th>
-                  <th>Color</th>
-                  <th>Storage</th>
+                  <th>Name</th>
+                  <th>Category</th>
+                  <th>Unit / Attributes</th>
                   <th class="num">Price (KES)</th>
                   <th>Assigned to</th>
                 </tr>
@@ -245,20 +266,11 @@
 
 
     <script src="enterprise-core.js"></script>
-<script src="kv-client.js"></script>
+    <script src="kv-client.js"></script>
     <script src="enterprise-store.js"></script>
+    <script src="erp-client.js"></script>
     <script src="enterprise-platform.js"></script>
-
-
-
-
-
-<script src="agent.js"></script>
-
-
-
-
-
-<script src="pwa.js"></script>
+    <script src="agent.js"></script>
+    <script src="pwa.js"></script>
   </body>
 </html>

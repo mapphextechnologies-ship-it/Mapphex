@@ -101,6 +101,7 @@
       submit.disabled = true;
       setResult("Saving agreement...");
       try {
+        let nextSettings = null;
         try {
           const response = await postJson("/api/org-admin", {
             action: "accept-agreement",
@@ -109,8 +110,9 @@
             supportPackage: data.supportPackage,
           });
           if (!response.res.ok || !response.data?.ok) throw new Error(response.data?.error || "Agreement failed");
+          nextSettings = response.data.settings || null;
         } catch (apiErr) {
-          saveLocalAgreement(data);
+          nextSettings = saveLocalAgreement(data);
         }
         setResult("Agreement accepted. Opening portal manager...", "var(--ok)");
         setTimeout(() => {

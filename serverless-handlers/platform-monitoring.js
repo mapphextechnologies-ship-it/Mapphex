@@ -3,6 +3,7 @@ const { getStore } = require("../api/_lib/kv-store");
 const { scopeTenantKey } = require("../api/_lib/tenant");
 const { appendEvent, listEvents } = require("../api/_lib/events");
 const { assertObject, rateLimit, safeString } = require("../api/_lib/security");
+const { requireSuperAdmin } = require("../api/_lib/super-admin-auth");
 
 const ORGS_KEY = "platform_organizations_v1";
 const USERS_KEY = "enterprise_org_users_v1";
@@ -15,15 +16,6 @@ const BACKUPS_KEY = "platform_backups_v1";
 const publicOrg = (org) => {
   const { adminPasswordHash, ...safe } = org || {};
   return safe;
-};
-
-const requireSuperAdmin = (req) => {
-  const key = process.env.SUPER_ADMIN_KEY || process.env.INTERNAL_ADMIN_KEY || "mapphex-internal";
-  const provided = String(req.headers["x-super-admin-key"] || "").trim();
-  if (provided === key) return true;
-  const err = new Error("Super admin authorization required");
-  err.statusCode = 403;
-  throw err;
 };
 
 const readArray = async (store, key) => {
@@ -71,7 +63,7 @@ const summarizeTenant = async (store, org) => {
 module.exports = async (req, res) => {
   try {
     rateLimit(req, { scope: "platform-monitoring", limit: 180, windowMs: 60_000 });
-    requireSuperAdmin(req);
+    const superSession = requireSuperAdmin(req);
     const store = getStore();
     const organizationsRaw = (await store.get(ORGS_KEY)) || [];
     const organizations = Array.isArray(organizationsRaw) ? organizationsRaw : [];
@@ -81,7 +73,7 @@ module.exports = async (req, res) => {
       if (body.action === "broadcast") {
         const title = safeString(body.title || "Platform notification", 120);
         const message = safeString(body.message || body.body || "", 500);
-        await appendEvent(store, "platform", "platform.broadcast.sent", { title, message, count: organizations.length });
+        await appendEvent(store, "platform", "platform.broadcast.sent", { title, message, count: organizations.length, actor: superSession.sub });
         await Promise.all(
           organizations.map((org) => appendEvent(store, org.id, "platform.broadcast.received", { title, message })),
         );
@@ -101,7 +93,7 @@ module.exports = async (req, res) => {
         };
         const backups = await readArray(store, BACKUPS_KEY);
         await store.set(BACKUPS_KEY, [backup, ...backups].slice(0, 500));
-        await appendEvent(store, "platform", "organization.backup.created", { tenantId: org.id, backupId: backup.id });
+        await appendEvent(store, "platform", "organization.backup.created", { tenantId: org.id, backupId: backup.id, actor: superSession.sub });
         return sendJson(res, 200, { ok: true, backup: { ...backup, summary: undefined } });
       }
       return sendJson(res, 400, { ok: false, error: "Unsupported monitoring action" });

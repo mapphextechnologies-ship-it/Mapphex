@@ -9,6 +9,14 @@
   let state = { users: [], settings: {}, organization: null, events: [] };
 
   const csv = (value) => String(value || "").split(",").map((x) => x.trim()).filter(Boolean);
+  const downloadText = (filename, text, type = "text/plain") => {
+    const blob = new Blob([text], { type });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
 
   const fetchJson = async (url, opts = {}) => {
     const res = await fetch(url, opts);
@@ -24,9 +32,8 @@
 
   const render = () => {
     const session = window.EnterpriseCore?.getSession?.() || {};
-    const support = session.role === "super_admin" || new URLSearchParams(location.search).get("support") === "1";
     const badge = $("#internal-mode-badge");
-    if (badge) badge.hidden = !support;
+    if (badge) badge.hidden = true;
     $("#org-admin-title").textContent = state.organization?.name || "Organization Admin";
     $("#org-admin-sub").textContent = state.organization?.organizationId || tenantId;
     $("#org-kpi-users").textContent = state.users.length;
@@ -64,7 +71,7 @@
     const fromQuery = new URLSearchParams(location.search).get("tenant");
     setTenant(fromQuery || window.EnterpriseCore?.currentTenantId?.() || "default-company");
     const session = window.EnterpriseCore?.getSession?.();
-    if (!session?.tenantId) {
+    if (!session?.tenantId || session.role === "super_admin" || new URLSearchParams(location.search).get("support") === "1") {
       location.href = "organization-login.html";
       return;
     }
@@ -94,6 +101,18 @@
         }),
       });
       await load();
+    });
+    $("#export-admin-audit")?.addEventListener("click", () => {
+      const rows = state.events.map((event) => [event.at, event.type, JSON.stringify(event.payload || {})]);
+      downloadText("organization-audit.csv", rows.map((row) => row.map((cell) => `"${String(cell || "").replace(/"/g, '""')}"`).join(",")).join("\n"), "text/csv");
+      window.EnterpriseCore?.audit?.("admin.audit.exported", { count: rows.length });
+    });
+    $("#send-global-announcement")?.addEventListener("click", () => {
+      const message = `Global announcement sent to ${state.organization?.name || tenantId} portals.`;
+      window.EnterpriseCore?.notify?.("Global announcement", message);
+      window.EnterpriseCore?.audit?.("admin.announcement.sent", { tenantId });
+      state.events.push({ at: new Date().toISOString(), type: "admin.announcement.sent", payload: { message } });
+      render();
     });
     window.addEventListener("enterprise:realtime", () => load().catch(() => null));
     load().catch((err) => window.EnterpriseCore?.notify?.("Organization Admin", err.message, "error"));

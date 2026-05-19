@@ -9,6 +9,7 @@ const routes = new Map([
   ["/api/assets/sync", () => require("./assets/sync")],
   ["/api/audit", () => require("./audit")],
   ["/api/auth/session", () => require("./auth/session")],
+  ["/api/erp", () => require("./erp")],
   ["/api/files", () => require("./files")],
   ["/api/health", () => require("./health")],
   ["/api/kv", () => require("./kv")],
@@ -22,7 +23,7 @@ const routes = new Map([
   ["/api/organizations", () => require("./organizations")],
   ["/api/platform-monitoring", () => require("./platform-monitoring")],
   ["/api/realtime", () => require("./realtime")],
-  ["/api/tasks", () => require("./tasks")]
+  ["/api/super-admin/session", () => require("./super-admin/session")]
 ]);
 
 module.exports = async (req, res) => {

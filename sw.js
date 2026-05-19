@@ -1,10 +1,10 @@
-const CACHE_NAME = "enterprise-erp-v32";
+const CACHE_NAME = "enterprise-erp-v43";
 const APP_SHELL = [
   "./",
+  "./manifest.webmanifest",
   "./index.html",
-  "./TeamLeader.html",
-  "./teamleader-login.html",
-  "./teamleader-register.html",
+  "./services.html",
+  "./service-detail.html",
   "./organization-register.html",
   "./organization-login.html",
   "./organization-agreement.html",
@@ -12,21 +12,31 @@ const APP_SHELL = [
   "./organization-workspace.html",
   "./organization-module.html",
   "./organization-admin.html",
-  "./staff-portal.html",
+  "./Agent.html",
+  "./Branch.html",
+  "./Director.html",
+  "./TeamLeader.html",
   "./director.css",
-  "./teamleader.css",
-  "./departments.css",
+  "./enterprise-platform.css",
   "./home.css",
-  "./portal.css",
+  "./service-detail.css",
   "./management.css",
   "./onboarding.css",
-  "./enterprise-platform.css",
+  "./portal.css",
+  "./auth.css",
+  "./agent.css",
+  "./branch.css",
+  "./teamleader.css",
   "./enterprise-core.js",
   "./enterprise-platform.js",
+  "./enterprise-modules.js",
   "./kv-client.js",
   "./enterprise-store.js",
+  "./erp-client.js",
   "./pwa.js",
+  "./ui-menu.js",
   "./home.js",
+  "./service-detail.js",
   "./organization-register.js",
   "./organization-login.js",
   "./organization-agreement.js",
@@ -34,10 +44,10 @@ const APP_SHELL = [
   "./organization-workspace.js",
   "./organization-module.js",
   "./organization-admin.js",
+  "./agent.js",
+  "./branch.js",
+  "./director.js",
   "./teamleader.js",
-  "./teamleader-login.js",
-  "./teamleader-register.js",
-  "./ui-menu.js",
   "./images/enterprise-logo.png",
   "./images/enterprise-icon-192.png",
   "./images/enterprise-icon-512.png",
@@ -70,9 +80,36 @@ self.addEventListener("fetch", (event) => {
     fetch(req)
       .then((res) => {
         const copy = res.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(req, copy)).catch(() => null);
+        caches.open(CACHE_NAME).then((cache) => cache.put(req, copy)).catch(() => {});
         return res;
       })
       .catch(() => caches.match(req).then((cached) => cached || caches.match("./index.html")))
   );
+});
+
+self.addEventListener("sync", (event) => {
+  if (event.tag !== "bytewaave-background-sync") return;
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      clients.forEach((client) => client.postMessage({ type: "BYTEWAAVE_BACKGROUND_SYNC", at: new Date().toISOString() }));
+    })
+  );
+});
+
+self.addEventListener("push", (event) => {
+  const data = event.data?.json?.() || {};
+  event.waitUntil(
+    self.registration.showNotification(data.title || "BYTEWAAVE", {
+      body: data.body || "ERP workflow update",
+      icon: "/images/bytewave-icon-192.png",
+      badge: "/images/bytewave-icon-192.png",
+      data: data.url || "/organization-workspace.html",
+    })
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = event.notification.data || "/organization-workspace.html";
+  event.waitUntil(self.clients.openWindow(url));
 });

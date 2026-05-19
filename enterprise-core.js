@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const COMPANY_NAME = "MAPPHEX";
+  const COMPANY_NAME = "BYTEWAAVE";
   const DEFAULT_TENANT_ID = "default-company";
   const TENANT_KEY = "enterprise_active_tenant_v1";
   const SESSION_META_KEY = "enterprise_session_meta_v1";
@@ -98,10 +98,19 @@
     ],
     director: ["*"],
     admin: ["users.manage", "branches.manage", "reports.read", "audit.read", "settings.manage"],
-    finance: ["finance.manage", "reports.read", "payments.manage"],
-    hr: ["hr.manage", "reports.read"],
+    finance: ["finance.manage", "reports.read", "payments.manage", "approvals.manage"],
+    hr: ["hr.manage", "reports.read", "payroll.prepare", "employees.manage"],
+    procurement: ["procurement.manage", "suppliers.manage", "purchase_requests.manage", "reports.read"],
+    technology: ["technology.manage", "projects.manage", "tickets.manage", "deployments.manage", "reports.read"],
     operations: ["operations.manage", "inventory.manage", "reports.read"],
     sales: ["sales.manage", "customers.manage", "reports.read"],
+    pharmacy: ["pharmacy.manage", "inventory.manage", "prescriptions.manage", "reports.read"],
+    inventory: ["inventory.manage", "stock.transfer", "reports.read"],
+    customer_service: ["customers.manage", "tickets.manage", "reports.read"],
+    academic: ["academic.manage", "students.manage", "reports.read"],
+    hospital: ["hospital.manage", "patients.manage", "reports.read"],
+    restaurant: ["restaurant.manage", "orders.manage", "reports.read"],
+    real_estate: ["real-estate.manage", "properties.manage", "reports.read"],
     branch: ["inventory.manage", "sales.manage", "reports.read"],
     teamleader: ["agents.manage", "inventory.allocate", "reports.read"],
     agent: ["sales.create", "customers.manage"],

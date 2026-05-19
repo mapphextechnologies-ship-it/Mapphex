@@ -1,0 +1,139 @@
+/* Service detail page layout
+   Keep service-specific preview and subscription styling here so the service page can scale without burying new work in home.css. */
+
+.service-app-preview {
+  max-width: 1040px;
+  margin-inline: auto;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.preview-context {
+  padding: 0 0 14px;
+  border-bottom: 1px solid rgba(130, 190, 255, 0.14);
+}
+
+.preview-stage {
+  min-height: 0;
+  grid-template-columns: minmax(0, 1.25fr) minmax(230px, 0.55fr);
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(130, 190, 255, 0.12);
+  border-radius: 14px;
+  background: #f5f8fb;
+}
+
+.preview-main-window,
+.preview-side-window,
+.preview-bottom-window {
+  border-color: rgba(15, 23, 42, 0.1);
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.preview-main-window,
+.preview-side-window,
+.preview-bottom-window {
+  padding: 13px;
+}
+
+.mock-toolbar {
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+}
+
+.mock-toolbar strong {
+  font-size: 15px;
+}
+
+.mock-toolbar span,
+.preview-component-strip span,
+.portal-stack span {
+  min-height: 24px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  font-size: 11px;
+}
+
+.retail-pos-grid,
+.order-board,
+.device-metrics,
+.care-list,
+.setup-steps {
+  gap: 8px;
+}
+
+.product-tile,
+.order-board article,
+.device-metrics article,
+.care-list article,
+.setup-steps article {
+  min-height: 78px;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.product-tile strong,
+.order-board strong,
+.care-list strong,
+.setup-steps strong,
+.preview-bottom-window strong,
+.mock-panel-title {
+  font-size: 14px;
+}
+
+.product-tile span,
+.order-board span,
+.care-list span,
+.setup-steps small,
+.order-board p,
+.mini-table span,
+.mini-table b,
+.receipt-line,
+.toggle-row {
+  font-size: 12px;
+}
+
+.product-tile small {
+  margin-top: 10px;
+}
+
+.device-metrics strong {
+  font-size: 20px;
+}
+
+.mini-table {
+  border-radius: 8px;
+}
+
+.mini-table span,
+.mini-table b {
+  padding: 8px 10px;
+}
+
+.preview-side-window button {
+  min-height: 38px;
+  border-radius: 8px;
+}
+
+.allocation-flow span {
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+@media (max-width: 760px) {
+  .preview-stage {
+    grid-template-columns: 1fr;
+    padding: 10px;
+  }
+
+  .preview-main-window,
+  .preview-side-window,
+  .preview-bottom-window,
+  .preview-component-strip {
+    grid-column: 1;
+  }
+}

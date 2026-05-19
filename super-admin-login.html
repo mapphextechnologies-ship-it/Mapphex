@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Platform Control Access</title>
+    <meta name="robots" content="noindex,nofollow" />
+    <link rel="icon" href="/images/enterprise-icon-192.png" type="image/png" />
+    <link rel="stylesheet" href="/auth.css" />
+    <link rel="stylesheet" href="/enterprise-platform.css" />
+  </head>
+  <body class="auth-page" data-page="super-admin-login">
+    <main class="auth-shell">
+      <section class="auth-card">
+        <div class="auth-brand">
+          <img src="/images/enterprise-logo.png" alt="" />
+          <div>
+            <h1>Platform Control</h1>
+            <p>Restricted Super Admin access</p>
+          </div>
+        </div>
+        <form id="super-admin-login-form" class="auth-form">
+          <label class="field">
+            <span>Super Admin username</span>
+            <input name="username" autocomplete="username" required />
+          </label>
+          <label class="field">
+            <span>Password</span>
+            <input name="password" type="password" autocomplete="current-password" required />
+          </label>
+          <button class="btn primary" type="submit">Enter Control Center</button>
+          <p id="super-admin-login-error" class="form-error" role="alert"></p>
+        </form>
+      </section>
+    </main>
+    <script src="/super-admin-session.js"></script>
+    <script src="/super-admin-login.js"></script>
+  </body>
+</html>

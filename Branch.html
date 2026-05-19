@@ -4,10 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Branch Dashboard • MAPPHEX</title>
-    <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="icon" href="images/enterprise-icon-192.png" type="image/png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/images/enterprise-icon-192.png" type="image/png" />
     <link rel="stylesheet" href="director.css" />
-    <link rel="stylesheet" href="branch.css" />    <link rel="stylesheet" href="enterprise-platform.css" />
+    <link rel="stylesheet" href="branch.css" />
+    <link rel="stylesheet" href="enterprise-platform.css" />
 
   </head>
   <body data-page="branch-dashboard">
@@ -16,7 +17,7 @@
         <button id="menu-toggle" class="icon-btn" type="button" aria-label="Open menu" aria-expanded="false">
           <span class="icon-hamburger" aria-hidden="true"></span>
         </button>
-        <img class="logo-img" src="images/enterprise-logo.png" alt="" />
+        <img class="logo-img" src="/images/enterprise-logo.png" alt="" />
         <div>
           <div class="brand-title">MAPPHEX</div>
           <div class="brand-subtitle muted">Branch ERP Dashboard</div>
@@ -62,25 +63,25 @@
 
         <div class="kpis">
           <article class="kpi">
-            <div class="kpi-label">Models</div>
+            <div class="kpi-label">Categories</div>
             <div id="b-kpi-models" class="kpi-value">0</div>
             <div class="kpi-foot muted">This branch</div>
           </article>
 
           <article class="kpi">
-            <div class="kpi-label">Phones in stock</div>
+            <div class="kpi-label">Items in stock</div>
             <div id="b-kpi-stock" class="kpi-value">0</div>
             <div class="kpi-foot muted">This branch</div>
           </article>
 
           <article class="kpi">
-            <div class="kpi-label">Phones sold</div>
+            <div class="kpi-label">Items sold</div>
             <div id="b-kpi-sold" class="kpi-value">0</div>
             <div class="kpi-foot muted">This branch</div>
           </article>
 
           <article class="kpi">
-            <div class="kpi-label">Top model</div>
+            <div class="kpi-label">Top product/service</div>
             <div id="b-kpi-top" class="kpi-value">—</div>
             <div class="kpi-foot muted">Highest sold</div>
           </article>
@@ -92,30 +93,30 @@
           <h2>Inventory Entry</h2>
           <div class="panel-actions">
             <button id="add-phone-btn" class="btn primary" type="button">
-              Add phone
+              Add product/service
             </button>
           </div>
         </div>
 
         <div class="branch-form">
           <label class="field">
-            <span>Phone model</span>
-            <input id="ph-model" type="text" placeholder="e.g. Samsung A15" />
+            <span>Product / service name</span>
+            <input id="ph-model" type="text" placeholder="e.g. Antibiotics, school fees, web hosting, cement" />
           </label>
 
           <label class="field">
-            <span>Color</span>
-            <input id="ph-color" type="text" placeholder="e.g. Black" />
+            <span>Category</span>
+            <input id="ph-color" type="text" placeholder="e.g. Medicine, SaaS, Hardware, Food, Tuition" />
           </label>
 
           <label class="field">
-            <span>Storage</span>
-            <input id="ph-storage" type="text" placeholder="e.g. 128GB" />
+            <span>Unit / attributes</span>
+            <input id="ph-storage" type="text" placeholder="e.g. pcs, kg, monthly, batch, custom attribute" />
           </label>
 
           <label class="field">
-            <span>Serial number</span>
-            <input id="ph-serial" type="text" placeholder="e.g. SN-000123" />
+            <span>SKU / service code / asset reference</span>
+            <input id="ph-serial" type="text" placeholder="e.g. SKU-000123, SVC-001, ASSET-01" />
           </label>
 
           <label class="field">
@@ -124,7 +125,7 @@
           </label>
 
           <div class="report-buttons" style="justify-content:flex-start;">
-            <button id="ph-save-btn" class="btn primary" type="button">Save phone</button>
+            <button id="ph-save-btn" class="btn primary" type="button">Save item</button>
             <button id="ph-clear-btn" class="btn" type="button">Clear</button>
           </div>
         </div>
@@ -134,9 +135,9 @@
             <thead>
               <tr>
                 <th>Serial</th>
-                <th>Model</th>
-                <th>Color</th>
-                <th>Storage</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Unit / Attributes</th>
                 <th class="num">Price</th>
                 <th>Status</th>
                 <th>Assigned to</th>
@@ -156,8 +157,8 @@
 
         <div class="branch-form">
           <label class="field">
-            <span>Model</span>
-            <input id="dl-model" type="text" placeholder="e.g. iPhone 15 Pro" />
+            <span>Product / service</span>
+            <input id="dl-model" type="text" placeholder="e.g. Product, asset, subscription, or service name" />
           </label>
 
           <label class="field">
@@ -190,7 +191,7 @@
               <tr>
                 <th>Date</th>
                 <th>Type</th>
-                <th>Model</th>
+                <th>Product / Service</th>
                 <th class="num">Quantity</th>
                 <th>Notes</th>
               </tr>
@@ -217,10 +218,10 @@
         <div class="branch-form">
           <label class="field">
             <span>Serial number</span>
-            <input id="tx-serial" type="text" placeholder="Phone serial number" />
+            <input id="tx-serial" type="text" placeholder="SKU, service code, asset serial, or transaction reference" />
           </label>
           <label class="field">
-            <span>Customer phone</span>
+            <span>Customer contact</span>
             <input id="tx-customer-phone" type="tel" inputmode="tel" placeholder="e.g. 07XXXXXXXX" />
           </label>
           <label class="field">
@@ -243,7 +244,7 @@
           </label>
           <label class="field">
             <span>Amount (KES)</span>
-            <input id="tx-amount" type="number" min="0" step="1" placeholder="Auto from phone price" />
+            <input id="tx-amount" type="number" min="0" step="1" placeholder="Auto from item or service price" />
           </label>
           <label class="field">
             <span>Amount paid (KES)</span>
@@ -267,8 +268,8 @@
 
         <div class="branch-form">
           <label class="field">
-            <span>Credit serial</span>
-            <input id="credit-serial" type="text" placeholder="Sold phone serial" />
+            <span>Credit sale reference</span>
+            <input id="credit-serial" type="text" placeholder="Sale, subscription, or asset reference" />
           </label>
           <label class="field">
             <span>Payment channel</span>
@@ -294,7 +295,7 @@
             <thead>
               <tr>
                 <th>Date</th>
-                <th>Model</th>
+                  <th>Product / Service</th>
                 <th>Serial</th>
                 <th>Customer</th>
                 <th>Channel</th>
@@ -361,11 +362,11 @@
         </div>
         <div class="charts-grid">
           <div class="chart-card">
-            <div class="muted" style="font-size:12px; margin-bottom:8px;">Inventory by model (stock)</div>
+            <div class="muted" style="font-size:12px; margin-bottom:8px;">Inventory by product or service category</div>
             <canvas id="chart-stock" height="220"></canvas>
           </div>
           <div class="chart-card">
-            <div class="muted" style="font-size:12px; margin-bottom:8px;">Sales by model (sold)</div>
+            <div class="muted" style="font-size:12px; margin-bottom:8px;">Sales by product or service</div>
             <canvas id="chart-sold" height="220"></canvas>
           </div>
           <div class="chart-card">
@@ -386,20 +387,11 @@
 
 
     <script src="enterprise-core.js"></script>
-<script src="kv-client.js"></script>
+    <script src="kv-client.js"></script>
     <script src="enterprise-store.js"></script>
+    <script src="erp-client.js"></script>
     <script src="enterprise-platform.js"></script>
-
-
-
-
-
-<script src="branch.js"></script>
-
-
-
-
-
-<script src="pwa.js"></script>
+    <script src="branch.js"></script>
+    <script src="pwa.js"></script>
   </body>
 </html>

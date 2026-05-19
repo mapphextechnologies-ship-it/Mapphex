@@ -4,9 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Register Organization • MAPPHEX</title>
-    <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="icon" href="images/bytewave-icon-192.png" type="image/png" />
-    <link rel="apple-touch-icon" href="images/bytewave-icon-192.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/images/bytewave-icon-192.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/images/bytewave-icon-192.png" />
     <meta name="theme-color" content="#06101f" />
     <link rel="stylesheet" href="director.css" />
     <link rel="stylesheet" href="enterprise-platform.css" />
@@ -16,21 +16,38 @@
     <main class="auth-shell org-register-shell">
       <section class="auth-card org-register-card">
         <div class="auth-header">
-          <img class="logo-img" src="images/enterprise-logo.png" alt="" />
+          <img class="logo-img" src="/images/enterprise-logo.png" alt="" />
           <h1>Register Organization</h1>
-          <p>Create an isolated company workspace with its own admin account.</p>
+          <p>Set up a workspace for your organization, choose the business category, and create the first admin account.</p>
         </div>
         <form id="org-register-form" class="auth-form">
-          <label class="field"><span>Organization name</span><input name="name" required placeholder="Acme Pharmacy Ltd" /></label>
-          <label class="field"><span>Business type</span><select name="businessType"><option>company</option><option>pharmacy</option><option>supermarket</option><option>restaurant</option><option>logistics</option><option>retail</option><option>school</option><option>agency</option><option>corporate</option><option>service</option><option>warehouse</option></select></label>
-          <label class="field"><span>Organization email</span><input name="email" type="email" required placeholder="info@company.com" /></label>
-          <label class="field"><span>Phone number</span><input name="phone" required placeholder="+254..." /></label>
+          <section class="selected-package-summary" aria-live="polite">
+            <div>
+              <span>Selected service</span>
+              <h2 id="selected-service-title">No service selected</h2>
+              <p id="selected-service-copy">Choose a service first so the right components and subscription estimate can be attached to this organization.</p>
+            </div>
+            <div class="selected-package-total">
+              <strong id="selected-service-total">KSh 0 / month</strong>
+              <span>Estimated subscription</span>
+            </div>
+            <div id="selected-service-components" class="selected-service-components"></div>
+            <a class="btn" href="services.html#services">Choose service</a>
+          </section>
+          <input id="selected-service-id" name="businessType" type="hidden" value="company" />
+          <input id="selected-service-category" name="serviceCategory" type="hidden" value="General & Setup" />
+          <input id="selected-service-name" name="serviceTitle" type="hidden" value="Company" />
+          <input id="selected-service-estimate" name="serviceEstimate" type="hidden" value="0" />
+          <input id="selected-service-components-input" name="selectedComponents" type="hidden" value="" />
+          <label class="field"><span>Organization name</span><input name="name" required placeholder="Majembe Clinic Ltd" /></label>
+          <label class="field"><span>Organization email</span><input name="email" type="email" required placeholder="info@majembeclinic.co.ke" /></label>
+          <label class="field"><span>Phone number</span><input name="phone" required placeholder="+254 700 000 000" /></label>
           <label class="field"><span>Country / location</span><input name="location" required placeholder="Kenya, Nairobi" /></label>
           <label class="field"><span>Company size</span><select name="companySize"><option>1-10</option><option>11-50</option><option>51-200</option><option>201-1000</option><option>1000+</option></select></label>
-          <label class="field"><span>Branches / departments</span><input name="branchCount" type="number" min="0" placeholder="Optional" /></label>
-          <label class="field"><span>Admin name</span><input name="adminName" required placeholder="Jane Admin" /></label>
-          <label class="field"><span>Admin email</span><input name="adminEmail" type="email" required placeholder="admin@company.com" /></label>
-          <label class="field"><span>Admin password</span><input name="adminPassword" type="password" required minlength="6" /></label>
+          <label class="field"><span>Branches / departments</span><input name="branchCount" type="number" min="0" placeholder="Number of branches or departments" /></label>
+          <label class="field"><span>Admin name</span><input name="adminName" required placeholder="Jane Mwangi" /></label>
+          <label class="field"><span>Admin email</span><input name="adminEmail" type="email" required placeholder="admin@majembeclinic.co.ke" /></label>
+          <label class="field"><span>Admin password</span><input name="adminPassword" type="password" required minlength="6" placeholder="Create admin password" /></label>
           <button class="btn primary" type="submit">Create organization</button>
           <p id="org-register-result" class="form-error"></p>
         </form>

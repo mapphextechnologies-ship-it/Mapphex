@@ -435,12 +435,16 @@
       if (window.innerWidth <= 980) setMenuOpen(false);
     };
 
+    const itemName = (item) => String(item?.name || item?.model || item?.serviceName || "Item").trim();
+    const itemCategory = (item) => String(item?.category || item?.color || item?.type || "General").trim();
+    const itemUnit = (item) => String(item?.unit || item?.storage || item?.attributes || "unit").trim();
+
     const rebuildInventoryFromPhones = (branch) => {
       const phones = Array.isArray(branch.phones) ? branch.phones : [];
       const soldPhones = Array.isArray(branch.soldPhones) ? branch.soldPhones : [];
       const byModel = new Map();
       for (const p of [...phones, ...soldPhones]) {
-        const model = String(p.model || "").trim() || "—";
+        const model = itemName(p) || "—";
         const row = byModel.get(model) || { model, stock: 0, sold: 0 };
         if (String(p.status || "in_stock") === "sold") row.sold += 1;
         else row.stock += 1;
@@ -529,7 +533,7 @@
     const exportDamageLossCsv = () => {
       const branch = normalizeBranch(getBranch());
       if (!branch) return;
-      const rows = [["Date", "Type", "Model", "Quantity", "Notes"]];
+      const rows = [["Date", "Type", "ProductService", "Quantity", "Notes"]];
       for (const r of branch.damageLoss || []) {
         rows.push([r.at, r.type, r.model, r.qty, r.notes || ""]);
       }
@@ -565,9 +569,9 @@
         `;
 
         tr.children[0].textContent = p.serial || "—";
-        tr.children[1].textContent = p.model || "—";
-        tr.children[2].textContent = p.color || "—";
-        tr.children[3].textContent = p.storage || "—";
+        tr.children[1].textContent = itemName(p) || "—";
+        tr.children[2].textContent = itemCategory(p) || "—";
+        tr.children[3].textContent = itemUnit(p) || "—";
         tr.children[4].textContent = formatInt(p.price || 0);
         tr.children[5].textContent = String(p.status || "in_stock").replace("_", " ");
         tr.children[6].textContent = p.assignedAgentName || p.assignedAgentUsername || "Open";
@@ -634,8 +638,11 @@
       branch.phones.push({
         serial,
         model,
+        name: model,
         color,
+        category: color,
         storage,
+        unit: storage,
         price,
         status: "in_stock",
         createdAt: isoNow(),
@@ -669,7 +676,7 @@
           (p) => String(p.serial || "").toLowerCase() === serial.toLowerCase(),
         ) || null;
       if (!phone) {
-        if (txHelper) txHelper.textContent = "Serial not found in inventory.";
+        if (txHelper) txHelper.textContent = "Reference not found in inventory.";
         if (txSms) txSms.textContent = "";
         if (txCustomerPhone) txCustomerPhone.value = "";
         return;
@@ -682,7 +689,7 @@
         txPaid.value = String(Number(phone.price || 0));
       }
       if (txHelper) {
-        txHelper.textContent = `${phone.model || "Phone"} • ${phone.color || "—"} • ${phone.storage || "—"} • KES ${formatInt(phone.price || 0)}`;
+        txHelper.textContent = `${itemName(phone)} • ${itemCategory(phone)} • ${itemUnit(phone)} • KES ${formatInt(phone.price || 0)}`;
       }
       if (txSms) txSms.textContent = "";
     };
@@ -771,12 +778,12 @@
               saleType: p.saleType || "cash",
               creditDueDate: p.creditDueDate || "",
               creditStatus: p.creditStatus || "",
-              phone: { model: p.model, color: p.color, storage: p.storage, price: p.price },
+              phone: { name: itemName(p), category: itemCategory(p), unit: itemUnit(p), model: p.model, color: p.color, storage: p.storage, price: p.price },
               agent: { username: p.soldBy || "" },
             }));
 
       for (const obj of rows) {
-        const modelRaw = obj?.phone?.model ?? obj?.model ?? "—";
+        const modelRaw = obj?.phone?.name ?? obj?.phone?.model ?? obj?.model ?? "—";
         const soldBy = obj?.agent?.username ?? obj?.soldBy ?? "";
         const amount = Number(obj.amount || 0) || 0;
         const saleType = String(obj.saleType || "cash").toLowerCase();
@@ -863,7 +870,7 @@
       let ref = String(creditRef?.value || "").trim();
       const rawAmount = Number(creditAmount?.value || 0);
       if (!serial) {
-        if (creditHelper) creditHelper.textContent = "Enter the sold phone serial for the open credit sale.";
+        if (creditHelper) creditHelper.textContent = "Enter the sale, subscription, or asset reference for the open credit account.";
         return creditSerial?.focus?.();
       }
       if (!Number.isFinite(rawAmount) || rawAmount <= 0) {
@@ -873,7 +880,7 @@
 
       const found = findOpenCreditSale(branch, serial);
       if (!found) {
-        if (creditHelper) creditHelper.textContent = "No open credit sale found for this serial.";
+        if (creditHelper) creditHelper.textContent = "No open credit sale found for this reference.";
         return creditSerial?.focus?.();
       }
 
@@ -950,8 +957,8 @@
       sendSmsReceipt(
         saleTx.customerPhone,
         nextBalance > 0
-          ? `MAPPHEX: Credit payment received KES ${formatInt(paidNow)} for serial ${saleTx.serial}. Balance KES ${formatInt(nextBalance)}. Ref: ${ref}.`
-          : `MAPPHEX: Credit cleared for serial ${saleTx.serial}. Last payment KES ${formatInt(paidNow)}. Ref: ${ref}. Thank you.`,
+          ? `MAPPHEX: Credit payment received KES ${formatInt(paidNow)} for reference ${saleTx.serial}. Balance KES ${formatInt(nextBalance)}. Ref: ${ref}.`
+          : `MAPPHEX: Credit cleared for reference ${saleTx.serial}. Last payment KES ${formatInt(paidNow)}. Ref: ${ref}. Thank you.`,
       );
 
       if (creditSerial) creditSerial.value = "";
@@ -981,7 +988,7 @@
           (p) => String(p.serial || "").toLowerCase() === serial.toLowerCase(),
         ) || null;
       if (!phone) {
-        if (txHelper) txHelper.textContent = "Serial not found in inventory.";
+        if (txHelper) txHelper.textContent = "Reference not found in inventory.";
         if (txSms) txSms.textContent = "";
         return txSerial?.focus?.();
       }
@@ -1008,7 +1015,7 @@
             amount: amountPaid,
             phoneNumber: customerPhone,
             accountReference: ref,
-            transactionDesc: `MAPPHEX ${phone.model || "phone"} sale`,
+            transactionDesc: `MAPPHEX ${itemName(phone)} sale`,
           });
         } catch (err) {
           if (txSms) txSms.textContent = String(err?.message || "M-Pesa STK push failed.");
@@ -1030,6 +1037,9 @@
         serial: phone.serial,
         customerPhone,
         phone: {
+          name: itemName(phone),
+          category: itemCategory(phone),
+          unit: itemUnit(phone),
           model: phone.model,
           color: phone.color,
           storage: phone.storage,
@@ -1060,7 +1070,7 @@
       branch.financeSummary.txCount += 1;
       branch.financeSummary.lastTxAt = isoNow();
 
-      // Remove serial from available inventory (move to sold list for reporting).
+      // Move the referenced item from available inventory to the sold list for reporting.
       const sold = {
         ...phone,
         status: "sold",
@@ -1087,6 +1097,24 @@
       branch.updatedAt = isoNow();
       persist().catch(() => null);
       notifyTransaction(txObj, branch);
+      window.ERPClient?.postTransaction?.({
+        sourceModule: "sales",
+        type: "sale",
+        amount,
+        amountPaid,
+        quantity: 1,
+        itemId: phone.serial || itemName(phone),
+        ref,
+        customerPhone,
+        payload: {
+          branchId: branch.id,
+          productService: itemName(phone),
+          category: itemCategory(phone),
+          unit: itemUnit(phone),
+          saleType,
+          balance,
+        },
+      }).catch(() => null);
 
       if (txRef) txRef.value = "";
       if (txAmount) txAmount.value = "";
@@ -1102,7 +1130,7 @@
       if (saleType === "credit") {
         if (txSms) txSms.textContent = `Credit sale recorded. Paid KES ${formatInt(amountPaid)}, balance KES ${formatInt(balance)}. Ref ${ref}.`;
       } else if (channel === "mpesa") {
-        const promptMsg = `M-Pesa prompt sent. Enter your M-Pesa PIN to pay KES ${formatInt(amountPaid)} for ${sold.model} (${sold.storage}, ${sold.color}) [SN:${sold.serial}]. Ref ${ref}.`;
+        const promptMsg = `M-Pesa prompt sent. Enter your M-Pesa PIN to pay KES ${formatInt(amountPaid)} for ${itemName(sold)} (${itemUnit(sold)}, ${itemCategory(sold)}) [Ref:${sold.serial}]. Ref ${ref}.`;
         if (txSms) txSms.textContent = promptMsg;
       } else {
         if (txSms) txSms.textContent = `Bank transaction recorded. Ref ${ref}.`;
@@ -1111,8 +1139,8 @@
       sendSmsReceipt(
         customerPhone,
         saleType === "credit"
-          ? `MAPPHEX: Credit sale for ${sold.model} (${sold.storage}, ${sold.color}). Paid KES ${formatInt(amountPaid)}, balance KES ${formatInt(balance)}, due ${creditDueDate}. Serial: ${sold.serial}. Ref: ${ref}.`
-          : `MAPPHEX: Payment received KES ${formatInt(amount)} for ${sold.model} (${sold.storage}, ${sold.color}). Serial: ${sold.serial}. Ref: ${ref}. Thank you.`,
+          ? `MAPPHEX: Credit sale for ${itemName(sold)} (${itemUnit(sold)}, ${itemCategory(sold)}). Paid KES ${formatInt(amountPaid)}, balance KES ${formatInt(balance)}, due ${creditDueDate}. Ref: ${ref}.`
+          : `MAPPHEX: Payment received KES ${formatInt(amount)} for ${itemName(sold)} (${itemUnit(sold)}, ${itemCategory(sold)}). Ref: ${ref}. Thank you.`,
       );
 
       await renderTransactions();
@@ -1128,9 +1156,9 @@
       const rows = [
         [
           "Date",
-          "Model",
+          "ProductService",
           "Serial",
-          "CustomerPhone",
+          "CustomerContact",
           "Channel",
           "Reference",
           "AmountKES",
@@ -1151,7 +1179,7 @@
 
       if (txLog.length) {
         for (const tx of txLog) {
-          const modelRaw = tx?.phone?.model ?? tx?.model ?? "";
+          const modelRaw = tx?.phone?.name ?? tx?.phone?.model ?? tx?.model ?? "";
           const amount = Number(tx.amount || 0) || 0;
           const paid = Number(tx.amountPaid ?? tx.paidAmount ?? amount) || 0;
           const creditPaidTotal = Number(tx.creditPaidTotal ?? paid) || 0;
@@ -1179,7 +1207,7 @@
         for (const p of soldPhones) {
           rows.push([
             p.soldAt || "",
-            p.model || "",
+            itemName(p) || "",
             p.serial || "",
             p.soldTo || "",
             p.soldChannel || "",
@@ -1361,7 +1389,7 @@
         <p style="margin-top:12px; font-weight:800;">Executive summary</p>
         <div class="report-grid">
           <div class="report-card">
-            <div class="label">Models</div>
+            <div class="label">Categories</div>
             <div class="value">${formatInt(totals.models)}</div>
           </div>
           <div class="report-card">
@@ -1381,7 +1409,7 @@
             <div class="value">${formatInt(periodRevenue)}</div>
           </div>
           <div class="report-card">
-            <div class="label">Credit phones</div>
+            <div class="label">Credit accounts</div>
             <div class="value">${formatInt(creditCount)}</div>
           </div>
           <div class="report-card">
@@ -1407,7 +1435,7 @@
           <table class="table" aria-label="Branch inventory report">
             <thead>
               <tr>
-                <th>Model</th>
+                <th>Product / Service</th>
                 <th class="num">In stock</th>
                 <th class="num">Sold</th>
               </tr>
@@ -1423,7 +1451,7 @@
               <tr>
                 <th>Date</th>
                 <th>Type</th>
-                <th>Model</th>
+                <th>Product / Service</th>
                 <th class="num">Qty</th>
                 <th>Notes</th>
               </tr>
@@ -1467,7 +1495,7 @@
       const branch = normalizeBranch(getBranch());
       if (!branch) return;
       const range = getReportRange();
-      const rows = [["BranchId", "Branch", "Model", "Stock", "Sold"]];
+      const rows = [["BranchId", "Branch", "ProductService", "Stock", "Sold"]];
       for (const row of branch.inventory || []) {
         rows.push([branch.id, branch.name, row.model, row.stock, row.sold]);
       }

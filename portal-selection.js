@@ -6,21 +6,7 @@
     String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
   const ORGS_KEY = "platform_organizations_v1";
   const SETTINGS_KEY = "enterprise_org_settings_v1";
-  const PORTAL_CATALOG = window.EnterpriseModules?.catalog || [
-    { id: "branch", title: "Branch Management", href: "organization-module.html", description: "Locations, branch teams, local operations.", features: ["Branch records", "Local teams", "Operational scope"] },
-    { id: "departments", title: "Department Management", href: "organization-module.html", description: "Department users, workflows, and approvals.", features: ["Department roles", "Approvals", "Workflows"] },
-    { id: "hr", title: "HR Module", href: "organization-module.html", description: "Staff records, HR reports, and workforce structure.", features: ["Shared users", "Workforce reports", "Role access"] },
-    { id: "finance", title: "Finance Module", href: "organization-module.html", description: "Finance summaries, payments, and reports.", features: ["Shared transactions", "Expense views", "Reports"] },
-    { id: "pharmacy", title: "Pharmacy Module", href: "organization-module.html", description: "Pharmacy inventory and controlled operations.", features: ["Medicine stock", "Supplier control", "Shared inventory"] },
-    { id: "inventory", title: "Inventory Module", href: "organization-module.html", description: "Stock, items, transfers, and availability.", features: ["Stock levels", "Transfers", "Availability"] },
-    { id: "logistics", title: "Logistics Module", href: "organization-module.html", description: "Dispatch, delivery, fleet, and tracking workflows.", features: ["Dispatch", "Tracking", "Delivery status"] },
-    { id: "sales", title: "Sales Module", href: "organization-module.html", description: "Sales operations, customers, and performance.", features: ["Customers", "Sales activity", "Performance"] },
-    { id: "analytics", title: "Analytics Module", href: "organization-module.html", description: "Realtime analytics, reports, and insights.", features: ["Charts", "Insights", "Activity trends"] },
-    { id: "admin", title: "Admin Module", href: "organization-admin.html", description: "Organization settings, users, roles, and modules.", features: ["Users", "Settings", "Permissions"] },
-    { id: "staff", title: "Staff Module", href: "organization-module.html", description: "Role-specific staff workspace.", features: ["Tasks", "Notifications", "Role access"] },
-    { id: "customer", title: "Customer Module", href: "organization-module.html", description: "Customer operations and service workflows.", features: ["Customers", "Service records", "Support"] },
-    { id: "reporting", title: "Reporting Module", href: "organization-module.html", description: "Operational, finance, and organization reports.", features: ["Operational reports", "Financial summaries", "Exports"] },
-  ];
+  const PORTAL_CATALOG = window.EnterpriseModules?.catalog || [];
   const VALID_PORTAL_IDS = window.EnterpriseModules?.validIds || new Set(PORTAL_CATALOG.map((portal) => portal.id));
 
   const readJson = (key, fallback) => {
@@ -89,6 +75,34 @@
   let settings = {};
   let org = null;
   let selected = new Set();
+  const TECHNOLOGY_DEVICE_PORTALS = ["admin", "technology", "branch", "inventory", "customer", "sales", "finance", "staff", "reporting", "analytics", "agent"];
+
+  const portalPricing = (portal) => {
+    const serviceCost = settings.servicePricing?.cost || "From KSh 2,500 / month";
+    const servicePlan = settings.servicePricing?.plan || "Starter or Business";
+    const devicePrices = {
+      director: ["From KSh 2,500 / month", "Business"],
+      "device-branch": ["From KSh 2,000 / month", "Business"],
+      "team-leader": ["From KSh 1,500 / month", "Business"],
+      agent: ["From KSh 1,000 / month", "Starter or Business"],
+      "device-departments": ["From KSh 2,000 / month", "Business"],
+    };
+    const [cost, plan] = devicePrices[portal.id] || [serviceCost, servicePlan];
+    return {
+      cost,
+      plan,
+      subscription: `${portal.title} runs inside the registered ${settings.serviceTitle || "organization"} workspace. Install only this portal when that role is needed; more portals can be added later under the same organization subscription.`,
+    };
+  };
+
+  const relevantPortalIds = () => {
+    const ids = settings.allowedPortals?.length ? settings.allowedPortals : settings.recommendedPortals?.length ? settings.recommendedPortals : settings.installedPortals || [];
+    const serviceKey = String(settings.businessType || settings.serviceTitle || "").toLowerCase();
+    if (serviceKey === "technology-devices" || serviceKey === "technology devices" || serviceKey === "technology-services") {
+      return new Set(TECHNOLOGY_DEVICE_PORTALS.filter((id) => VALID_PORTAL_IDS.has(id)));
+    }
+    return new Set((ids || []).filter((id) => VALID_PORTAL_IDS.has(id)));
+  };
 
   const portalUrl = (portal) => {
     const tenant = window.EnterpriseCore?.currentTenantId?.() || "";
@@ -125,15 +139,28 @@
       mine = { ok: true, organization: localOrg(session.tenantId) };
     }
     if (!admin.ok) throw new Error(admin.error || "Unable to load portals");
-    catalog = (admin.portalCatalog || []).map(enrichPortal);
     settings = admin.settings || {};
+    const relevant = relevantPortalIds();
+    catalog = (admin.portalCatalog || [])
+      .map(enrichPortal)
+      .filter((portal) => !relevant.size || relevant.has(portal.id));
     org = mine?.organization || null;
     if (settings.agreementAccepted !== true) {
       location.href = `organization-agreement.html?tenant=${encodeURIComponent(window.EnterpriseCore?.currentTenantId?.() || "")}`;
       return;
     }
-    $("#portal-org-name").textContent = `Byewave - ${org?.name || "Organization"}`;
+    const orgName = org?.name || "Organization";
+    const orgCode = org?.organizationId || window.EnterpriseCore?.currentTenantId?.() || tenant || "Organization ID";
+    $("#portal-org-name").textContent = `${orgName}`;
+    $("#portal-org-id").textContent = orgCode;
+    $("#portal-org-context").textContent = `${orgName} • ${orgCode}`;
     $("#portal-workspace-link").href = `organization-workspace.html?tenant=${encodeURIComponent(window.EnterpriseCore?.currentTenantId?.() || tenant || "")}`;
+    const subtitle = $(".portal-manager-subtitle");
+    if (subtitle) {
+      subtitle.textContent = settings.serviceTitle
+        ? `Only portals that match ${settings.serviceTitle} are available for this organization.`
+        : "Only portals that match this organization's selected service are available.";
+    }
     render();
   };
 
@@ -145,6 +172,7 @@
         (portal) => {
           const isInstalled = installed.has(portal.id);
           const isSelected = selected.has(portal.id);
+          const pricing = portalPricing(portal);
           return `
           <article class="portal-install-card ${isInstalled ? "is-installed" : "is-selectable"} ${isSelected ? "is-selected" : ""}" data-portal-card="${escapeHtml(portal.id)}">
             <div class="portal-card-top">
@@ -171,11 +199,16 @@
                 ? `<div class="module-connectors">${portal.sharedResources.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}</div>`
                 : ""
             }
+            <div class="portal-pricing-details">
+              <div><strong>${escapeHtml(pricing.cost)}</strong><span>Estimated portal subscription</span></div>
+              <div><strong>${escapeHtml(pricing.plan)}</strong><span>Recommended plan</span></div>
+              <p>${escapeHtml(pricing.subscription)}</p>
+            </div>
             ${isInstalled ? "" : `<span class="portal-status">${isSelected ? "Selected for unified install" : "Ready to install"}</span>`}
             <div class="portal-card-actions">
               ${
                 isInstalled
-                  ? `<a class="btn primary" href="${escapeHtml(portalUrl(portal))}">Open Portal</a>`
+                  ? `<a class="btn primary" href="${escapeHtml(portalUrl(portal))}">Open Portal</a><button class="btn" data-portal-install-app="${escapeHtml(portal.id)}" type="button">Install Portal App</button><button class="btn" data-portal-deactivate="${escapeHtml(portal.id)}" type="button">Deactivate</button>`
                   : `<button class="btn" data-portal-toggle="${escapeHtml(portal.id)}" type="button">${isSelected ? "Remove from install" : "Add to install"}</button>`
               }
             </div>
@@ -201,10 +234,10 @@
     if (countEl) countEl.textContent = `${count} selected`;
     if (summaryEl) {
       summaryEl.textContent = count
-        ? `${names.join(", ")}${count > names.length ? ` and ${count - names.length} more` : ""} will install as one Byewave app.`
+        ? `${names.join(", ")}${count > names.length ? ` and ${count - names.length} more` : ""} will install as one BYTEWAAVE app.`
         : available.length
-          ? "Pick the modules your organization needs."
-          : "All available portals are already installed.";
+          ? "Pick from the portals that match this organization's registered service."
+          : "All portals for this registered service are already installed.";
     }
     if (installBtn) installBtn.disabled = count === 0;
     if (clearBtn) clearBtn.disabled = count === 0;
@@ -240,15 +273,32 @@
     return window.MapphexPWA.promptInstall();
   };
 
+  const promptPortalApp = async (portalId) => {
+    const portal = catalog.find((item) => item.id === portalId);
+    if (!portal) return;
+    const progress = $("#portal-progress");
+    if (progress) progress.textContent = `Preparing ${portal.title} app install...`;
+    const result = await promptWorkspacePwa();
+    const message = result?.ok
+      ? `${portal.title} app installed. Opening portal...`
+      : `${portal.title} is enabled. Open it and use the browser menu to install this portal app.`;
+    if (progress) progress.textContent = message;
+    showPwaHelp(message, portal);
+    if (result?.ok) window.setTimeout(() => (location.href = portalUrl(portal)), 900);
+  };
+
   const openWorkspace = () => {
     location.href = `organization-workspace.html?tenant=${encodeURIComponent(window.EnterpriseCore?.currentTenantId?.() || "")}`;
   };
 
-  const showPwaHelp = (message) => {
+  const showPwaHelp = (message, portal = null) => {
     const help = $("#pwa-install-help");
     const text = $("#pwa-install-help-text");
     const link = $("#pwa-open-workspace");
-    if (link) link.href = `organization-workspace.html?tenant=${encodeURIComponent(window.EnterpriseCore?.currentTenantId?.() || "")}`;
+    if (link) {
+      link.href = portal ? portalUrl(portal) : `organization-workspace.html?tenant=${encodeURIComponent(window.EnterpriseCore?.currentTenantId?.() || "")}`;
+      link.textContent = portal ? `Open ${portal.title}` : "Open Workspace";
+    }
     if (text && message) text.textContent = message;
     if (help) help.hidden = false;
   };
@@ -256,29 +306,29 @@
   const normalizePageCopy = () => {
     const subtitle = $(".portal-manager-subtitle");
     const helpText = $("#pwa-install-help-text");
-    if (subtitle) subtitle.textContent = "Select multiple modules and install them together as one Byewave app.";
+    if (subtitle) subtitle.textContent = "Only portals that match the registered service are shown here.";
     if (helpText) {
       helpText.textContent =
-        "After modules are enabled, your browser may ask to install Byewave. If no prompt appears, the workspace will still open and you can install from your browser menu.";
+        "After a portal is enabled, open that portal and install it from your browser menu if the install prompt does not appear.";
     }
   };
 
   const manualInstallMessage = () => {
     const ua = navigator.userAgent || "";
     if (/iPad|iPhone|iPod/i.test(ua)) {
-      return "Modules are installed. On iPhone or iPad, tap Share, then Add to Home Screen. Opening your workspace now.";
+      return "Portal is enabled. On iPhone or iPad, open the portal, tap Share, then Add to Home Screen.";
     }
     if (/Android/i.test(ua)) {
-      return "Modules are installed. If no install prompt appears, tap the browser menu, then Install app or Add to Home screen. Opening your workspace now.";
+      return "Portal is enabled. Open the portal, then use the browser menu to install the portal app or add it to the home screen.";
     }
-    return "Modules are installed. If no install prompt appears, use Chrome or Edge menu, then Install Byewave. Opening your workspace now.";
+    return "Portal is enabled. Open the portal, then use Chrome or Edge menu to install it as an app.";
   };
 
   const install = async (portalIds, options = {}) => {
     const ids = Array.from(new Set((Array.isArray(portalIds) ? portalIds : [portalIds]).filter(Boolean)));
     if (!ids.length) return;
     const progress = $("#portal-progress");
-    if (progress) progress.textContent = `Installing ${ids.length} module${ids.length === 1 ? "" : "s"} as one Byewave app...`;
+    if (progress) progress.textContent = `Installing ${ids.length} portal${ids.length === 1 ? "" : "s"}...`;
     let data;
     try {
       const response = await fetchJson("/api/org-admin", {
@@ -294,7 +344,7 @@
       const installedPortals = Array.from(new Set([...(settings.installedPortals || []), ...ids]));
       const modulePermissions = { ...(settings.modulePermissions || {}) };
       ids.forEach((portalId) => {
-        modulePermissions[portalId] = Array.from(new Set(window.EnterpriseModules?.permissionsFor?.(portalId) || [`${portalId}.read`, `${portalId}.manage`, "organization.shared.read"]));
+        modulePermissions[portalId] = Array.from(new Set(window.EnterpriseModules?.permissionsFor?.(portalId) || [`${portalId}.read`, `${portalId}.manage`]));
       });
       settings = {
         ...settings,
@@ -311,12 +361,12 @@
     settings = data.settings;
     selected.clear();
     render();
-    window.EnterpriseCore?.notify?.("Byewave installed", `${ids.length} module${ids.length === 1 ? "" : "s"} enabled`);
+    window.EnterpriseCore?.notify?.("Portals installed", `${ids.length} portal${ids.length === 1 ? "" : "s"} enabled`);
     if (options.installPwa) {
       if (progress) progress.textContent = "Modules enabled. Installing the unified workspace app...";
       const pwaResult = await promptWorkspacePwa();
       if (pwaResult?.ok) {
-        if (progress) progress.textContent = "Byewave installed. Opening workspace...";
+        if (progress) progress.textContent = "BYTEWAAVE installed. Opening workspace...";
         setTimeout(openWorkspace, 900);
         return;
       }
@@ -330,10 +380,38 @@
       if (reason !== "dismissed") window.setTimeout(openWorkspace, 2800);
       return;
     }
-    if (progress && !options.installPwa) progress.textContent = "Unified installation complete. Opening the workspace app...";
-    setTimeout(() => {
-      openWorkspace();
-    }, options.installPwa ? 1100 : 750);
+    if (progress && !options.installPwa) progress.textContent = "Portal installation complete. Use each installed portal card to open or install that portal app.";
+  };
+
+  const deactivate = async (portalId) => {
+    if (!portalId) return;
+    const progress = $("#portal-progress");
+    if (progress) progress.textContent = "Deactivating portal...";
+    try {
+      const response = await fetchJson("/api/org-admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "uninstall-portal", portalId }),
+      });
+      if (!response.res.ok || !response.data?.ok) throw new Error(response.data?.error || "Deactivate failed");
+      settings = response.data.settings;
+    } catch {
+      const remove = new Set([portalId]);
+      const modulePermissions = { ...(settings.modulePermissions || {}) };
+      delete modulePermissions[portalId];
+      settings = {
+        ...settings,
+        installedPortals: (settings.installedPortals || []).filter((id) => !remove.has(id)),
+        modules: (settings.modules || []).filter((id) => !remove.has(id)),
+        navigation: (settings.navigation || []).filter((id) => !remove.has(id)),
+        modulePermissions,
+        updatedAt: new Date().toISOString(),
+      };
+      writeJson(SETTINGS_KEY, settings);
+    }
+    window.EnterpriseCore?.notify?.("Portal deactivated", `${portalId} disabled`);
+    if (progress) progress.textContent = "Portal deactivated. It can be activated again later.";
+    render();
   };
 
   document.addEventListener("DOMContentLoaded", () => {
@@ -350,6 +428,24 @@
         toggleSelection(toggle.dataset.portalToggle);
         return;
       }
+      const installApp = event.target.closest("button[data-portal-install-app]");
+      if (installApp) {
+        promptPortalApp(installApp.dataset.portalInstallApp).catch((err) => {
+          const progress = $("#portal-progress");
+          if (progress) progress.textContent = "Portal app install failed. Open the portal and install from your browser menu.";
+          window.EnterpriseCore?.notify?.("Portal app install", err.message, "error");
+        });
+        return;
+      }
+      const deactivateBtn = event.target.closest("button[data-portal-deactivate]");
+      if (deactivateBtn) {
+        deactivate(deactivateBtn.dataset.portalDeactivate).catch((err) => {
+          const progress = $("#portal-progress");
+          if (progress) progress.textContent = "Deactivate failed. Try again.";
+          window.EnterpriseCore?.notify?.("Deactivate failed", err.message, "error");
+        });
+        return;
+      }
       const card = event.target.closest("[data-portal-card]");
       if (card && !event.target.closest("a,button,input,label")) toggleSelection(card.dataset.portalCard);
     });
@@ -363,15 +459,15 @@
       const btn = event.currentTarget;
       if (!selected.size) return;
       btn.disabled = true;
-      btn.textContent = "Installing workspace app...";
-      install([...selected], { installPwa: true })
+      btn.textContent = "Installing portals...";
+      install([...selected], { installPwa: false })
         .catch((err) => {
           const progress = $("#portal-progress");
           if (progress) progress.textContent = "Installation failed. Try again.";
           window.EnterpriseCore?.notify?.("Install failed", err.message, "error");
         })
         .finally(() => {
-          btn.textContent = "Install Selected as App";
+          btn.textContent = "Install Selected Portals";
           renderBulkBar();
         });
     });
@@ -380,7 +476,7 @@
       if (progress) progress.textContent = "Trying the device app install prompt...";
       const result = await promptWorkspacePwa();
       if (result?.ok) {
-        if (progress) progress.textContent = "Byewave installed. Opening workspace...";
+        if (progress) progress.textContent = "BYTEWAAVE installed. Opening workspace...";
         setTimeout(openWorkspace, 900);
       } else {
         const message = manualInstallMessage();
@@ -392,7 +488,7 @@
     window.MapphexPWA?.onStatus?.((status) => {
       const help = $("#pwa-install-help");
       if (status.promptReady && help?.hidden === false) {
-        $("#pwa-install-help-text").textContent = "The app install prompt is ready. Click Try install prompt again to install Byewave on this device.";
+        $("#pwa-install-help-text").textContent = "The app install prompt is ready. Click Try install prompt again to install BYTEWAAVE on this device.";
       }
     });
     load().catch((err) => window.EnterpriseCore?.notify?.("Portal manager", err.message, "error"));

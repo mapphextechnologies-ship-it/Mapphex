@@ -7,16 +7,18 @@
 
   let state = { organizations: [], events: [], totals: {}, activity: [], health: {} };
   let monitoring = { organizations: [], totals: {}, activity: [], health: {} };
-  const internalKey = new URLSearchParams(location.search).get("key") || sessionStorage.getItem("mapphex_internal_key") || "";
-  if (internalKey) sessionStorage.setItem("mapphex_internal_key", internalKey);
+
+  const notify = (title, body) => {
+    const message = body ? `${title}: ${body}` : title;
+    console.info(message);
+  };
 
   const fetchJson = async (url, opts = {}) => {
-    const headers = new Headers(opts.headers || {});
-    if (internalKey) headers.set("X-Super-Admin-Key", internalKey);
-    const res = await fetch(url, { ...opts, headers });
-    const data = await res.json().catch(() => null);
-    if (!res.ok || !data?.ok) throw new Error(data?.error || "Request failed");
-    return data;
+    if (!window.SuperAdminSession?.readSession?.()) {
+      location.replace("/_internal/mapphex-control");
+      throw new Error("Super Admin session required");
+    }
+    return window.SuperAdminSession.apiFetch(url, opts);
   };
 
   const num = (value) => Number(value || 0).toLocaleString();
@@ -67,9 +69,8 @@
               <button class="btn" data-action="verified" data-id="${escapeHtml(org.id)}" type="button">Verify</button>
               <button class="btn" data-action="restricted" data-id="${escapeHtml(org.id)}" type="button">Restrict</button>
               <button class="btn danger" data-action="suspended" data-id="${escapeHtml(org.id)}" type="button">Suspend</button>
+              <button class="btn" data-action="modules-core" data-id="${escapeHtml(org.id)}" type="button">Core Modules</button>
               <button class="btn" data-action="backup" data-id="${escapeHtml(org.id)}" type="button">Backup</button>
-              <button class="btn internal-action" data-support="${escapeHtml(org.id)}" type="button">Support switch</button>
-              <a class="btn" href="organization-admin.html?tenant=${encodeURIComponent(org.id)}&support=1">Dashboard</a>
             </td>
           </tr>`;
       })
@@ -167,21 +168,13 @@
     await load();
   };
 
-  const supportSwitch = (tenantId) => {
-    const org = orgRows().find((row) => row.id === tenantId);
-    window.EnterpriseCore?.setTenant?.(tenantId);
-    window.EnterpriseCore?.setSession?.(
-      {
-        role: "super_admin",
-        name: "Super Admin",
-        tenantId,
-        supportMode: true,
-        permissions: ["*"],
-      },
-      true,
-    );
-    window.EnterpriseCore?.audit?.("super.support.switch", { tenantId, organization: org?.name });
-    location.href = `organization-admin.html?tenant=${encodeURIComponent(tenantId)}&support=1`;
+  const setCoreModules = async (id) => {
+    await fetchJson("/api/organizations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "set-modules", id, modules: ["admin", "finance", "hr", "sales", "inventory", "procurement", "customer", "reporting"] }),
+    });
+    await load();
   };
 
   const broadcast = async (form) => {
@@ -191,7 +184,7 @@
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "broadcast", title: data.get("title"), message: data.get("body") }),
     });
-    window.EnterpriseCore?.notify?.(data.get("title"), data.get("body"));
+    notify(data.get("title"), data.get("body"));
     form.reset();
     await load();
   };
@@ -206,23 +199,30 @@
   };
 
   document.addEventListener("DOMContentLoaded", () => {
-    window.EnterpriseCore?.setSession?.({ role: "super_admin", name: "Super Admin", tenantId: "platform", permissions: ["*"] }, true);
-    $("#super-refresh")?.addEventListener("click", () => load().catch((err) => window.EnterpriseCore?.notify?.("Super Admin", err.message, "error")));
+    if (!window.SuperAdminSession?.readSession?.()) {
+      location.replace("/_internal/mapphex-control");
+      return;
+    }
+    $("#super-admin-logout")?.addEventListener("click", async () => {
+      await fetchJson("/api/super-admin/session", { method: "DELETE" }).catch(() => null);
+      window.SuperAdminSession.clearSession();
+      location.replace("/_internal/mapphex-control");
+    });
+    $("#super-refresh")?.addEventListener("click", () => load().catch((err) => notify("Super Admin", err.message)));
     $("#super-search")?.addEventListener("input", renderOrgs);
     $("#global-search-input")?.addEventListener("input", () => load().catch(() => null));
     $("#org-table")?.addEventListener("click", (event) => {
-      const support = event.target.closest("button[data-support]");
-      if (support) return supportSwitch(support.dataset.support);
       const btn = event.target.closest("button[data-action]");
       if (!btn) return;
-      if (btn.dataset.action === "backup") return backupOrganization(btn.dataset.id).catch((err) => window.EnterpriseCore?.notify?.("Backup failed", err.message, "error"));
-      setStatus(btn.dataset.id, btn.dataset.action).catch((err) => window.EnterpriseCore?.notify?.("Organization update failed", err.message, "error"));
+      if (btn.dataset.action === "backup") return backupOrganization(btn.dataset.id).catch((err) => notify("Backup failed", err.message));
+      if (btn.dataset.action === "modules-core") return setCoreModules(btn.dataset.id).catch((err) => notify("Module update failed", err.message));
+      setStatus(btn.dataset.id, btn.dataset.action).catch((err) => notify("Organization update failed", err.message));
     });
     $("#broadcast-form")?.addEventListener("submit", (event) => {
       event.preventDefault();
-      broadcast(event.currentTarget).catch((err) => window.EnterpriseCore?.notify?.("Broadcast failed", err.message, "error"));
+      broadcast(event.currentTarget).catch((err) => notify("Broadcast failed", err.message));
     });
     window.addEventListener("enterprise:realtime", () => load().catch(() => null));
-    load().catch((err) => window.EnterpriseCore?.notify?.("Super Admin load failed", err.message, "error"));
+    load().catch((err) => notify("Super Admin load failed", err.message));
   });
 })();

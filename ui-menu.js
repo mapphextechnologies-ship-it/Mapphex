@@ -5,14 +5,21 @@
   const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
   const setMenuOpen = (open) => {
-    document.body.classList.toggle("menu-open", !!open);
+    const mobile = window.innerWidth <= 980;
+    if (mobile) {
+      document.body.classList.toggle("menu-open", !!open);
+      document.body.classList.remove("portal-sidebar-collapsed");
+    } else {
+      document.body.classList.remove("menu-open");
+      document.body.classList.toggle("portal-sidebar-collapsed", !!open);
+    }
     const toggle = $("#menu-toggle");
-    if (toggle) toggle.setAttribute("aria-expanded", open ? "true" : "false");
+    if (toggle) toggle.setAttribute("aria-expanded", mobile ? (open ? "true" : "false") : (!open ? "true" : "false"));
     const sidebar = $("#portal-sidebar");
     if (sidebar) sidebar.setAttribute("aria-hidden", open || window.innerWidth > 980 ? "false" : "true");
     const backdrop = $("#menu-backdrop");
-    if (backdrop) backdrop.setAttribute("aria-hidden", open ? "false" : "true");
-    if (open) $("#menu-close")?.focus?.({ preventScroll: true });
+    if (backdrop) backdrop.setAttribute("aria-hidden", mobile && open ? "false" : "true");
+    if (mobile && open) $("#menu-close")?.focus?.({ preventScroll: true });
   };
 
   const setActiveLink = () => {
@@ -30,7 +37,14 @@
     const close = $("#menu-close");
     const backdrop = $("#menu-backdrop");
 
-    if (toggle) toggle.addEventListener("click", () => setMenuOpen(true));
+    if (toggle) {
+      toggle.addEventListener("click", () => {
+        const open = window.innerWidth <= 980
+          ? !document.body.classList.contains("menu-open")
+          : !document.body.classList.contains("portal-sidebar-collapsed");
+        setMenuOpen(open);
+      });
+    }
     if (close) close.addEventListener("click", () => setMenuOpen(false));
     if (backdrop) backdrop.addEventListener("click", () => setMenuOpen(false));
     document.addEventListener("click", (e) => {
@@ -43,7 +57,8 @@
       if (e.key === "Escape") setMenuOpen(false);
     });
     window.addEventListener("resize", () => {
-      if (window.innerWidth > 980) setMenuOpen(false);
+      if (window.innerWidth > 980) document.body.classList.remove("menu-open");
+      else document.body.classList.remove("portal-sidebar-collapsed");
     });
     window.addEventListener("hashchange", setActiveLink);
     setActiveLink();

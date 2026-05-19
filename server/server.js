@@ -5,6 +5,7 @@ const fsp = require("fs/promises");
 const path = require("path");
 const crypto = require("crypto");
 const { setSecurityHeaders } = require("../api/_lib/security");
+const { decodeSuperAdminToken } = require("../api/_lib/super-admin-auth");
 
 const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || "127.0.0.1";
@@ -199,6 +200,12 @@ const parseUrl = (req) => {
   return new URL(req.url || "/", base);
 };
 
+const cookieValue = (req, name) => {
+  const cookies = String(req.headers.cookie || "").split(";").map((part) => part.trim());
+  const found = cookies.find((part) => part.startsWith(`${name}=`));
+  return found ? decodeURIComponent(found.slice(name.length + 1)) : "";
+};
+
 const isSafePath = (filePath) => {
   const rel = path.relative(ROOT_DIR, filePath);
   return rel && !rel.startsWith("..") && !path.isAbsolute(rel);
@@ -208,11 +215,12 @@ const serveStatic = async (req, res, url) => {
   let pathname = decodeURIComponent(url.pathname || "/");
   if (pathname === "/") pathname = "/index.html";
   if (pathname === "/workspace") pathname = "/organization-workspace.html";
-  if (pathname === "/super-admin.html") return notFound(res);
+  if (pathname === "/super-admin.html" || pathname === "/super-admin-login.html") return notFound(res);
   if (pathname === "/_internal/mapphex-control") {
-    const expected = process.env.SUPER_ADMIN_KEY || process.env.INTERNAL_ADMIN_KEY || "mapphex-internal";
-    const provided = String(url.searchParams.get("key") || "").trim();
-    if (provided !== expected) return notFound(res);
+    pathname = "/super-admin-login.html";
+  }
+  if (pathname === "/_internal/mapphex-control/dashboard") {
+    if (!decodeSuperAdminToken(cookieValue(req, "mapphex_super_admin"))) return notFound(res);
     pathname = "/super-admin.html";
   }
 
@@ -328,12 +336,12 @@ const handleApi = async (req, res, url) => {
     return require("../serverless-handlers/auth/session")(req, res);
   }
 
-  if (url.pathname === "/api/tasks") {
-    return require("../serverless-handlers/tasks")(req, res);
-  }
-
   if (url.pathname === "/api/audit") {
     return require("../serverless-handlers/audit")(req, res);
+  }
+
+  if (url.pathname === "/api/erp") {
+    return require("../serverless-handlers/erp")(req, res);
   }
 
   if (url.pathname === "/api/modules") {
@@ -350,6 +358,10 @@ const handleApi = async (req, res, url) => {
 
   if (url.pathname === "/api/platform-monitoring") {
     return require("../serverless-handlers/platform-monitoring")(req, res);
+  }
+
+  if (url.pathname === "/api/super-admin/session") {
+    return require("../serverless-handlers/super-admin/session")(req, res);
   }
 
   if (url.pathname === "/api/files") {

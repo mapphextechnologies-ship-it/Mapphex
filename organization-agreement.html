@@ -4,9 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Licensing Agreement • MAPPHEX</title>
-    <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="icon" href="images/bytewave-icon-192.png" type="image/png" />
-    <link rel="apple-touch-icon" href="images/bytewave-icon-192.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/images/bytewave-icon-192.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/images/bytewave-icon-192.png" />
     <meta name="theme-color" content="#06101f" />
     <link rel="stylesheet" href="director.css" />
     <link rel="stylesheet" href="management.css" />
@@ -16,13 +16,13 @@
     <main class="onboarding-shell">
       <section class="onboarding-panel">
         <div class="onboarding-head">
-          <img class="logo-img" src="images/enterprise-logo.png" alt="" />
-          <div><h1>Licensing & Subscription Agreement</h1><p class="muted">Review and accept before portal access is activated.</p></div>
+          <img class="logo-img" src="/images/enterprise-logo.png" alt="" />
+          <div><h1>Licensing & Subscription Agreement</h1><p class="muted">Review and accept before choosing the portals your organization wants to install.</p></div>
         </div>
         <div class="agreement-grid">
           <article><h2>Licensing Agreement</h2><p>Use MAPPHEX portals under your organization workspace with role-based access and tenant isolation.</p></article>
           <article><h2>Data Protection Policy</h2><p>Organization data is stored in isolated scopes with audit logs, secure APIs, and controlled access.</p></article>
-          <article><h2>Subscription Terms</h2><p>Monthly and yearly plans cover platform access, active portals, hosting, maintenance, and support level.</p></article>
+          <article><h2>Subscription Terms</h2><p>Monthly and yearly plans cover platform access, selected portals, hosting, maintenance, and support level.</p></article>
           <article><h2>Maintenance Agreement</h2><p>Updates, backups, operational support, and recovery workflows are maintained according to selected plan.</p></article>
           <article><h2>Security & Hosting</h2><p>Cloud hosting, encryption-ready storage, protected admin routes, and monitored platform APIs.</p></article>
           <article><h2>Support Packages</h2><p>Standard, Business, and Enterprise support packages are available for different operational needs.</p></article>
@@ -31,7 +31,7 @@
           <label class="field"><span>Subscription plan</span><select name="subscriptionPlan"><option value="starter-monthly">Starter Monthly</option><option value="business-monthly">Business Monthly</option><option value="business-yearly">Business Yearly</option><option value="enterprise">Enterprise</option></select></label>
           <label class="field"><span>Support package</span><select name="supportPackage"><option value="standard">Standard</option><option value="priority">Priority</option><option value="enterprise">Enterprise Support</option></select></label>
           <label class="remember-row agreement-check"><input id="agreement-accepted" name="accepted" type="checkbox" required /> <span>I agree to the licensing and subscription terms.</span></label>
-          <button id="agreement-submit" class="btn primary" type="submit" aria-disabled="true">Accept and continue</button>
+          <button id="agreement-submit" class="btn primary" type="submit" aria-disabled="true">Accept and choose portals</button>
           <p id="agreement-result" class="form-error"></p>
         </form>
       </section>

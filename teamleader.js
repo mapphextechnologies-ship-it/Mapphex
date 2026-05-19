@@ -128,7 +128,8 @@
   const getAccount = (session) =>
     loadTeamLeaderAccounts().find((a) => String(a.id || "") === String(session.userId || "")) || null;
 
-  const phoneSerial = (phone) => String(phone?.imei || phone?.serial || "").trim();
+  const phoneSerial = (phone) => String(phone?.sku || phone?.serviceCode || phone?.imei || phone?.serial || "").trim();
+  const itemName = (item) => [item?.name || item?.model, item?.category || item?.color, item?.unit || item?.storage].filter(Boolean).join(" • ") || "—";
   const normalized = (value) => String(value || "").trim().toLowerCase();
   const isAllocated = (phone) => Boolean(phone?.assignedAgentId || phone?.assignedAgentName);
 
@@ -278,7 +279,7 @@
       if (!phonesTbody) return;
       phonesTbody.textContent = "";
       if (!phones.length) {
-        phonesTbody.innerHTML = `<tr><td colspan="8" class="teamleader-empty">No branch phones found. Add phones in the Branch portal first.</td></tr>`;
+        phonesTbody.innerHTML = `<tr><td colspan="8" class="teamleader-empty">No branch products, services, assets, or tasks found. Add records in the Branch portal first.</td></tr>`;
         return;
       }
 
@@ -286,7 +287,7 @@
         const tr = document.createElement("tr");
         tr.innerHTML = `<td></td><td></td><td class="num"></td><td></td><td></td><td></td><td></td><td></td>`;
         tr.children[0].textContent = phoneSerial(p) || "—";
-        tr.children[1].textContent = [p.model, p.storage, p.color].filter(Boolean).join(" • ") || "—";
+        tr.children[1].textContent = itemName(p);
         tr.children[2].textContent = formatInt(Number(p.price || 0) || 0);
         tr.children[3].textContent = p.assignedAgentName || p.assignedAgentUsername || "Unassigned";
         tr.children[4].textContent = p.assignedAgentPhone || "—";
@@ -329,7 +330,7 @@
             branch.updatedAt = isoNow();
             await persist();
             renderPhones();
-            setHelper("Phone allocation removed.", true);
+            setHelper("Allocation removed.", true);
           });
           actions.appendChild(removeBtn);
         }
@@ -345,11 +346,11 @@
       const serial = String(serialInput?.value || "").trim();
       const phone = findPhone(branch, serial);
       if (!serial) {
-        setHelper("Enter the IMEI or serial number.");
+        setHelper("Enter the SKU, service code, serial, or task reference.");
         return serialInput?.focus?.();
       }
       if (!phone) {
-        setHelper("IMEI / serial not found in this branch inventory.");
+        setHelper("Reference not found in this branch catalog or task inventory.");
         return serialInput?.focus?.();
       }
 
@@ -364,7 +365,7 @@
         return agentName?.focus?.();
       }
       if (!phoneNo) {
-        setHelper("Enter the agent phone number.");
+        setHelper("Enter the agent contact.");
         return agentPhone?.focus?.();
       }
       if (!idNumber) {
@@ -373,6 +374,7 @@
       }
 
       phone.imei = phone.imei || phone.serial || serial;
+      phone.sku = phone.sku || phone.serial || serial;
       phone.assignedAgentId = selectedAgent?.id || "";
       phone.assignedAgentUsername = selectedAgent?.username || "";
       phone.assignedAgentName = name;
@@ -385,7 +387,7 @@
       await persist();
       renderPhones();
       clearForm();
-      setHelper("Phone allocated to agent.", true);
+      setHelper("Work allocated to agent.", true);
     };
 
     const sync = async () => {

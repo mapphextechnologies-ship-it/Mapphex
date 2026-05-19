@@ -3,21 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Byewave Portal Hub</title>
-    <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="icon" href="images/bytewave-icon-192.png" type="image/png" />
-    <link rel="apple-touch-icon" href="images/bytewave-icon-192.png" />
+    <title>BYTEWAAVE Portal Hub</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/images/bytewave-icon-192.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/images/bytewave-icon-192.png" />
     <meta name="theme-color" content="#06101f" />
     <link rel="stylesheet" href="director.css" />
     <link rel="stylesheet" href="management.css" />
     <link rel="stylesheet" href="onboarding.css" />
+    <link rel="stylesheet" href="enterprise-platform.css" />
   </head>
   <body data-page="organization-workspace" class="portal-hub-page">
     <header class="topbar portal-hub-topbar">
       <div class="brand">
-        <img id="organization-logo" class="logo-img" src="images/bytewave-logo.jpg" alt="" />
+        <img id="organization-logo" class="logo-img" src="/images/bytewave-logo.jpg" alt="" />
         <div>
-          <div id="workspace-title" class="brand-title">Byewave</div>
+          <div id="workspace-title" class="brand-title">BYTEWAAVE</div>
           <div id="workspace-subtitle" class="brand-subtitle muted">Centralized organization workspace</div>
         </div>
       </div>
@@ -33,7 +34,7 @@
       <section class="portal-hub-hero panel">
         <div>
           <div class="eyebrow">Organization Portal Hub</div>
-          <h1 id="portal-hub-heading">Byewave</h1>
+          <h1 id="portal-hub-heading">BYTEWAAVE</h1>
           <p id="portal-hub-summary" class="muted">Installed modules, quick access, notifications, and organization controls.</p>
         </div>
         <div class="portal-hub-profile">
@@ -66,6 +67,9 @@
     <script src="enterprise-core.js"></script>
     <script src="kv-client.js"></script>
     <script src="enterprise-store.js"></script>
+    <script src="erp-client.js"></script>
+    <script src="enterprise-modules.js"></script>
+    <script src="enterprise-platform.js"></script>
     <script src="pwa.js"></script>
     <script src="organization-workspace.js?v=12"></script>
   </body>

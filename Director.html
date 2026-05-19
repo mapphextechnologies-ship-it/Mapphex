@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Director Dashboard • MAPPHEX</title>
-    <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="icon" href="images/enterprise-icon-192.png" type="image/png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/images/enterprise-icon-192.png" type="image/png" />
     <link rel="stylesheet" href="director.css">
-    <link rel="stylesheet" href="departments.css">    <link rel="stylesheet" href="enterprise-platform.css" />
+    <link rel="stylesheet" href="enterprise-platform.css" />
 
 </head>
 <body data-page="director-dashboard">
@@ -16,7 +16,7 @@
         <button id="menu-toggle" class="icon-btn" type="button" aria-label="Open menu" aria-expanded="false">
           <span class="icon-hamburger" aria-hidden="true"></span>
         </button>
-        <img class="logo-img" src="images/enterprise-logo.png" alt="" />
+        <img class="logo-img" src="/images/enterprise-logo.png" alt="" />
         <div>
           <div class="brand-title">MAPPHEX</div>
           <div class="brand-subtitle muted">Director ERP Dashboard</div>
@@ -43,7 +43,7 @@
           <a class="sidebar-link" href="Director.html#inventory-panel">Inventory by Branch</a>
           <a class="sidebar-link" href="Director.html#report-center">Report Center</a>
           <a class="sidebar-link" href="Director.html#report-output">Reports</a>
-          <a class="sidebar-link" href="departments.html">Departments Portal</a>
+          <a class="sidebar-link" href="organization-workspace.html">ERP Workspace</a>
           <a class="sidebar-link" href="branch-login.html">Branch Portal</a>
           <a class="sidebar-link" href="agent-login.html">Agent Portal</a>
         </nav>
@@ -71,13 +71,13 @@
           </article>
 
           <article class="kpi">
-            <div class="kpi-label">Phones in stock</div>
+            <div class="kpi-label">Items in stock</div>
             <div id="kpi-stock" class="kpi-value">0</div>
             <div class="kpi-foot muted">All branches</div>
           </article>
 
           <article class="kpi">
-            <div class="kpi-label">Phones sold</div>
+            <div class="kpi-label">Items sold</div>
             <div id="kpi-sold" class="kpi-value">0</div>
             <div class="kpi-foot muted">All time</div>
           </article>
@@ -111,7 +111,7 @@
                 <th class="num">Sold</th>
                 <th class="num">Damaged</th>
                 <th class="num">Lost</th>
-                <th>Top model</th>
+                <th>Top product/service</th>
               </tr>
             </thead>
             <tbody id="branches-tbody"></tbody>
@@ -224,19 +224,19 @@
           <div class="panel-actions muted">Director can access all departments</div>
         </div>
         <div class="dept-grid">
-          <a class="dept-card" href="hr.html" data-dept="hr">
+          <a class="dept-card" href="organization-module.html?portal=hr" data-dept="hr">
             <div class="dept-title">HR</div>
             <div class="muted">Headcount, hiring, attendance</div>
           </a>
-          <a class="dept-card" href="finance.html" data-dept="finance">
+          <a class="dept-card" href="organization-module.html?portal=finance" data-dept="finance">
             <div class="dept-title">Finance</div>
             <div class="muted">Revenue, expenses, profit</div>
           </a>
-          <a class="dept-card" href="operations.html" data-dept="operations">
+          <a class="dept-card" href="organization-module.html?portal=inventory" data-dept="operations">
             <div class="dept-title">Operations</div>
             <div class="muted">Stock movement, logistics</div>
           </a>
-          <a class="dept-card" href="sales.html" data-dept="sales">
+          <a class="dept-card" href="organization-module.html?portal=sales" data-dept="sales">
             <div class="dept-title">Sales</div>
             <div class="muted">Sales velocity, targets</div>
           </a>
@@ -245,12 +245,12 @@
           Open full department portals (Director access enabled):
         </p>
         <div class="report-buttons" style="padding: 0 18px 18px; justify-content: flex-start;">
-          <a class="btn" href="departments-hr.html">HR Portal</a>
-          <a class="btn" href="departments-finance.html">Finance Portal</a>
-          <a class="btn" href="departments-operations.html">Operations Portal</a>
-          <a class="btn" href="departments-sales.html">Sales Portal</a>
-          <a class="btn" href="departments-admin.html">Admin Portal</a>
-          <a class="btn" href="departments.html">Departments login</a>
+          <a class="btn" href="organization-module.html?portal=hr">HR Portal</a>
+          <a class="btn" href="organization-module.html?portal=finance">Finance Portal</a>
+          <a class="btn" href="organization-module.html?portal=inventory">Operations Portal</a>
+          <a class="btn" href="organization-module.html?portal=sales">Sales Portal</a>
+          <a class="btn" href="organization-admin.html">Admin Portal</a>
+          <a class="btn" href="organization-workspace.html">Open workspace</a>
           <a class="btn" href="branch-login.html">Branch portal</a>
         </div>
       </section>
@@ -263,32 +263,12 @@
 
 
     <script src="enterprise-core.js"></script>
-<script src="kv-client.js"></script>
+    <script src="kv-client.js"></script>
     <script src="enterprise-store.js"></script>
+    <script src="erp-client.js"></script>
     <script src="enterprise-platform.js"></script>
-
-
-
-
-
-<script src="departments.js"></script>
-
-
-
-
-
-<script src="ui-menu.js"></script>
-
-
-
-
-
-<script src="director.js"></script>
-
-
-
-
-
-<script src="pwa.js"></script>
+    <script src="ui-menu.js"></script>
+    <script src="director.js"></script>
+    <script src="pwa.js"></script>
 </body>
 </html>

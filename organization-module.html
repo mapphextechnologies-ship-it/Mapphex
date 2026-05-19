@@ -3,22 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Byewave Module Workspace</title>
-    <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="icon" href="images/bytewave-icon-192.png" type="image/png" />
-    <link rel="apple-touch-icon" href="images/bytewave-icon-192.png" />
+    <title>BYTEWAAVE Module Workspace</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/images/bytewave-icon-192.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/images/bytewave-icon-192.png" />
     <meta name="theme-color" content="#06101f" />
     <link rel="stylesheet" href="director.css" />
     <link rel="stylesheet" href="management.css" />
     <link rel="stylesheet" href="onboarding.css" />
+    <link rel="stylesheet" href="enterprise-platform.css" />
   </head>
   <body data-page="organization-module" class="portal-hub-page">
     <header class="topbar portal-hub-topbar">
       <div class="brand">
         <button id="module-menu-toggle" class="icon-btn module-menu-toggle" type="button" aria-label="Open module navigation" aria-expanded="false"><span class="icon-hamburger" aria-hidden="true"></span></button>
-        <img class="logo-img" src="images/bytewave-logo.jpg" alt="" />
+        <img class="logo-img" src="/images/bytewave-logo.jpg" alt="" />
         <div>
-          <div id="module-title" class="brand-title">Byewave Module</div>
+          <div id="module-title" class="brand-title">BYTEWAAVE Module</div>
           <div id="module-subtitle" class="brand-subtitle muted">Workspace module</div>
         </div>
       </div>
@@ -29,16 +30,17 @@
     </header>
 
     <main class="layout onboarding-layout portal-hub-layout module-app-shell">
-      <aside id="module-sidebar" class="panel module-sidebar" aria-label="Installed portal navigation">
+      <aside id="module-sidebar" class="panel module-sidebar" aria-label="Portal navigation">
         <div class="module-sidebar-head">
-          <strong>Workspace Modules</strong>
+          <strong id="module-sidebar-title">Portal Menu</strong>
           <button id="module-menu-close" class="btn" type="button">Close</button>
         </div>
         <nav id="module-nav" class="module-nav"></nav>
       </aside>
+      <div id="module-menu-backdrop" class="menu-backdrop module-menu-backdrop" aria-hidden="true"></div>
 
       <div class="module-content">
-        <section class="portal-hub-hero panel">
+        <section id="portal-dashboard" class="portal-hub-hero panel">
           <div>
             <div class="eyebrow">Workspace Portal</div>
             <h1 id="module-heading">Module Workspace</h1>
@@ -53,14 +55,14 @@
           </div>
         </section>
 
-        <section class="portal-hub-widgets">
+        <section id="portal-kpis" class="portal-hub-widgets">
           <article class="kpi"><div id="module-kpi-a-label" class="kpi-label">Records</div><div id="module-kpi-a" class="kpi-value">0</div><div id="module-kpi-a-foot" class="kpi-foot muted">Module records</div></article>
           <article class="kpi"><div id="module-kpi-b-label" class="kpi-label">Shared Users</div><div id="module-kpi-users" class="kpi-value">0</div><div class="kpi-foot muted">Same organization table</div></article>
           <article class="kpi"><div class="kpi-label">Enabled Modules</div><div id="module-kpi-modules" class="kpi-value">0</div><div class="kpi-foot muted">Feature toggles</div></article>
           <article class="kpi"><div class="kpi-label">Data Context</div><div class="kpi-value">Unified</div><div id="module-kpi-tenant" class="kpi-foot muted">One tenant database</div></article>
         </section>
 
-        <section class="panel">
+        <section id="portal-records" class="panel">
           <div class="panel-header">
             <div>
               <h2 id="module-workflow-title">Module Operations</h2>
@@ -80,27 +82,16 @@
           <div id="module-empty" class="empty-state" hidden>No records yet. Add the first item to activate this module.</div>
         </section>
 
-        <section class="panel">
-          <div class="panel-header">
-            <h2>Shared System Layer</h2>
-            <div class="panel-actions muted">One organization database and session</div>
-          </div>
-          <div class="module-shared-grid">
-            <article><strong>Authentication</strong><span>Uses the current organization session. No separate module login.</span></article>
-            <article><strong>Permissions</strong><span id="module-permissions">Module permissions load from the organization role system.</span></article>
-            <article><strong>Realtime Activity</strong><span id="module-activity-note">Actions are recorded in the workspace activity stream.</span></article>
-            <article><strong>Analytics</strong><span>Reports read from the same organization data context.</span></article>
-          </div>
-        </section>
-
-        <footer class="site-powered-footer">© Teams Technology • Powered by Byewave • Enterprise Workspace System</footer>
+        <footer class="site-powered-footer">© Teams Technology • Powered by BYTEWAAVE • Enterprise Workspace System</footer>
       </div>
     </main>
 
     <script src="enterprise-core.js"></script>
     <script src="kv-client.js"></script>
     <script src="enterprise-store.js"></script>
+    <script src="erp-client.js"></script>
     <script src="enterprise-modules.js"></script>
+    <script src="enterprise-platform.js"></script>
     <script src="pwa.js"></script>
     <script src="organization-module.js?v=6"></script>
   </body>

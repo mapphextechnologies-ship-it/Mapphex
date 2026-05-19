@@ -4,11 +4,85 @@ const { getStore } = require("../api/_lib/kv-store");
 const { cleanTenantId, getTenantId, scopeTenantKey } = require("../api/_lib/tenant");
 const { appendEvent, listEvents } = require("../api/_lib/events");
 const { assertIdempotent, assertObject, assertSameOrigin, rateLimit, requireTenantSession, safeString } = require("../api/_lib/security");
+const { requireSuperAdmin } = require("../api/_lib/super-admin-auth");
+const { VALID_PORTAL_IDS } = require("../api/_lib/portal-catalog");
 
 const ORGS_KEY = "platform_organizations_v1";
 const USERS_KEY = "enterprise_org_users_v1";
 const PROFILE_KEY = "enterprise_org_profile_v1";
 const SETTINGS_KEY = "enterprise_org_settings_v1";
+const BASE_PORTALS = ["admin", "staff", "reporting"];
+const SERVICE_PORTALS = {
+  company: ["admin", "departments", "staff", "reporting"],
+  agency: ["admin", "staff", "customer", "sales", "reporting"],
+  corporate: ["admin", "branch", "departments", "hr", "finance", "procurement", "customer", "reporting", "analytics"],
+  service: ["admin", "staff", "customer", "sales", "reporting"],
+  "business-onboarding": ["admin", "staff", "customer", "reporting"],
+  "organization-setup": ["admin", "branch", "departments", "staff", "reporting"],
+  "licensing-subscriptions": ["admin", "finance", "reporting"],
+  "security-services": ["admin", "departments", "staff", "reporting"],
+  "support-training": ["admin", "staff", "customer", "reporting"],
+  "cloud-hosting": ["admin", "technology", "customer", "finance", "staff", "reporting", "analytics"],
+  "data-migration": ["admin", "inventory", "staff", "reporting", "analytics"],
+  "finance-management": ["admin", "finance", "reporting", "analytics"],
+  "hr-staff-access": ["admin", "hr", "departments", "staff", "reporting"],
+  "retail-pos": ["admin", "branch", "retail", "inventory", "sales", "finance", "procurement", "customer", "reporting"],
+  "inventory-control": ["admin", "branch", "inventory", "reporting", "analytics"],
+  "crm-workflows": ["admin", "customer", "sales", "staff", "reporting"],
+  "document-management": ["admin", "staff", "reporting"],
+  "reporting-tools": ["admin", "reporting", "analytics"],
+  "pharmacy-operations": ["admin", "branch", "pharmacy", "inventory", "sales", "finance", "procurement", "customer", "reporting"],
+  "school-management": ["admin", "academic", "departments", "hr", "finance", "customer", "staff", "reporting"],
+  "logistics-tracking": ["admin", "branch", "logistics", "inventory", "finance", "customer", "reporting", "analytics"],
+  "branch-management": ["admin", "branch", "staff", "reporting", "analytics"],
+  "warehouse-control": ["admin", "branch", "inventory", "logistics", "reporting"],
+  "supplier-records": ["admin", "procurement", "inventory", "finance", "reporting"],
+  "analytics-dashboard": ["admin", "reporting", "analytics"],
+  "task-management": ["admin", "staff", "departments", "reporting"],
+  "role-permissions": ["admin", "departments", "staff", "reporting"],
+  "audit-trails": ["admin", "reporting", "analytics"],
+  notifications: ["admin", "staff", "customer", "reporting"],
+  "multi-branch-reports": ["admin", "branch", "reporting", "analytics"],
+  "subscription-review": ["admin", "finance", "reporting"],
+  "customer-support-desk": ["admin", "customer", "staff", "reporting"],
+  retail: ["admin", "branch", "retail", "inventory", "sales", "finance", "procurement", "customer", "reporting"],
+  manufacturing: ["admin", "manufacturing", "inventory", "procurement", "finance", "sales", "logistics", "reporting", "analytics"],
+  ngo: ["admin", "finance", "hr", "procurement", "customer", "reporting", "analytics"],
+  government: ["admin", "finance", "hr", "procurement", "customer", "reporting", "analytics"],
+  startup: ["admin", "technology", "sales", "finance", "customer", "hr", "reporting"],
+  "book-store": ["admin", "inventory", "sales", "finance", "reporting"],
+  "clothing-store": ["admin", "inventory", "sales", "customer", "reporting"],
+  "furniture-store": ["admin", "inventory", "sales", "customer", "logistics", "reporting"],
+  "grocery-store": ["admin", "inventory", "sales", "finance", "reporting"],
+  "hardware-shop": ["admin", "branch", "inventory", "sales", "finance", "procurement", "customer", "reporting"],
+  wholesale: ["admin", "branch", "inventory", "sales", "finance", "logistics", "reporting"],
+  supermarket: ["admin", "branch", "inventory", "sales", "finance", "hr", "reporting"],
+  "mini-supermarket": ["admin", "inventory", "sales", "finance", "reporting"],
+  warehouse: ["admin", "branch", "inventory", "logistics", "reporting"],
+  restaurant: ["admin", "restaurant", "inventory", "sales", "finance", "procurement", "staff", "reporting"],
+  "fast-food": ["admin", "restaurant", "inventory", "sales", "finance", "staff", "reporting"],
+  hotels: ["admin", "branch", "customer", "finance", "hr", "staff", "reporting"],
+  "guest-house": ["admin", "customer", "finance", "staff", "reporting"],
+  "bar-pub": ["admin", "inventory", "sales", "finance", "staff", "reporting"],
+  "sports-club": ["admin", "customer", "finance", "staff", "reporting"],
+  pharmacy: ["admin", "branch", "pharmacy", "inventory", "sales", "finance", "procurement", "customer", "reporting"],
+  "hair-salon": ["admin", "customer", "sales", "finance", "staff", "reporting"],
+  gym: ["admin", "customer", "finance", "staff", "reporting"],
+  clinics: ["admin", "hospital", "customer", "finance", "staff", "pharmacy", "reporting"],
+  hospital: ["admin", "hospital", "hr", "finance", "pharmacy", "customer", "reporting"],
+  school: ["admin", "academic", "hr", "finance", "customer", "staff", "reporting"],
+  "real-estate": ["admin", "real-estate", "finance", "customer", "procurement", "reporting"],
+  "software-company": ["admin", "technology", "departments", "staff", "customer", "sales", "finance", "reporting", "analytics"],
+  "it-support": ["admin", "technology", "staff", "customer", "finance", "reporting", "analytics"],
+  "cybersecurity-services": ["admin", "technology", "departments", "staff", "customer", "finance", "reporting", "analytics"],
+  "web-development": ["admin", "technology", "staff", "customer", "sales", "finance", "reporting"],
+  "app-development": ["admin", "technology", "staff", "customer", "sales", "finance", "reporting", "analytics"],
+  "device-repair": ["admin", "technology", "inventory", "customer", "sales", "finance", "reporting"],
+  "technology-devices": ["admin", "technology", "branch", "inventory", "customer", "finance", "staff", "reporting", "analytics"],
+  "technology-services": ["admin", "technology", "customer", "sales", "finance", "staff", "reporting", "analytics"],
+  "internet-services": ["admin", "technology", "branch", "customer", "finance", "staff", "reporting"],
+  "digital-agency": ["admin", "technology", "staff", "customer", "sales", "finance", "reporting"],
+};
 
 const slug = (value) =>
   safeString(value, 90)
@@ -34,15 +108,6 @@ const verifySecret = (value, encoded) => {
   return crypto.timingSafeEqual(Buffer.from(actual), Buffer.from(expected));
 };
 
-const requireSuperAdmin = (req) => {
-  const key = process.env.SUPER_ADMIN_KEY || process.env.INTERNAL_ADMIN_KEY || "mapphex-internal";
-  const provided = String(req.headers["x-super-admin-key"] || "").trim();
-  if (provided === key) return true;
-  const err = new Error("Super admin authorization required");
-  err.statusCode = 403;
-  throw err;
-};
-
 const loadOrganizations = async (store) => {
   const rows = (await store.get(ORGS_KEY)) || [];
   return Array.isArray(rows) ? rows : [];
@@ -55,6 +120,18 @@ const createOrganization = async (req, res, body) => {
   const rows = await loadOrganizations(store);
   const name = safeString(body.name || body.organizationName, 140);
   const businessType = safeString(body.businessType || "retail", 80);
+  const serviceCategory = safeString(body.serviceCategory || "", 80);
+  const serviceTitle = safeString(body.serviceTitle || businessType, 120);
+  const servicePricing = {
+    cost: safeString(body.serviceCost || "", 80),
+    plan: safeString(body.servicePlan || "", 80),
+    setup: safeString(body.serviceSetup || "", 80),
+  };
+  const selectedComponents = Array.isArray(body.selectedComponents)
+    ? body.selectedComponents.map((id) => safeString(id, 40)).filter(Boolean)
+    : safeString(body.selectedComponents || "", 500).split(",").map((id) => safeString(id, 40)).filter(Boolean);
+  const estimatedTotal = Math.max(0, Number(body.estimatedTotal || body.serviceEstimate || 0) || 0);
+  const servicePortals = Array.from(new Set(Array.isArray(body.recommendedPortals) && body.recommendedPortals.length ? body.recommendedPortals.map((id) => safeString(id, 40)).filter(Boolean) : SERVICE_PORTALS[businessType] || BASE_PORTALS));
   const adminName = safeString(body.adminName || "Organization Admin", 120);
   const adminEmail = safeString(body.adminEmail || body.email, 160).toLowerCase();
   const orgEmail = safeString(body.email || body.organizationEmail || adminEmail, 160).toLowerCase();
@@ -78,6 +155,11 @@ const createOrganization = async (req, res, body) => {
     referenceCode: orgCode,
     name,
     businessType,
+    serviceCategory,
+    serviceTitle,
+    servicePricing,
+    selectedComponents,
+    estimatedTotal,
     contact: { email: orgEmail, phone, location },
     companySize,
     status: "active",
@@ -105,13 +187,20 @@ const createOrganization = async (req, res, body) => {
   ]);
   await store.set(profileKey, publicOrg(org));
   await store.set(settingsKey, {
-    modules: ["dashboard", "inventory", "orders", "finance", "crm", "documents"],
+    modules: ["dashboard"],
     installedPortals: [],
+    recommendedPortals: servicePortals,
+    allowedPortals: servicePortals,
     agreementAccepted: false,
     onboardingComplete: false,
     businessType,
+    serviceCategory,
+    serviceTitle,
+    servicePricing,
+    selectedComponents,
+    estimatedTotal,
     branches: Array.from({ length: branchCount }, (_, idx) => `Branch ${idx + 1}`),
-    departments: [],
+    departments: ["technology-services", "technology-devices", "software-company", "it-support", "digital-agency"].includes(businessType) ? ["Sales", "Operations", "Finance", "HR", "Technology", "Support"] : [],
     createdAt: now,
   });
   await saveOrganizations(store, [org, ...rows]);
@@ -156,7 +245,7 @@ module.exports = async (req, res) => {
 
     if (body.action === "register") return createOrganization(req, res, body);
 
-    requireSuperAdmin(req);
+    const superSession = requireSuperAdmin(req);
     const rows = await loadOrganizations(store);
     const id = cleanTenantId(body.organizationId || body.id || body.tenantId);
     const idx = rows.findIndex((org) => org.id === id || org.organizationId === body.organizationId);
@@ -167,7 +256,7 @@ module.exports = async (req, res) => {
       if (!["active", "suspended", "restricted", "verified"].includes(status)) return sendJson(res, 400, { ok: false, error: "Invalid status" });
       rows[idx] = { ...rows[idx], status, updatedAt: new Date().toISOString() };
       await saveOrganizations(store, rows);
-      await appendEvent(store, "platform", "organization.status.changed", { organizationId: rows[idx].organizationId, status });
+      await appendEvent(store, "platform", "organization.status.changed", { organizationId: rows[idx].organizationId, status, actor: superSession.sub });
       await appendEvent(store, rows[idx].id, "organization.status.changed", { status });
       return sendJson(res, 200, { ok: true, organization: publicOrg(rows[idx]) });
     }
@@ -181,9 +270,33 @@ module.exports = async (req, res) => {
         organizationId: rows[idx].organizationId,
         subscriptionStatus,
         plan,
+        actor: superSession.sub,
       });
       await appendEvent(store, rows[idx].id, "organization.subscription.changed", { subscriptionStatus, plan });
       return sendJson(res, 200, { ok: true, organization: publicOrg(rows[idx]) });
+    }
+
+    if (body.action === "set-modules") {
+      const requested = Array.isArray(body.modules) ? body.modules : [];
+      const modules = Array.from(new Set(requested.map((id) => safeString(id, 80)).filter((id) => VALID_PORTAL_IDS.has(id))));
+      const settingsKey = scopeTenantKey(rows[idx].id, SETTINGS_KEY);
+      const settings = ((await store.get(settingsKey)) || {});
+      const nextSettings = {
+        ...settings,
+        installedPortals: modules,
+        modules,
+        navigation: modules,
+        modulePermissions: Object.fromEntries(modules.map((id) => [id, [`${id}.read`, `${id}.manage`]])),
+        updatedAt: new Date().toISOString(),
+      };
+      rows[idx] = { ...rows[idx], modules, updatedAt: nextSettings.updatedAt };
+      await store.setManyAtomic({
+        [ORGS_KEY]: rows,
+        [settingsKey]: nextSettings,
+      });
+      await appendEvent(store, "platform", "organization.modules.changed", { organizationId: rows[idx].organizationId, modules, actor: superSession.sub });
+      await appendEvent(store, rows[idx].id, "organization.modules.changed", { modules });
+      return sendJson(res, 200, { ok: true, organization: publicOrg(rows[idx]), settings: nextSettings });
     }
 
     return sendJson(res, 400, { ok: false, error: "Unsupported organization action" });

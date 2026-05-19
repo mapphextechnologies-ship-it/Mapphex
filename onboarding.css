@@ -134,6 +134,12 @@
   flex-wrap: wrap;
 }
 
+.portal-manager-org {
+  margin: 4px 0 6px;
+  font-size: 13px;
+  font-weight: 850;
+}
+
 .pwa-install-help {
   margin: 12px 18px 0;
   padding: 14px;
@@ -205,6 +211,43 @@
   line-height: 1.55;
 }
 
+.portal-pricing-details {
+  display: grid;
+  gap: 9px;
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid rgba(91, 214, 255, 0.18);
+  border-radius: 14px;
+  background: rgba(0, 119, 255, 0.08);
+}
+
+.portal-pricing-details div {
+  min-width: 0;
+  padding-left: 10px;
+  border-left: 2px solid rgba(91, 214, 255, 0.52);
+}
+
+.portal-pricing-details strong,
+.portal-pricing-details span {
+  display: block;
+}
+
+.portal-pricing-details strong {
+  color: #fff;
+  font-size: 12px;
+}
+
+.portal-pricing-details span,
+.portal-pricing-details p {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.portal-pricing-details p {
+  margin: 0;
+}
+
 .portal-install-card .btn[disabled],
 .agreement-form .btn[disabled],
 .agreement-form .btn.is-disabled {
@@ -230,6 +273,11 @@
 .module-app-shell {
   grid-template-columns: 280px minmax(0, 1fr);
   align-items: start;
+  transition: grid-template-columns 180ms ease;
+}
+
+.module-app-shell:has(.module-sidebar.is-collapsed) {
+  grid-template-columns: 82px minmax(0, 1fr);
 }
 
 .module-content {
@@ -246,6 +294,7 @@
   position: sticky;
   top: 92px;
   padding: 12px;
+  transition: width 180ms ease, transform 180ms ease, padding 180ms ease;
 }
 
 .module-sidebar-head {
@@ -278,10 +327,52 @@
   background: rgba(255, 255, 255, 0.035);
 }
 
+.module-nav a span {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.module-nav a b {
+  flex: 0 0 auto;
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 9px;
+  background: rgba(111, 78, 55, 0.16);
+  color: #6f4e37;
+  font-size: 12px;
+}
+
 .module-nav a.active {
   color: #fff;
-  border-color: rgba(91, 214, 255, 0.45);
-  background: rgba(0, 119, 255, 0.16);
+  border-color: rgba(111, 78, 55, 0.38);
+  background: rgba(111, 78, 55, 0.18);
+}
+
+.module-sidebar.is-collapsed .module-sidebar-head strong,
+.module-sidebar.is-collapsed .module-nav a small,
+.module-sidebar.is-collapsed .module-nav a span {
+  font-size: 0;
+}
+
+.module-sidebar.is-collapsed .module-sidebar-head {
+  justify-content: center;
+}
+
+.module-sidebar.is-collapsed .module-nav a {
+  justify-content: center;
+  padding-inline: 8px;
+}
+
+.module-sidebar.is-collapsed .module-nav a b {
+  font-size: 12px;
+}
+
+.module-menu-backdrop {
+  display: none;
 }
 
 .module-record-form {
@@ -314,6 +405,210 @@
   color: var(--muted);
   font-size: 13px;
   line-height: 1.55;
+}
+
+.erp-sections {
+  display: grid;
+  gap: 18px;
+}
+
+.erp-dashboard-panel,
+.erp-work-grid > .panel {
+  background: rgba(17, 11, 8, 0.72);
+  border-color: rgba(173, 122, 82, 0.22);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(14px);
+}
+
+.erp-kpi-grid,
+.erp-dashboard-grid,
+.erp-work-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  padding: 16px 18px 18px;
+}
+
+.erp-dashboard-grid,
+.erp-work-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding-top: 0;
+}
+
+.erp-card,
+.erp-action,
+.erp-approval,
+.erp-message-list article,
+.erp-activity-list article {
+  border: 1px solid rgba(173, 122, 82, 0.20);
+  background: rgba(23, 16, 12, 0.74);
+  border-radius: 8px;
+  padding: 14px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+}
+
+.erp-card strong,
+.erp-message-list strong,
+.erp-activity-list strong,
+.erp-approval strong {
+  display: block;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.erp-card ul {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  color: rgba(255, 255, 255, 0.70);
+}
+
+.erp-card li + li {
+  margin-top: 6px;
+}
+
+.erp-chart {
+  height: 170px;
+  display: flex;
+  align-items: end;
+  gap: 10px;
+  padding: 14px 0 8px;
+}
+
+.erp-chart span {
+  flex: 1;
+  min-width: 18px;
+  border-radius: 8px 8px 3px 3px;
+  background: linear-gradient(180deg, #a0704b, #5a3823);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.erp-action-list,
+.erp-approval-list,
+.erp-message-list,
+.erp-activity-list,
+.erp-report-grid {
+  display: grid;
+  gap: 10px;
+  padding: 16px 18px 18px;
+}
+
+.erp-action {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.92);
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.erp-action:hover {
+  transform: translateY(-2px);
+  border-color: rgba(211, 154, 103, 0.44);
+  background: rgba(55, 35, 24, 0.86);
+}
+
+.erp-action span,
+.erp-message-list span,
+.erp-activity-list span,
+.erp-approval span,
+.erp-message-list small,
+.erp-activity-list small {
+  display: block;
+  margin-top: 5px;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 12px;
+}
+
+.erp-approval {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.erp-approval p {
+  margin: 8px 0 0;
+  color: rgba(255, 255, 255, 0.70);
+  font-size: 13px;
+}
+
+.erp-approval.approved {
+  border-color: rgba(22, 163, 74, 0.32);
+}
+
+.erp-approval.paid {
+  border-color: rgba(52, 211, 153, 0.42);
+}
+
+.erp-approval.rejected {
+  border-color: rgba(220, 38, 38, 0.32);
+}
+
+.erp-approval.returned {
+  border-color: rgba(202, 138, 4, 0.34);
+}
+
+.erp-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.erp-row-actions .danger {
+  color: #7f1d1d;
+  border-color: rgba(220, 38, 38, 0.24);
+}
+
+.erp-message-form {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr) auto;
+  gap: 12px;
+  padding: 16px 18px 0;
+  align-items: end;
+}
+
+.module-content .field input,
+.module-content .field select,
+.module-content .field textarea,
+.erp-message-form input,
+.erp-message-form select,
+.erp-message-form textarea {
+  width: 100%;
+  border: 1px solid rgba(173, 122, 82, 0.22);
+  background: rgba(7, 5, 4, 0.76);
+  color: rgba(255, 255, 255, 0.92);
+  box-shadow: inset 0 1px 0 rgba(211, 154, 103, 0.08);
+  color-scheme: dark;
+}
+
+.module-content .field input:focus,
+.module-content .field select:focus,
+.module-content .field textarea:focus,
+.erp-message-form input:focus,
+.erp-message-form select:focus,
+.erp-message-form textarea:focus {
+  border-color: rgba(211, 154, 103, 0.46);
+  background: rgba(17, 11, 8, 0.92);
+}
+
+.module-content .field input::placeholder,
+.module-content .field textarea::placeholder,
+.erp-message-form input::placeholder,
+.erp-message-form textarea::placeholder {
+  color: rgba(255, 255, 255, 0.46);
+}
+
+.module-content .field input:-webkit-autofill,
+.erp-message-form input:-webkit-autofill {
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 0 0 1000px rgba(7, 5, 4, 0.96) inset;
+}
+
+.erp-report-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.erp-report-grid .btn {
+  justify-content: center;
 }
 
 .portal-hub-page {
@@ -487,7 +782,12 @@
   .portal-hub-widgets,
   .portal-hub-grid,
   .module-app-shell,
-  .module-shared-grid {
+  .module-shared-grid,
+  .erp-kpi-grid,
+  .erp-dashboard-grid,
+  .erp-work-grid,
+  .erp-message-form,
+  .erp-report-grid {
     grid-template-columns: 1fr;
   }
 
@@ -499,16 +799,43 @@
   .module-sidebar {
     position: fixed;
     inset: 0 auto 0 0;
-    z-index: 60;
+    z-index: 70;
     width: min(310px, calc(100vw - 42px));
     transform: translateX(-104%);
-    transition: transform 160ms ease;
+    transition: transform 180ms ease;
     border-radius: 0 18px 18px 0;
     overflow-y: auto;
   }
 
+  .module-sidebar.is-collapsed {
+    width: min(310px, calc(100vw - 42px));
+  }
+
+  .module-sidebar.is-collapsed .module-sidebar-head strong,
+  .module-sidebar.is-collapsed .module-nav a small,
+  .module-sidebar.is-collapsed .module-nav a span {
+    font-size: inherit;
+  }
+
   .module-sidebar.is-open {
     transform: translateX(0);
+  }
+
+  .module-menu-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 65;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 180ms ease;
+    background: rgba(63, 42, 29, 0.34);
+    backdrop-filter: blur(3px);
+  }
+
+  body.module-menu-open .module-menu-backdrop {
+    opacity: 1;
+    pointer-events: auto;
   }
 
   .module-sidebar-head .btn {

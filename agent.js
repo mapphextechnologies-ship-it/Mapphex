@@ -9,6 +9,7 @@
   const ERP_KEY = "enterprise_erp_v1";
   const API_ENABLED_KEY = "enterprise_api_enabled_v1";
   const SMS_OUTBOX_KEY = "enterprise_sms_outbox_v1";
+  const AGENT_PIPELINE_KEY = "enterprise_agent_pipeline_v1";
   const BRANCH_COUNT = 47;
 
   const $ = (selector, root = document) => root.querySelector(selector);
@@ -244,6 +245,9 @@
     return str;
   };
 
+  const htmlEscape = (value) =>
+    String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
+
   const downloadText = (filename, text) => {
     const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -357,16 +361,36 @@
 
     const txTbody = $("#tx-tbody");
     const invTbody = $("#inv-tbody");
+    const orgNameInput = $("#agent-org-name");
+    const orgIndustryInput = $("#agent-org-industry");
+    const orgPlanInput = $("#agent-org-plan");
+    const orgStatusInput = $("#agent-org-status");
+    const orgValueInput = $("#agent-org-value");
+    const orgNextInput = $("#agent-org-next");
+    const orgSaveBtn = $("#agent-org-save");
+    const orgReportBtn = $("#agent-org-report");
+    const orgTbody = $("#agent-org-tbody");
 
     const getBranch = () => (erp.branches || []).find((b) => b.id === session.branchId) || null;
 
-    const phoneAvailableToAgent = (phone) => {
-      const assignedId = String(phone?.assignedAgentId || "").trim();
-      const assignedName = String(phone?.assignedAgentUsername || phone?.assignedAgentName || "").trim().toLowerCase();
+    const itemAvailableToAgent = (item) => {
+      const assignedId = String(item?.assignedAgentId || "").trim();
+      const assignedName = String(item?.assignedAgentUsername || item?.assignedAgentName || "").trim().toLowerCase();
       if (!assignedId && !assignedName) return true;
       if (assignedId && assignedId === String(account.id || "")) return true;
       return assignedName && assignedName === String(account.username || "").trim().toLowerCase();
     };
+
+    const phoneAvailableToAgent = itemAvailableToAgent;
+    const itemName = (item) => String(item?.name || item?.model || item?.serviceName || "Item").trim();
+    const itemCategory = (item) => String(item?.category || item?.color || item?.type || "General").trim();
+    const itemUnit = (item) => String(item?.unit || item?.storage || item?.attributes || "unit").trim();
+    const pipelineKey = () => `${AGENT_PIPELINE_KEY}:${account.id || session.userId || "agent"}`;
+    const loadPipeline = () => {
+      const rows = loadJson(pipelineKey(), []);
+      return Array.isArray(rows) ? rows : [];
+    };
+    const savePipeline = (rows) => saveJson(pipelineKey(), rows.slice(0, 300));
 
     const normalizeBranch = (branch) => {
       if (!branch) return null;
@@ -406,11 +430,46 @@
       if (!branch) return;
       rebuildInventoryFromPhones(branch);
       const totals = computeBranchTotals(branch);
-      if (kpiStock) kpiStock.textContent = formatInt(totals.stock);
+      const pipeline = loadPipeline();
+      if (kpiStock) kpiStock.textContent = formatInt(totals.stock + pipeline.length);
       if (kpiSold) kpiSold.textContent = formatInt(totals.sold);
       if (kpiTop) kpiTop.textContent = totals.topModel;
       if (kpiTx) kpiTx.textContent = formatInt((branch.txLog || []).length);
       if (badge) badge.textContent = `${account.username || "Agent"} • ${branch.name || branch.id || ""}`.trim();
+    };
+
+    const renderPipeline = () => {
+      if (!orgTbody) return;
+      const rows = loadPipeline();
+      orgTbody.innerHTML = rows.length
+        ? rows
+            .map((row) => `<tr><td>${htmlEscape(row.name || "—")}</td><td>${htmlEscape(row.industry || "—")}</td><td>${htmlEscape(row.plan || "—")}</td><td>${htmlEscape(row.status || "—")}</td><td class="num">${formatInt(row.value || 0)}</td><td>${htmlEscape(row.next || "—")}</td></tr>`)
+            .join("")
+        : `<tr><td colspan="6" class="muted">No organizations onboarded yet. Add a client from any industry.</td></tr>`;
+    };
+
+    const savePipelineRow = () => {
+      const name = String(orgNameInput?.value || "").trim();
+      if (!name) return orgNameInput?.focus?.();
+      const rows = loadPipeline();
+      rows.unshift({
+        id: `client-${Date.now()}`,
+        name,
+        industry: String(orgIndustryInput?.value || "Retail"),
+        plan: String(orgPlanInput?.value || "Starter"),
+        status: String(orgStatusInput?.value || "Lead"),
+        value: Math.max(0, Number(orgValueInput?.value || 0) || 0),
+        next: String(orgNextInput?.value || "").trim(),
+        agentId: account.id || session.userId,
+        createdAt: isoNow(),
+      });
+      savePipeline(rows);
+      [orgNameInput, orgValueInput, orgNextInput].forEach((el) => {
+        if (el) el.value = "";
+      });
+      window.EnterpriseCore?.notify?.("Organization onboarding", "Client pipeline updated");
+      renderPipeline();
+      renderKPIs();
     };
 
     const renderInventory = () => {
@@ -429,13 +488,13 @@
 
       if (!invTbody) return;
       invTbody.textContent = "";
-      for (const p of phones.slice().sort((a, z) => String(a.model || "").localeCompare(String(z.model || ""))).slice(0, 120)) {
+      for (const p of phones.slice().sort((a, z) => itemName(a).localeCompare(itemName(z))).slice(0, 120)) {
         const tr = document.createElement("tr");
         tr.innerHTML = `<td></td><td></td><td></td><td></td><td class="num"></td><td></td>`;
         tr.children[0].textContent = p.serial || "—";
-        tr.children[1].textContent = p.model || "—";
-        tr.children[2].textContent = p.color || "—";
-        tr.children[3].textContent = p.storage || "—";
+        tr.children[1].textContent = itemName(p) || "—";
+        tr.children[2].textContent = itemCategory(p) || "—";
+        tr.children[3].textContent = itemUnit(p) || "—";
         tr.children[4].textContent = formatInt(Number(p.price || 0) || 0);
         tr.children[5].textContent = p.assignedAgentName || p.assignedAgentUsername || "Open";
         invTbody.appendChild(tr);
@@ -468,7 +527,7 @@
         const tr = document.createElement("tr");
         tr.innerHTML = `<td></td><td></td><td></td><td></td><td></td><td></td><td class="num"></td><td class="num"></td><td class="num"></td><td></td>`;
         tr.children[0].textContent = tx.at ? new Date(tx.at).toLocaleString() : "—";
-        tr.children[1].textContent = String(tx?.phone?.model ?? tx?.model ?? "—") || "—";
+        tr.children[1].textContent = String(tx?.phone?.name ?? tx?.phone?.model ?? tx?.model ?? "—") || "—";
         tr.children[2].textContent = tx.serial || "—";
         tr.children[3].textContent = tx.customerPhone || "—";
         tr.children[4].textContent = String(tx.channel || "").toUpperCase() || "—";
@@ -517,7 +576,7 @@
       let ref = String(creditRef?.value || "").trim();
       const rawAmount = Number(creditAmount?.value || 0);
       if (!serial) {
-        if (creditHelper) creditHelper.textContent = "Enter the sold phone serial for the open credit sale.";
+        if (creditHelper) creditHelper.textContent = "Enter the sale, subscription, or asset reference for the open credit account.";
         return creditSerial?.focus?.();
       }
       if (!Number.isFinite(rawAmount) || rawAmount <= 0) {
@@ -527,7 +586,7 @@
 
       const found = findOpenCreditSale(branch, serial);
       if (!found) {
-        if (creditHelper) creditHelper.textContent = "No open credit sale found for this serial.";
+        if (creditHelper) creditHelper.textContent = "No open credit sale found for this reference.";
         return creditSerial?.focus?.();
       }
 
@@ -597,8 +656,8 @@
       queueSms(
         saleTx.customerPhone,
         nextBalance > 0
-          ? `MAPPHEX: Credit payment received KES ${formatInt(paidNow)} for serial ${saleTx.serial}. Balance KES ${formatInt(nextBalance)}. Ref: ${ref}.`
-          : `MAPPHEX: Credit cleared for serial ${saleTx.serial}. Last payment KES ${formatInt(paidNow)}. Ref: ${ref}. Thank you.`,
+          ? `MAPPHEX: Credit payment received KES ${formatInt(paidNow)} for reference ${saleTx.serial}. Balance KES ${formatInt(nextBalance)}. Ref: ${ref}.`
+          : `MAPPHEX: Credit cleared for reference ${saleTx.serial}. Last payment KES ${formatInt(paidNow)}. Ref: ${ref}. Thank you.`,
       );
 
       if (creditSerial) creditSerial.value = "";
@@ -627,18 +686,18 @@
         ) || null;
 
       if (!phone) {
-        if (helper) helper.textContent = "Serial not found in inventory.";
+        if (helper) helper.textContent = "Reference not found in inventory.";
         if (amountInput) amountInput.value = "";
         return;
       }
       if (!phoneAvailableToAgent(phone)) {
-        if (helper) helper.textContent = "This phone is allocated to another agent.";
+        if (helper) helper.textContent = "This item or service is allocated to another agent.";
         if (amountInput) amountInput.value = "";
         return;
       }
 
       if (helper) {
-        helper.textContent = `${phone.model || "Phone"} • ${phone.storage || ""} ${phone.color ? `• ${phone.color}` : ""} • KES ${formatInt(Number(phone.price || 0) || 0)}`.replaceAll("  ", " ").trim();
+        helper.textContent = `${itemName(phone)} • ${itemCategory(phone)} • ${itemUnit(phone)} • KES ${formatInt(Number(phone.price || 0) || 0)}`.replaceAll("  ", " ").trim();
       }
       if (amountInput && !String(amountInput.value || "").trim()) {
         amountInput.value = String(Math.max(0, Number(phone.price || 0) || 0));
@@ -666,11 +725,11 @@
           (p) => String(p.serial || "").toLowerCase() === serial.toLowerCase(),
         ) || null;
       if (!phone) {
-        if (helper) helper.textContent = "Serial not found in inventory.";
+        if (helper) helper.textContent = "Reference not found in inventory.";
         return serialInput?.focus?.();
       }
       if (!phoneAvailableToAgent(phone)) {
-        if (helper) helper.textContent = "This phone is allocated to another agent.";
+        if (helper) helper.textContent = "This item or service is allocated to another agent.";
         return serialInput?.focus?.();
       }
 
@@ -698,7 +757,7 @@
             amount: amountPaid,
             phoneNumber: cust,
             accountReference: ref,
-            transactionDesc: `MAPPHEX ${phone.model || "phone"} sale`,
+            transactionDesc: `MAPPHEX ${itemName(phone)} sale`,
           });
         } catch (err) {
           if (smsLine) smsLine.textContent = String(err?.message || "M-Pesa STK push failed.");
@@ -721,6 +780,9 @@
         customerPhone: cust,
         agent: { id: account.id, username: account.username },
         phone: {
+          name: itemName(phone),
+          category: itemCategory(phone),
+          unit: itemUnit(phone),
           model: phone.model,
           color: phone.color,
           storage: phone.storage,
@@ -768,6 +830,25 @@
       branch.updatedAt = at;
       persist();
       notifyTransaction(txObj, branch);
+      window.ERPClient?.postTransaction?.({
+        sourceModule: "sales",
+        type: "sale",
+        amount,
+        amountPaid,
+        quantity: 1,
+        itemId: phone.serial || itemName(phone),
+        ref,
+        customerPhone: cust,
+        payload: {
+          branchId: branch.id,
+          agentId: account.id,
+          productService: itemName(phone),
+          category: itemCategory(phone),
+          unit: itemUnit(phone),
+          saleType,
+          balance,
+        },
+      }).catch(() => null);
 
       // UI cleanup
       if (refInput) refInput.value = "";
@@ -789,8 +870,8 @@
       queueSms(
         cust,
         saleType === "credit"
-          ? `MAPPHEX: Credit sale for ${sold.model} (${sold.storage}, ${sold.color}). Paid KES ${formatInt(amountPaid)}, balance KES ${formatInt(balance)}, due ${creditDueDate}. Serial: ${sold.serial}. Ref: ${ref}.`
-          : `MAPPHEX: Payment received KES ${formatInt(amount)} for ${sold.model} (${sold.storage}, ${sold.color}). Serial: ${sold.serial}. Ref: ${ref}. Thank you.`,
+          ? `MAPPHEX: Credit sale for ${itemName(sold)} (${itemCategory(sold)}, ${itemUnit(sold)}). Paid KES ${formatInt(amountPaid)}, balance KES ${formatInt(balance)}, due ${creditDueDate}. Ref: ${ref}.`
+          : `MAPPHEX: Payment received KES ${formatInt(amount)} for ${itemName(sold)} (${itemCategory(sold)}, ${itemUnit(sold)}). Ref: ${ref}. Thank you.`,
       );
 
       renderKPIs();
@@ -803,10 +884,10 @@
       const branch = normalizeBranch(getBranch());
       if (!branch) return;
       const rows = [
-        ["Date", "Channel", "Reference", "Serial", "CustomerPhone", "AmountKES", "PaidKES", "CreditPaidToDateKES", "BalanceKES", "SaleType", "CreditDueDate", "CreditStatus", "CreditParentRef", "Model", "Agent"],
+        ["Date", "Channel", "Reference", "ItemReference", "ClientContact", "AmountKES", "PaidKES", "CreditPaidToDateKES", "BalanceKES", "SaleType", "CreditDueDate", "CreditStatus", "CreditParentRef", "ProductService", "Agent"],
       ];
       for (const tx of branch.txLog || []) {
-        const modelRaw = tx?.phone?.model ?? tx?.model ?? "";
+        const modelRaw = tx?.phone?.name ?? tx?.phone?.model ?? tx?.model ?? "";
         const amount = Number(tx.amount || 0) || 0;
         const paid = Number(tx.amountPaid ?? tx.paidAmount ?? amount) || 0;
         const creditPaidTotal = Number(tx.creditPaidTotal ?? paid) || 0;
@@ -842,6 +923,7 @@
       renderKPIs();
       renderInventory();
       renderHistory();
+      renderPipeline();
       updateTxFromSerial();
       if (indicator) {
         indicator.textContent = "Live";
@@ -886,6 +968,11 @@
     if (addBtn) addBtn.addEventListener("click", () => completeSale());
     if (exportBtn) exportBtn.addEventListener("click", () => exportCsv());
     if (creditPayBtn) creditPayBtn.addEventListener("click", () => recordCreditPayment());
+    if (orgSaveBtn) orgSaveBtn.addEventListener("click", () => savePipelineRow());
+    if (orgReportBtn) orgReportBtn.addEventListener("click", () => {
+      const rows = [["Organization", "Industry", "Plan", "Status", "ValueKES", "NextAction"], ...loadPipeline().map((row) => [row.name, row.industry, row.plan, row.status, row.value, row.next])];
+      downloadText(`agent-onboarding-${new Date().toISOString().slice(0, 10)}.csv`, rows.map((r) => r.map(csvEscape).join(",")).join("\n"));
+    });
 
     sync();
     navigateTo(String(window.location.hash || "").replace("#", "") || "overview");

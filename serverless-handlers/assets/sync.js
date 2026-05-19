@@ -24,7 +24,9 @@ const makeDefaultErp = () => {
       area: "",
       employees: 0,
       inventory: [],
+      items: [],
       phones: [],
+      soldItems: [],
       soldPhones: [],
       transactions: [],
       txLog: [],
@@ -40,7 +42,9 @@ const makeDefaultErp = () => {
 const normalizeBranch = (branch) => {
   if (!branch || typeof branch !== "object") return null;
   if (!Array.isArray(branch.inventory)) branch.inventory = [];
+  if (!Array.isArray(branch.items)) branch.items = Array.isArray(branch.phones) ? branch.phones : [];
   if (!Array.isArray(branch.phones)) branch.phones = [];
+  if (!Array.isArray(branch.soldItems)) branch.soldItems = Array.isArray(branch.soldPhones) ? branch.soldPhones : [];
   if (!Array.isArray(branch.soldPhones)) branch.soldPhones = [];
   if (!Array.isArray(branch.transactions)) branch.transactions = [];
   if (!Array.isArray(branch.txLog)) branch.txLog = [];
@@ -52,27 +56,33 @@ const normalizeBranch = (branch) => {
   return branch;
 };
 
-const rebuildInventoryFromPhones = (branch) => {
-  const phones = Array.isArray(branch.phones) ? branch.phones : [];
-  const soldPhones = Array.isArray(branch.soldPhones) ? branch.soldPhones : [];
+const rebuildInventoryFromItems = (branch) => {
+  const activeItems = Array.isArray(branch.items) && branch.items.length ? branch.items : branch.phones || [];
+  const soldItems = Array.isArray(branch.soldItems) && branch.soldItems.length ? branch.soldItems : branch.soldPhones || [];
   const byModel = new Map();
-  for (const phone of [...phones, ...soldPhones]) {
-    const model = String(phone.model || "").trim() || "-";
-    const row = byModel.get(model) || { model, stock: 0, sold: 0 };
-    if (String(phone.status || "in_stock") === "sold") row.sold += 1;
+  for (const item of [...activeItems, ...soldItems]) {
+    const model = String(item.name || item.model || item.serviceName || "").trim() || "-";
+    const row = byModel.get(model) || { model, name: model, stock: 0, sold: 0 };
+    if (String(item.status || "in_stock") === "sold") row.sold += 1;
     else row.stock += 1;
     byModel.set(model, row);
   }
   branch.inventory = Array.from(byModel.values()).sort((a, b) => String(a.model).localeCompare(String(b.model)));
 };
 
+const rebuildInventoryFromPhones = rebuildInventoryFromItems;
+
 const getAssignments = (body) => {
   if (Array.isArray(body)) return body;
   if (Array.isArray(body?.assignments)) return body.assignments;
   if (Array.isArray(body?.allocations)) return body.allocations;
+  if (Array.isArray(body?.catalogItems)) return body.catalogItems;
+  if (Array.isArray(body?.items)) return body.items;
+  if (Array.isArray(body?.products)) return body.products;
+  if (Array.isArray(body?.services)) return body.services;
+  if (Array.isArray(body?.assets)) return body.assets;
   if (Array.isArray(body?.assignedPhones)) return body.assignedPhones;
   if (Array.isArray(body?.phones)) return body.phones;
-  if (Array.isArray(body?.assets)) return body.assets;
   if (body && typeof body === "object") return [body];
   return [];
 };
@@ -98,26 +108,36 @@ const hasSerial = (erp, serial) => {
   const needle = String(serial || "").trim().toLowerCase();
   if (!needle) return false;
   return (erp.branches || []).some((branch) =>
-    [...(branch.phones || []), ...(branch.soldPhones || [])].some((phone) => itemSerial(phone).toLowerCase() === needle),
+    [...(branch.items || []), ...(branch.phones || []), ...(branch.soldItems || []), ...(branch.soldPhones || [])].some((item) => itemSerial(item).toLowerCase() === needle),
   );
 };
 
-const makePhone = (item, serial) => {
-  const model = String(item.model || item.name || item.assetName || item.phoneModel || item.phoneName || "").trim();
+const makeCatalogItem = (item, serial) => {
+  const name = String(item.name || item.model || item.serviceName || item.assetName || item.phoneModel || item.phoneName || "").trim();
+  const category = String(item.category || item.type || item.itemType || item.color || "").trim();
+  const unit = String(item.unit || item.uom || item.storage || item.capacity || "unit").trim();
   return {
     id: String(item.id || item.assetId || `asset-${serial}`).trim(),
-    model,
-    color: String(item.color || "").trim(),
-    storage: String(item.storage || item.capacity || "").trim(),
+    name,
+    model: name,
+    category,
+    color: category,
+    unit,
+    storage: unit,
     serial,
+    sku: String(item.sku || item.serviceCode || serial).trim(),
+    itemType: String(item.itemType || item.kind || (item.serviceName ? "service" : "product")).trim(),
     price: toMoney(item.price || item.cost || item.value || item.amount, 0),
     status: "in_stock",
-    source: "asset-management",
-    syncedFrom: String(item.source || "External asset feed").trim(),
+    source: "catalog-sync",
+    syncedFrom: String(item.source || "External ERP feed").trim(),
+    attributes: item.attributes && typeof item.attributes === "object" ? item.attributes : {},
     assignedAt: item.assignedAt || item.createdAt || isoNow(),
     createdAt: item.createdAt || isoNow(),
   };
 };
+
+const makePhone = makeCatalogItem;
 
 module.exports = async (req, res) => {
   try {
@@ -167,10 +187,10 @@ module.exports = async (req, res) => {
         continue;
       }
       const serial = itemSerial(item);
-      const model = String(item.model || item.name || item.assetName || item.phoneModel || "").trim();
-      if (!serial || !model) {
+      const name = String(item.name || item.model || item.serviceName || item.assetName || item.phoneModel || "").trim();
+      if (!serial || !name) {
         skipped += 1;
-        errors.push(`Missing serial or model for ${branch.name || branch.id}.`);
+        errors.push(`Missing item reference or name for ${branch.name || branch.id}.`);
         continue;
       }
       if (hasSerial(erp, serial)) {
@@ -178,9 +198,11 @@ module.exports = async (req, res) => {
         continue;
       }
 
-      branch.phones.push(makePhone(item, serial));
+      const catalogItem = makeCatalogItem(item, serial);
+      branch.items.push(catalogItem);
+      branch.phones.push(catalogItem);
       branch.updatedAt = isoNow();
-      rebuildInventoryFromPhones(branch);
+      rebuildInventoryFromItems(branch);
       imported += 1;
     }
 

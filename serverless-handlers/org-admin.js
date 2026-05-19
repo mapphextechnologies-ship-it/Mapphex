@@ -7,24 +7,7 @@ const { assertIdempotent, assertObject, assertSameOrigin, rateLimit, requireTena
 const USERS_KEY = "enterprise_org_users_v1";
 const SETTINGS_KEY = "enterprise_org_settings_v1";
 
-const moduleHref = "organization-module.html";
-const PORTAL_CATALOG = [
-  { id: "branch", title: "Branch Management", href: moduleHref, description: "Locations, branch teams, local operations.", features: ["Branch records", "Local teams", "Operational scope"] },
-  { id: "departments", title: "Department Management", href: moduleHref, description: "Department users, workflows, and approvals.", features: ["Department roles", "Approvals", "Workflows"] },
-  { id: "hr", title: "HR Module", href: moduleHref, description: "Staff records, HR reports, and workforce structure.", features: ["Shared users", "Workforce reports", "Role access"] },
-  { id: "finance", title: "Finance Module", href: moduleHref, description: "Finance summaries, payments, and reports.", features: ["Shared transactions", "Expense views", "Reports"] },
-  { id: "pharmacy", title: "Pharmacy Module", href: moduleHref, description: "Pharmacy inventory and controlled operations.", features: ["Medicine stock", "Supplier control", "Shared inventory"] },
-  { id: "inventory", title: "Inventory Module", href: moduleHref, description: "Stock, items, transfers, and availability.", features: ["Stock levels", "Transfers", "Availability"] },
-  { id: "logistics", title: "Logistics Module", href: moduleHref, description: "Dispatch, delivery, fleet, and tracking workflows.", features: ["Dispatch", "Tracking", "Delivery status"] },
-  { id: "sales", title: "Sales Module", href: moduleHref, description: "Sales operations, customers, and performance.", features: ["Customers", "Sales activity", "Performance"] },
-  { id: "analytics", title: "Analytics Module", href: moduleHref, description: "Realtime analytics, reports, and insights.", features: ["Charts", "Insights", "Activity trends"] },
-  { id: "admin", title: "Admin Module", href: "organization-admin.html", description: "Organization settings, users, roles, and modules.", features: ["Users", "Settings", "Permissions"] },
-  { id: "staff", title: "Staff Module", href: moduleHref, description: "Role-specific staff workspace.", features: ["Tasks", "Notifications", "Role access"] },
-  { id: "customer", title: "Customer Module", href: moduleHref, description: "Customer operations and service workflows.", features: ["Customers", "Service records", "Support"] },
-  { id: "reporting", title: "Reporting Module", href: moduleHref, description: "Operational, finance, and organization reports.", features: ["Operational reports", "Financial summaries", "Exports"] },
-];
-
-const VALID_PORTAL_IDS = new Set(PORTAL_CATALOG.map((portal) => portal.id));
+const { PORTAL_CATALOG, VALID_PORTAL_IDS } = require("../api/_lib/portal-catalog");
 const sanitizeSettings = (settings = {}) => ({
   ...settings,
   installedPortals: (settings.installedPortals || []).filter((id) => VALID_PORTAL_IDS.has(id)),
@@ -111,7 +94,7 @@ module.exports = async (req, res) => {
       const modules = Array.from(new Set([...(settings.modules || []), ...portalIds]));
       const modulePermissions = { ...(settings.modulePermissions || {}) };
       portalIds.forEach((portalId) => {
-        modulePermissions[portalId] = Array.from(new Set([`${portalId}.read`, `${portalId}.manage`, "organization.shared.read"]));
+        modulePermissions[portalId] = Array.from(new Set([`${portalId}.read`, `${portalId}.manage`]));
       });
       const navigation = Array.from(new Set([...(settings.navigation || []), ...portalIds]));
       const next = {
@@ -131,6 +114,26 @@ module.exports = async (req, res) => {
         sharedWorkspace: true,
       });
       return sendJson(res, 200, { ok: true, portal: portals[0], portals, settings: next });
+    }
+
+    if (body.action === "uninstall-portal" || body.action === "uninstall-portals") {
+      const requested = body.action === "uninstall-portals" && Array.isArray(body.portalIds) ? body.portalIds : [body.portalId];
+      const portalIds = Array.from(new Set(requested.map((id) => safeString(id, 80)).filter((id) => VALID_PORTAL_IDS.has(id))));
+      if (!portalIds.length) return sendJson(res, 404, { ok: false, error: "One or more portals were not found" });
+      const remove = new Set(portalIds);
+      const modulePermissions = { ...(settings.modulePermissions || {}) };
+      portalIds.forEach((portalId) => delete modulePermissions[portalId]);
+      const next = {
+        ...settings,
+        installedPortals: (settings.installedPortals || []).filter((id) => !remove.has(id)),
+        modules: (settings.modules || []).filter((id) => !remove.has(id)),
+        navigation: (settings.navigation || []).filter((id) => !remove.has(id)),
+        modulePermissions,
+        updatedAt: new Date().toISOString(),
+      };
+      await store.set(settingsKey, next);
+      await appendEvent(store, tenantId, "org.modules.disabled", { portalIds, count: portalIds.length });
+      return sendJson(res, 200, { ok: true, settings: next });
     }
 
     return sendJson(res, 400, { ok: false, error: "Unsupported org admin action" });

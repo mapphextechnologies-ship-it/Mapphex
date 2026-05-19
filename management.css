@@ -21,6 +21,33 @@
   align-items: end;
 }
 
+.module-shared-grid {
+  padding: 16px 18px 18px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.module-shared-grid article {
+  min-height: 126px;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(111, 78, 55, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.module-shared-grid strong,
+.module-shared-grid span {
+  display: block;
+}
+
+.module-shared-grid span {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
 .org-register-shell {
   background:
     linear-gradient(135deg, rgba(0, 154, 68, 0.24), transparent 45%),
@@ -28,7 +55,232 @@
 }
 
 .org-register-card {
-  width: min(560px, 100%);
+  width: min(980px, 100%);
+}
+
+.business-type-picker {
+  grid-column: 1 / -1;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.selected-package-summary {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 240px) auto;
+  gap: 14px;
+  align-items: start;
+  padding: 16px;
+  border: 1px solid rgba(91, 214, 255, 0.22);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(0, 119, 255, 0.14), rgba(255, 255, 255, 0.035)),
+    rgba(2, 8, 18, 0.58);
+}
+
+.selected-package-summary span {
+  color: rgba(235, 245, 255, 0.62);
+  font-size: 12px;
+}
+
+.selected-package-summary h2 {
+  margin: 5px 0 7px;
+  color: #fff;
+  font-size: 22px;
+}
+
+.selected-package-summary p {
+  margin: 0;
+  color: rgba(235, 245, 255, 0.7);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.selected-package-total {
+  padding-left: 12px;
+  border-left: 2px solid rgba(91, 214, 255, 0.58);
+}
+
+.selected-package-total strong {
+  display: block;
+  color: #fff;
+  font-size: 16px;
+}
+
+.selected-service-components {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.selected-service-components span {
+  padding: 8px 10px;
+  border: 1px solid rgba(91, 214, 255, 0.22);
+  border-radius: 999px;
+  background: rgba(0, 119, 255, 0.1);
+  color: rgba(235, 245, 255, 0.82);
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.business-type-picker legend {
+  margin-bottom: 6px;
+  color: #f8fbff;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.business-type-picker > p {
+  margin: 0 0 12px;
+  color: rgba(235, 245, 255, 0.62);
+  font-size: 12px;
+}
+
+.business-type-selectors {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.business-type-groups {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.business-type-group {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid rgba(130, 190, 255, 0.14);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.business-type-group h3 {
+  margin: 0 0 4px;
+  color: #fff;
+  font-size: 13px;
+}
+
+.business-type-group label {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  border: 1px solid rgba(130, 190, 255, 0.12);
+  border-radius: 12px;
+  color: rgba(235, 245, 255, 0.74);
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.business-type-group label:has(input:checked) {
+  border-color: rgba(91, 214, 255, 0.62);
+  background: rgba(0, 119, 255, 0.22);
+  color: #fff;
+}
+
+.business-type-group input {
+  accent-color: #38bdf8;
+}
+
+.business-type-details {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid rgba(91, 214, 255, 0.22);
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(0, 119, 255, 0.14), rgba(255, 255, 255, 0.035)),
+    rgba(2, 8, 18, 0.58);
+}
+
+.business-type-details > div:first-child span {
+  color: #66dcff;
+  font-size: 11px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.business-type-details h3 {
+  margin: 6px 0 8px;
+  color: #fff;
+  font-size: 21px;
+}
+
+.business-type-details p {
+  margin: 0;
+  color: rgba(235, 245, 255, 0.7);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.business-type-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.business-type-detail-grid div {
+  min-width: 0;
+  padding-left: 12px;
+  border-left: 2px solid rgba(91, 214, 255, 0.58);
+}
+
+.business-type-detail-grid strong,
+.business-type-detail-grid span {
+  display: block;
+}
+
+.business-type-detail-grid strong {
+  color: #fff;
+  font-size: 13px;
+}
+
+.business-type-detail-grid span {
+  margin-top: 4px;
+  color: rgba(235, 245, 255, 0.58);
+  font-size: 11px;
+}
+
+.business-type-portals {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(130, 190, 255, 0.14);
+}
+
+.business-type-portals strong {
+  display: block;
+  margin-bottom: 10px;
+  color: #fff;
+  font-size: 13px;
+}
+
+.business-type-portals div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.business-type-portals span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 8px 11px;
+  border: 1px solid rgba(91, 214, 255, 0.22);
+  border-radius: 999px;
+  background: rgba(0, 119, 255, 0.1);
+  color: rgba(235, 245, 255, 0.82);
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1.2;
 }
 
 .status-active {
@@ -138,6 +390,18 @@
   .super-grid,
   .super-grid-4,
   .super-form,
+  .module-shared-grid,
+  .monitor-grid,
+  .business-type-selectors,
+  .business-type-groups,
+  .selected-package-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .super-grid,
+  .super-grid-4,
+  .super-form,
+  .module-shared-grid,
   .monitor-grid {
     grid-template-columns: 1fr;
   }
@@ -159,6 +423,7 @@
   }
 
   .super-grid,
+  .module-shared-grid,
   .monitor-grid,
   .search-results,
   .heatmap {
@@ -168,5 +433,21 @@
   .monitor-chart {
     min-height: 160px;
     gap: 6px;
+  }
+
+  .business-type-groups {
+    grid-template-columns: 1fr;
+  }
+
+  .business-type-selectors {
+    grid-template-columns: 1fr;
+  }
+
+  .selected-package-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .business-type-detail-grid {
+    grid-template-columns: 1fr;
   }
 }

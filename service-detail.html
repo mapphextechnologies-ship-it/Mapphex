@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Service | MAPPHEX</title>
+    <meta name="description" content="View a MAPPHEX service in detail with features, benefits, and setup options." />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/images/enterprise-icon-192.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/images/enterprise-icon-192.png" />
+    <meta name="theme-color" content="#06101f" />
+    <link rel="stylesheet" href="director.css" />
+    <link rel="stylesheet" href="home.css" />
+    <link rel="stylesheet" href="service-detail.css" />
+  </head>
+  <body data-page="service-detail" class="mapphex-home">
+    <header class="site-nav" data-nav>
+      <a class="site-brand" href="index.html" aria-label="MAPPHEX home">
+        <img class="logo-img" src="/images/enterprise-logo.png" alt="MAPPHEX logo" />
+        <span>MAPPHEX</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-label="Open navigation" aria-expanded="false" data-nav-toggle>
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="site-links" aria-label="Main navigation" data-nav-menu>
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <div class="nav-dropdown">
+          <a class="nav-dropdown-trigger" href="services.html#services">Services</a>
+          <div class="services-mega" aria-label="MAPPHEX services and applications" data-service-menu></div>
+        </div>
+        <a href="pricing.html">Pricing</a>
+        <a href="security.html">Security</a>
+        <a href="contact.html">Contact</a>
+      </nav>
+      <div class="site-actions">
+        <a class="btn ghost" href="organization-login.html">Organization Login</a>
+        <a class="btn primary" href="organization-register.html">Register Organization</a>
+      </div>
+    </header>
+
+    <main class="service-page-shell">
+      <section class="service-ad-hero reveal" data-service-hero>
+        <div class="service-ad-copy">
+          <a class="service-back service-back-top" href="services.html#services">All services</a>
+          <div class="eyebrow" data-service-category>Service</div>
+          <h1 data-service-title>Loading service</h1>
+          <p data-service-description></p>
+          <div class="service-ad-actions">
+            <a class="btn primary" href="organization-register.html" data-service-primary>Register Organization</a>
+            <a class="btn ghost" href="contact.html">Talk to Support</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="site-section service-summary-cards reveal">
+        <div class="service-ad-stats" aria-label="Service highlights">
+          <article><strong>Setup</strong><span>Guided workspace activation</span></article>
+          <article><strong>Control</strong><span>Roles, records, and reporting</span></article>
+          <article><strong>Growth</strong><span>Built for teams and branches</span></article>
+        </div>
+        <div class="service-pricing-summary" aria-label="Service pricing and subscription details">
+          <div><strong data-service-cost>From KSh 2,500 / month</strong><span>Estimated service subscription</span></div>
+          <div><strong data-service-plan>Starter or Business</strong><span>Recommended plan</span></div>
+          <div><strong data-service-setup>Setup included</strong><span>Activation guidance</span></div>
+          <p data-service-subscription>Subscription is attached to the registered organization workspace. You can renew monthly, upgrade later, and add modules, users, or branches as operations grow.</p>
+        </div>
+      </section>
+
+      <section class="site-section service-ad-section reveal">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">App Preview</div>
+            <h2>See the working areas before choosing components.</h2>
+            <p>Preview the main screens this business can use before registering the organization.</p>
+          </div>
+        </div>
+        <div class="service-app-preview" data-app-preview></div>
+      </section>
+
+      <section class="site-section service-ad-section reveal">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Components</div>
+            <h2>Choose the workspace parts this business needs.</h2>
+            <p>Core components are included for this service. Add optional components before registering the organization.</p>
+          </div>
+          <div class="component-total" aria-live="polite">
+            <span>Estimated monthly total</span>
+            <strong data-component-total>KSh 0 / month</strong>
+          </div>
+        </div>
+        <div class="component-layout component-rail-layout">
+          <div>
+            <h3>Core components</h3>
+            <div class="component-grid" data-core-components></div>
+          </div>
+          <div>
+            <h3>Optional add-ons</h3>
+            <div class="component-grid" data-optional-components></div>
+          </div>
+        </div>
+        <div class="component-detail-panel" data-component-detail>
+          Select a component to review what it controls.
+        </div>
+        <div class="all-components-panel">
+          <button class="btn" type="button" data-toggle-all-components>View all components</button>
+          <div class="all-components-body" data-all-components hidden>
+            <h3>All app components</h3>
+            <p>Choose extra components only if this organization needs them. The subscription estimate updates when you add them.</p>
+            <div class="component-grid" data-all-component-list></div>
+          </div>
+        </div>
+        <div class="selected-component-summary">
+          <strong data-selected-count>0 components selected</strong>
+          <span data-selected-components></span>
+        </div>
+      </section>
+
+      <section class="site-section service-ad-section reveal">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">What You Get</div>
+            <h2 data-service-feature-heading>Tools built for daily operations.</h2>
+            <p data-service-feature-copy></p>
+          </div>
+        </div>
+        <div class="security-grid service-feature-grid" data-service-features></div>
+      </section>
+
+      <section class="site-section service-ad-section reveal">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Workflow</div>
+            <h2>From setup to reporting without scattered records.</h2>
+            <p>MAPPHEX connects the selected service with users, permissions, daily records, and management review.</p>
+          </div>
+        </div>
+        <div class="solution-strip">
+          <article><strong>Configure</strong><span>Prepare the service, categories, users, and access rules.</span></article>
+          <article><strong>Operate</strong><span>Record daily work, transactions, customers, stock, tasks, or visits.</span></article>
+          <article><strong>Review</strong><span>Use reports and summaries to understand what changed.</span></article>
+          <article><strong>Improve</strong><span>Adjust teams, branches, modules, and service needs as the business grows.</span></article>
+        </div>
+      </section>
+
+      <section class="site-section service-ad-section reveal">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Related Services</div>
+            <h2>Explore services that work well with this one.</h2>
+          </div>
+        </div>
+        <div class="service-choice-grid related-services" data-related-services></div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-about">
+        <h3 class="footer-social-title">Follow Us</h3>
+        <div class="footer-socials" aria-label="MAPPHEX social media links">
+          <a class="social-icon" href="https://www.facebook.com/mapphex" aria-label="Facebook"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 8h3V4h-3c-3 0-5 2-5 5v2H6v4h3v5h4v-5h3l1-4h-4V9c0-.6.4-1 1-1Z" /></svg></a>
+          <a class="social-icon" href="https://www.linkedin.com/company/mapphex" aria-label="LinkedIn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 8.8H3V21h3.5V8.8ZM4.8 3A2 2 0 1 0 4.7 7 2 2 0 0 0 4.8 3Zm6 5.8H7.5V21H11v-6.3c0-1.7.8-2.7 2.2-2.7 1.3 0 1.9.9 1.9 2.7V21h3.5v-6.8c0-3.6-1.9-5.6-4.8-5.6-1.6 0-2.5.7-3 1.6V8.8Z" /></svg></a>
+          <a class="social-icon" href="https://www.instagram.com/mapphex" aria-label="Instagram"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8c3 0 5 2 5 5v8c0 3-2 5-5 5H8c-3 0-5-2-5-5V8c0-3 2-5 5-5Zm0 3c-1.4 0-2 .6-2 2v8c0 1.4.6 2 2 2h8c1.4 0 2-.6 2-2V8c0-1.4-.6-2-2-2H8Zm4 3a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm0 2a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm4.7-2.7a1 1 0 1 1 0 2 1 1 0 0 1 0-2Z" /></svg></a>
+          <a class="social-icon" href="https://x.com/mapphex" aria-label="X"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h4.7l4.1 5.4L17.5 4H20l-6 7 6.4 9h-4.7l-4.5-6-5.1 6H3.6l6.5-7.6L4 4Zm3.2 2 9.5 12h.8L8 6h-.8Z" /></svg></a>
+        </div>
+      </div>
+      <div class="footer-column">
+        <h3>Explore All MAPPHEX Services</h3>
+        <a href="service-detail.html?id=book-store">Retail</a>
+        <a href="service-detail.html?id=restaurants">Food & Hospitality</a>
+        <a href="service-detail.html?id=sports-club">Health & Fitness</a>
+        <a href="services.html#services">All Services</a>
+      </div>
+      <div class="footer-column">
+        <h3>Company</h3>
+        <a href="about.html">About Us</a>
+        <a href="about.html">Leadership Team</a>
+        <a href="contact.html">Work With Us</a>
+        <a href="contact.html">Newsroom</a>
+        <a href="index.html">MAPPHEX</a>
+      </div>
+      <div class="footer-column">
+        <h3>Resources</h3>
+        <a href="services.html">System Requirements</a>
+        <a href="security.html">Privacy Policy</a>
+        <a href="pricing.html">Terms of Use</a>
+        <a href="security.html">Cookie Policy</a>
+        <a href="/PRODUCTION-ARCHITECTURE.md">Platform Architecture</a>
+        <a href="contact.html">Accessibility</a>
+      </div>
+      <div class="footer-column">
+        <h3>Community</h3>
+        <a href="contact.html">Customer Support</a>
+        <a href="contact.html">Partner Network</a>
+        <a href="about.html">User Stories</a>
+        <a href="contact.html">Events</a>
+      </div>
+      <div class="footer-summary">
+        <p>Register an organization, choose the service type, accept the subscription, and open the matching workspace tools.</p>
+        <p>Manage staff, branches, departments, products, services, stock, sales, finance, customers, documents, tasks, and reports.</p>
+        <p>Control access with roles, permissions, audit activity, secure records, renewals, upgrades, and support workflows.</p>
+      </div>
+    </footer>
+    <script src="enterprise-core.js"></script>
+    <script src="service-detail.js"></script>
+    <script src="home.js?v=3"></script>
+    <script src="pwa.js"></script>
+  </body>
+</html>

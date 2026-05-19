@@ -5,9 +5,9 @@
 
 :root {
   --bg: #06101f;
-  --panel: rgba(255, 255, 255, 0.06);
-  --panel-2: rgba(255, 255, 255, 0.08);
-  --border: rgba(255, 255, 255, 0.14);
+  --panel: rgba(17, 11, 8, 0.64);
+  --panel-2: rgba(35, 23, 16, 0.72);
+  --border: rgba(173, 122, 82, 0.20);
   --text: rgba(255, 255, 255, 0.92);
   --muted: rgba(255, 255, 255, 0.70);
   --muted-2: rgba(255, 255, 255, 0.55);
@@ -75,7 +75,7 @@ code {
 
 .btn {
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(35, 23, 16, 0.64);
   color: var(--text);
   padding: 10px 14px;
   border-radius: 12px;
@@ -85,8 +85,8 @@ code {
 
 .btn:hover {
   transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.09);
-  border-color: rgba(255, 255, 255, 0.20);
+  background: rgba(55, 35, 24, 0.78);
+  border-color: rgba(211, 154, 103, 0.32);
 }
 
 .btn:active {
@@ -213,7 +213,7 @@ code {
 
 .panel {
   background: var(--panel);
-  border: 1px solid rgba(255, 255, 255, 0.11);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   overflow: hidden;
@@ -226,8 +226,8 @@ code {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.04));
+  border-bottom: 1px solid rgba(173, 122, 82, 0.18);
+  background: linear-gradient(180deg, rgba(55, 35, 24, 0.70), rgba(23, 16, 12, 0.36));
 }
 
 .panel-header h2 {
@@ -291,6 +291,7 @@ input[type="text"],
 input[type="password"],
 input[type="number"],
 input[type="date"],
+.field input,
 textarea,
 select {
   border: 1px solid rgba(255, 255, 255, 0.14);
@@ -307,6 +308,7 @@ input[type="text"]:focus,
 input[type="password"]:focus,
 input[type="number"]:focus,
 input[type="date"]:focus,
+.field input:focus,
 textarea:focus,
 select:focus {
   border-color: rgba(34, 211, 238, 0.55);

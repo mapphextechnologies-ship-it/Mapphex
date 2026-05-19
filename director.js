@@ -210,18 +210,18 @@
   };
 
   const modelsCatalog = () => [
-    "iPhone 15",
-    "iPhone 15 Pro",
-    "Samsung Galaxy S24",
-    "Samsung Galaxy A15 5G",
-    "Samsung Galaxy A25 5G",
-    "Tecno Camon 20",
-    "Tecno Spark 10",
-    "Infinix Hot 40",
-    "Infinix Note 30",
-    "Redmi Note 13",
-    "OPPO A58",
-    "Nokia G42 5G",
+    "Retail product",
+    "Pharmacy medicine",
+    "School fee service",
+    "Hospital consultation",
+    "Restaurant menu item",
+    "Hardware stock item",
+    "Software subscription",
+    "IT support package",
+    "Cloud hosting plan",
+    "Real estate rent",
+    "Logistics delivery",
+    "Manufacturing raw material",
   ];
 
   const kenyaCities = () => [

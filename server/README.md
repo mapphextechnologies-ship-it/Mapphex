@@ -14,7 +14,7 @@ node server/server.js
 ```
 Then open:
 ```text
-http://localhost:3000/departments.html
+http://localhost:3000/organization-workspace.html
 ```
 
 ### Enable backend sync (frontend)
@@ -43,4 +43,3 @@ Alternatives (fast to ship):
 - **Firestore / Supabase** if you want managed hosting and realtime.
 
 When you connect a real DB, keep the same API routes and replace the `kv.json` storage layer with DB reads/writes.
-
