@@ -44,10 +44,11 @@
       "erp.message.sent": "Department message sent",
       "admin.announcement.sent": "Announcement sent",
     };
-    return labels[type] || type.replace(/\./g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+    return event.displayType || labels[type] || type.replace(/\./g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
   };
 
   const eventDetail = (event) => {
+    if (event?.displayMessage) return event.displayMessage;
     const payload = event?.payload || {};
     switch (event?.type) {
       case "organization.workspace.created":

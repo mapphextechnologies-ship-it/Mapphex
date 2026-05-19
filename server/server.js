@@ -135,7 +135,7 @@ const handleRealtime = async (req, res, url) => {
   const after = Number(url.searchParams.get("after") || 0) || 0;
 
   if (!wantsSse) {
-    const events = eventLog.filter((event) => event.tenantId === tenantId && Number(event.seq || 0) > after).slice(-200);
+    const events = eventLog.filter((event) => event.tenantId === tenantId && Number(event.seq || 0) > after).filter(visibleEvent).slice(-200).map(cleanEvent);
     return ok(res, { tenantId, events });
   }
 
@@ -181,6 +181,34 @@ const unscopedTenantKey = (key) => {
   const value = String(key || "");
   const match = value.match(/^tenant:[^:]+:(.+)$/);
   return match ? match[1] : value;
+};
+
+const visibleEvent = (event) => !String(event?.type || "").startsWith("kv.");
+
+const cleanEvent = (event) => {
+  const payload = event?.payload || {};
+  const messages = {
+    "organization.workspace.created": `${payload.name || "Organization"} workspace is ready.`,
+    "org.agreement.accepted": `Subscription plan: ${payload.subscriptionPlan || "selected plan"}.`,
+    "org.modules.enabled": `${payload.count || payload.portalIds?.length || 0} portal${Number(payload.count || payload.portalIds?.length || 0) === 1 ? "" : "s"} installed: ${(payload.titles || payload.portalIds || []).join(", ")}.`,
+    "org.modules.disabled": `Removed ${(payload.portalIds || []).join(", ") || "selected portal"} from the workspace.`,
+    "org.user.created": `Added ${payload.role || "user"} account.`,
+    "org.settings.updated": "Organization settings updated.",
+    "erp.message.sent": `Message sent from ${payload.from || "one department"} to ${payload.to || "another department"}.`,
+  };
+  return {
+    ...event,
+    displayType: {
+      "organization.workspace.created": "Workspace created",
+      "org.agreement.accepted": "Agreement accepted",
+      "org.modules.enabled": "Portals installed",
+      "org.modules.disabled": "Portal uninstalled",
+      "org.user.created": "User added",
+      "org.settings.updated": "Settings updated",
+      "erp.message.sent": "Department message sent",
+    }[event.type] || String(event.type || "Activity").replace(/\./g, " ").replace(/\b\w/g, (char) => char.toUpperCase()),
+    displayMessage: messages[event.type] || payload.message || payload.detail || "Activity recorded.",
+  };
 };
 
 const withKvWriteLock = async (fn) => {
