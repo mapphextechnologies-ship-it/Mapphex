@@ -155,6 +155,7 @@ module.exports = async (req, res) => {
         userId: user?.id || "organization-admin",
         role: effectiveRole,
         permissions: Array.isArray(user?.permissions) ? user.permissions : effectiveRole === "org_admin" ? ["*"] : [],
+        portalAccess: Array.isArray(user?.portalAccess) ? user.portalAccess : [],
         tenantId,
         organizationId: organization?.organizationId,
         iat: now,

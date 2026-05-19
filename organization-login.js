@@ -135,6 +135,7 @@
             email: data.session.sub,
             userId: data.session.userId,
             permissions: data.session.permissions || [],
+            portalAccess: data.session.portalAccess || [],
             role: data.session.role || "org_admin",
             tenantId: data.session.tenantId,
             token: data.token,

@@ -100,6 +100,7 @@
     const session = window.EnterpriseCore?.getSession?.() || {};
     const role = String(session.role || "").toLowerCase();
     if (["org_admin", "admin", "director"].includes(role)) return true;
+    if (Array.isArray(session.portalAccess) && session.portalAccess.includes(portalId)) return true;
     return (
       window.EnterpriseCore?.hasPermission?.(`${portalId}.read`, session) ||
       window.EnterpriseCore?.hasPermission?.(`${portalId}.manage`, session)

@@ -84,6 +84,62 @@ module.exports = async (req, res) => {
       return sendJson(res, 200, { ok: true, user: publicUser(user), activationToken, users: next.map(publicUser) });
     }
 
+    if (body.action === "update-user") {
+      const userId = safeString(body.userId || body.id, 120);
+      const idx = users.findIndex((user) => user.id === userId);
+      if (idx < 0) return sendJson(res, 404, { ok: false, error: "User not found" });
+      const role = safeString(body.role || users[idx].role || "staff", 80);
+      const roleTemplate = (settings.defaultRoles || []).find((item) => item.id === role) || null;
+      const portalAccess = Array.isArray(body.portalAccess)
+        ? mergeUniqueStrings(body.portalAccess).filter((id) => VALID_PORTAL_IDS.has(id))
+        : mergeUniqueStrings(users[idx].portalAccess || roleTemplate?.portals || []).filter((id) => VALID_PORTAL_IDS.has(id));
+      const permissions = Array.isArray(body.permissions)
+        ? body.permissions.map((p) => safeString(p, 80)).filter(Boolean)
+        : users[idx].permissions || roleTemplate?.permissions || [];
+      const status = safeString(body.status || users[idx].status || "active", 40);
+      if (!["active", "disabled", "invited"].includes(status)) return sendJson(res, 400, { ok: false, error: "Invalid user status" });
+      const next = [...users];
+      next[idx] = {
+        ...next[idx],
+        role,
+        permissions,
+        portalAccess,
+        status,
+        updatedAt: new Date().toISOString(),
+      };
+      await store.set(usersKey, next);
+      await appendEvent(store, tenantId, "org.user.updated", { userId, role, status, portalAccess });
+      return sendJson(res, 200, { ok: true, user: publicUser(next[idx]), users: next.map(publicUser) });
+    }
+
+    if (body.action === "set-user-status") {
+      const userId = safeString(body.userId || body.id, 120);
+      const status = safeString(body.status || "active", 40);
+      if (!["active", "disabled", "invited"].includes(status)) return sendJson(res, 400, { ok: false, error: "Invalid user status" });
+      const idx = users.findIndex((user) => user.id === userId);
+      if (idx < 0) return sendJson(res, 404, { ok: false, error: "User not found" });
+      const next = [...users];
+      next[idx] = { ...next[idx], status, updatedAt: new Date().toISOString() };
+      await store.set(usersKey, next);
+      await appendEvent(store, tenantId, "org.user.status.changed", { userId, status });
+      return sendJson(res, 200, { ok: true, user: publicUser(next[idx]), users: next.map(publicUser) });
+    }
+
+    if (body.action === "issue-user-invite" || body.action === "issue-password-reset") {
+      const userId = safeString(body.userId || body.id, 120);
+      const idx = users.findIndex((user) => user.id === userId);
+      if (idx < 0) return sendJson(res, 404, { ok: false, error: "User not found" });
+      const token = randomOrganizationToken(body.action === "issue-password-reset" ? "reset" : "invite");
+      const next = [...users];
+      next[idx] =
+        body.action === "issue-password-reset"
+          ? { ...next[idx], passwordResetToken: token, passwordResetRequestedAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
+          : { ...next[idx], activationToken: token, status: "invited", updatedAt: new Date().toISOString() };
+      await store.set(usersKey, next);
+      await appendEvent(store, tenantId, body.action === "issue-password-reset" ? "org.user.password_reset.issued" : "org.user.invite.issued", { userId });
+      return sendJson(res, 200, { ok: true, token, user: publicUser(next[idx]), users: next.map(publicUser) });
+    }
+
     if (body.action === "save-settings") {
       const next = {
         ...settings,

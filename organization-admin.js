@@ -9,6 +9,10 @@
   let state = { users: [], settings: {}, organization: null, events: [] };
 
   const csv = (value) => String(value || "").split(",").map((x) => x.trim()).filter(Boolean);
+  const installedPortalIds = () => (state.settings.installedPortals || state.settings.modules || []).filter(Boolean);
+  const portalLabel = (id) => (state.portalCatalog || []).find((portal) => portal.id === id)?.title || id;
+  const selectedPortalInputs = (root = document) =>
+    [...root.querySelectorAll("[data-user-portal]:checked")].map((input) => input.value).filter(Boolean);
   const downloadText = (filename, text, type = "text/plain") => {
     const blob = new Blob([text], { type });
     const link = document.createElement("a");
@@ -85,8 +89,29 @@
     $("#org-branches").value = (state.settings.branches || []).join(", ");
     $("#org-departments").value = (state.settings.departments || []).join(", ");
     $("#org-modules").value = (state.settings.modules || []).join(", ");
+    const portalChecks = installedPortalIds()
+      .map((id) => `<label class="check-chip"><input type="checkbox" data-user-portal value="${escapeHtml(id)}" /> <span>${escapeHtml(portalLabel(id))}</span></label>`)
+      .join("");
+    $("#org-user-portals").innerHTML = portalChecks || `<span class="muted">No installed portals yet.</span>`;
     $("#org-users-table").innerHTML = state.users
-      .map((user) => `<tr><td>${escapeHtml(user.name)}</td><td>${escapeHtml(user.email)}</td><td>${escapeHtml(user.role)}</td><td>${escapeHtml(user.status)}</td></tr>`)
+      .map((user) => {
+        const portals = (user.portalAccess || []).map(portalLabel).join(", ") || "Inherited";
+        const disabled = user.status === "disabled";
+        return `<tr>
+          <td>${escapeHtml(user.name)}</td>
+          <td>${escapeHtml(user.email)}</td>
+          <td><select data-user-role="${escapeHtml(user.id)}"><option ${user.role === "staff" ? "selected" : ""}>staff</option><option ${user.role === "manager" ? "selected" : ""}>manager</option><option ${user.role === "finance" ? "selected" : ""}>finance</option><option ${user.role === "hr" ? "selected" : ""}>hr</option><option ${user.role === "sales" ? "selected" : ""}>sales</option><option ${user.role === "org_admin" ? "selected" : ""}>org_admin</option></select></td>
+          <td><span class="muted">${escapeHtml(portals)}</span></td>
+          <td>${escapeHtml(user.status || "active")}</td>
+          <td class="table-actions">
+            <button class="btn" type="button" data-user-save="${escapeHtml(user.id)}">Save</button>
+            <button class="btn" type="button" data-user-portals="${escapeHtml(user.id)}">Portals</button>
+            <button class="btn" type="button" data-user-invite="${escapeHtml(user.id)}">Invite</button>
+            <button class="btn" type="button" data-user-reset="${escapeHtml(user.id)}">Reset</button>
+            <button class="btn ${disabled ? "primary" : "danger"}" type="button" data-user-status="${escapeHtml(user.id)}" data-status="${disabled ? "active" : "disabled"}">${disabled ? "Activate" : "Disable"}</button>
+          </td>
+        </tr>`;
+      })
       .join("");
     const events = state.events.filter(visibleEvent).slice(-40);
     $("#org-activity-table").innerHTML = events.length ? events
@@ -105,7 +130,7 @@
       location.href = `organization-agreement.html?tenant=${encodeURIComponent(tenantId)}`;
       return;
     }
-    state = { organization: org.organization, users: admin.users || [], settings: admin.settings || {}, events: realtime.events || [] };
+    state = { organization: org.organization, users: admin.users || [], settings: admin.settings || {}, portalCatalog: admin.portalCatalog || [], events: realtime.events || [] };
     render();
   };
 
@@ -127,9 +152,52 @@
       event.preventDefault();
       const body = Object.fromEntries(new FormData(event.currentTarget).entries());
       body.action = "add-user";
+      body.portalAccess = selectedPortalInputs(event.currentTarget);
       await fetchJson("/api/org-admin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       event.currentTarget.reset();
       await load();
+    });
+    $("#org-users-table")?.addEventListener("click", async (event) => {
+      const save = event.target.closest("[data-user-save]");
+      const portals = event.target.closest("[data-user-portals]");
+      const status = event.target.closest("[data-user-status]");
+      const invite = event.target.closest("[data-user-invite]");
+      const reset = event.target.closest("[data-user-reset]");
+      const userId = save?.dataset.userSave || portals?.dataset.userPortals || status?.dataset.userStatus || invite?.dataset.userInvite || reset?.dataset.userReset;
+      if (!userId) return;
+      try {
+        let body;
+        if (save) {
+          body = {
+            action: "update-user",
+            userId,
+            role: $(`[data-user-role="${CSS.escape(userId)}"]`)?.value || "staff",
+            portalAccess: state.users.find((user) => user.id === userId)?.portalAccess || [],
+          };
+        } else if (portals) {
+          const user = state.users.find((row) => row.id === userId) || {};
+          const current = (user.portalAccess || []).join(", ");
+          const value = window.prompt(`Portal IDs for ${user.email}: ${installedPortalIds().join(", ")}`, current);
+          if (value === null) return;
+          body = {
+            action: "update-user",
+            userId,
+            role: user.role || "staff",
+            portalAccess: csv(value).filter((id) => installedPortalIds().includes(id)),
+          };
+        } else if (status) {
+          body = { action: "set-user-status", userId, status: status.dataset.status };
+        } else if (invite) {
+          body = { action: "issue-user-invite", userId };
+        } else {
+          body = { action: "issue-password-reset", userId };
+        }
+        const data = await fetchJson("/api/org-admin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+        if (data.token) window.EnterpriseCore?.notify?.("User token generated", data.token);
+        await load();
+      } catch (err) {
+        window.EnterpriseCore?.notify?.("User update failed", err.message, "error");
+      }
     });
     $("#save-org-settings")?.addEventListener("click", async () => {
       await fetchJson("/api/org-admin", {
