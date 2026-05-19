@@ -1,4 +1,4 @@
-const CACHE_NAME = "enterprise-erp-v54";
+const CACHE_NAME = "enterprise-erp-v55";
 const APP_SHELL = [
   "./",
   "./manifest.webmanifest",
@@ -90,10 +90,10 @@ self.addEventListener("fetch", (event) => {
 });
 
 self.addEventListener("sync", (event) => {
-  if (event.tag !== "bytewaave-background-sync") return;
+  if (event.tag !== "bytewave-background-sync") return;
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
-      clients.forEach((client) => client.postMessage({ type: "BYTEWAAVE_BACKGROUND_SYNC", at: new Date().toISOString() }));
+      clients.forEach((client) => client.postMessage({ type: "BYTEWAVE_BACKGROUND_SYNC", at: new Date().toISOString() }));
     })
   );
 });
@@ -101,7 +101,7 @@ self.addEventListener("sync", (event) => {
 self.addEventListener("push", (event) => {
   const data = event.data?.json?.() || {};
   event.waitUntil(
-    self.registration.showNotification(data.title || "BYTEWAAVE", {
+    self.registration.showNotification(data.title || "Bytewave", {
       body: data.body || "ERP workflow update",
       icon: "/images/bytewave-icon-192.png",
       badge: "/images/bytewave-icon-192.png",

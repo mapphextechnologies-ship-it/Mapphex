@@ -169,9 +169,9 @@
         .map((portal) => ({ ...portal, summary: portalSummary(portal, settings) }));
 
       const orgName = org?.name || "Organization";
-      $("#workspace-title").textContent = "BYTEWAAVE";
+      $("#workspace-title").textContent = "Bytewave";
       $("#workspace-subtitle").textContent = `${org?.organizationId || tenantId} • ${org?.businessType || settings.businessType || "company"}`;
-      $("#portal-hub-heading").textContent = `BYTEWAAVE - ${orgName}`;
+      $("#portal-hub-heading").textContent = `Bytewave - ${orgName}`;
       $("#portal-hub-summary").textContent = `One installed workspace app for ${orgName}'s selected modules, organization data, and secure workflows.`;
       $("#profile-name").textContent = orgName;
       $("#subscription-status").textContent = org?.subscriptionStatus ? `Subscription: ${org.subscriptionStatus}` : "Subscription: active";

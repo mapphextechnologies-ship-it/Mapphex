@@ -1,4 +1,4 @@
-# BYTEWAAVE Supabase + Vercel Production Setup
+# Bytewave Supabase + Vercel Production Setup
 
 ## 1. Create Supabase Tables
 

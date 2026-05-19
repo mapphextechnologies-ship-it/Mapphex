@@ -713,7 +713,7 @@
         .flatMap((row) =>
           (row.employees || []).map(
             (employee) =>
-              `BYTEWAAVE PAYSLIP\nMonth: ${row.month}\nEmployee: ${employee.name}\nDepartment: ${employee.department}\nGross Salary: ${money(employee.salary)}\nTax/Deductions: ${money(Math.round(employee.salary * 0.1))}\nNet Pay: ${money(Math.round(employee.salary * 0.9))}\nStatus: Paid\nReference: ${row.approvalId}\n`,
+              `Bytewave PAYSLIP\nMonth: ${row.month}\nEmployee: ${employee.name}\nDepartment: ${employee.department}\nGross Salary: ${money(employee.salary)}\nTax/Deductions: ${money(Math.round(employee.salary * 0.1))}\nNet Pay: ${money(Math.round(employee.salary * 0.9))}\nStatus: Paid\nReference: ${row.approvalId}\n`,
           ),
         )
         .join("\n---\n");
@@ -843,7 +843,7 @@
       const permissions = settings.modulePermissions?.[moduleId] || [];
       const moduleCode = (moduleDef.title || "M").slice(0, 2).toUpperCase();
 
-      document.title = `${moduleDef.title} • BYTEWAAVE`;
+      document.title = `${moduleDef.title} • Bytewave`;
       $("#module-title").textContent = moduleDef.title;
       $("#module-subtitle").textContent = `${org.organizationId || session.tenantId} • enterprise portal`;
       $("#module-heading").textContent = moduleDef.title;
@@ -897,7 +897,7 @@
         renderRows(moduleId, workflow, $("#module-search")?.value || "");
         refreshEnterpriseSections(moduleId);
       });
-      window.addEventListener("bytewaave:background-sync", async () => {
+      window.addEventListener("bytewave:background-sync", async () => {
         await hydrateSharedData();
         renderRows(moduleId, workflow, $("#module-search")?.value || "");
         refreshEnterpriseSections(moduleId);

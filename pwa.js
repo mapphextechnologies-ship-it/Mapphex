@@ -17,6 +17,7 @@
     installButtons.forEach((btn) => {
       btn.textContent = label;
       btn.classList.toggle("is-muted", !!muted);
+      btn.disabled = false;
     });
   };
 
@@ -87,11 +88,17 @@
     installBanner = document.createElement("div");
     installBanner.className = "pwa-install-banner";
     installBanner.innerHTML = `
-      <div><strong>Install BYTEWAAVE</strong><span>Use the ERP as one native-style app across your selected portals.</span></div>
+      <div><strong>Install Bytewave</strong><span>Use the ERP as one native-style app across your selected portals.</span></div>
       <button class="btn primary" type="button">Install</button>
       <button class="btn" type="button" data-pwa-dismiss>Later</button>
     `;
-    installBanner.querySelector(".primary")?.addEventListener("click", () => promptInstall());
+    installBanner.querySelector(".primary")?.addEventListener("click", async () => {
+      const result = await promptInstall();
+      if (!result.ok && result.reason === "prompt-unavailable") {
+        const text = installBanner?.querySelector("span");
+        if (text) text.textContent = manualInstallMessage();
+      }
+    });
     installBanner.querySelector("[data-pwa-dismiss]")?.addEventListener("click", () => {
       installBanner?.remove();
       installBanner = null;
@@ -106,12 +113,14 @@
       return { ok: true, installed: true };
     }
 
-    await registerServiceWorker();
-    if (!deferredPrompt) await waitForInstallPrompt();
+    if (!deferredPrompt) {
+      registerServiceWorker().then(() => null);
+      await waitForInstallPrompt();
+    }
 
     if (!deferredPrompt) {
       setButtonState("Use Browser Menu", true);
-      window.setTimeout(() => setButtonState("Install BYTEWAAVE App", false), 2400);
+      window.setTimeout(() => setButtonState("Install Bytewave App", false), 2400);
       emitStatus();
       return { ok: false, reason: "prompt-unavailable" };
     }
@@ -119,9 +128,9 @@
     const promptEvent = deferredPrompt;
     deferredPrompt = null;
     setButtonState("Installing...", true);
-    requestNotifications().then(() => null);
-    promptEvent.prompt();
+    await promptEvent.prompt();
     const choice = await promptEvent.userChoice.catch(() => null);
+    requestNotifications().then(() => null);
     if (choice?.outcome === "accepted") {
       installed = true;
       installBanner?.remove();
@@ -131,9 +140,16 @@
       emitStatus();
       return { ok: true, installed: true };
     }
-    setButtonState("Install BYTEWAAVE App", false);
+    setButtonState("Install Bytewave App", false);
     emitStatus();
     return { ok: false, reason: "dismissed" };
+  };
+
+  const manualInstallMessage = () => {
+    const ua = navigator.userAgent || "";
+    if (/iphone|ipad|ipod/i.test(ua)) return "Use Share, then Add to Home Screen to install Bytewave.";
+    if (/firefox/i.test(ua)) return "Use your browser menu to install Bytewave if app install is available.";
+    return "Use the browser menu and choose Install app or Add to Home screen.";
   };
 
   const createPoweredFooter = () => {
@@ -154,7 +170,7 @@
   window.addEventListener("beforeinstallprompt", (event) => {
     event.preventDefault();
     deferredPrompt = event;
-    setButtonState("Install BYTEWAAVE App", false);
+    setButtonState("Install Bytewave App", false);
     hideButtonIfInstalled();
     showInstallBanner();
     emitStatus();
@@ -175,19 +191,19 @@
       installButtons.add(button);
       button.addEventListener("click", () => promptInstall());
     });
-    setButtonState(isStandalone() ? "App Installed" : "Install BYTEWAAVE App", isStandalone());
+    setButtonState(isStandalone() ? "App Installed" : "Install Bytewave App", isStandalone());
     emitStatus();
   });
 
   window.addEventListener("online", () => {
     navigator.serviceWorker?.ready
-      ?.then((registration) => registration.sync?.register?.("bytewaave-background-sync"))
+      ?.then((registration) => registration.sync?.register?.("bytewave-background-sync"))
       .catch(() => null);
   });
 
   navigator.serviceWorker?.addEventListener?.("message", (event) => {
-    if (event.data?.type !== "BYTEWAAVE_BACKGROUND_SYNC") return;
-    window.dispatchEvent(new CustomEvent("bytewaave:background-sync", { detail: event.data }));
+    if (event.data?.type !== "BYTEWAVE_BACKGROUND_SYNC") return;
+    window.dispatchEvent(new CustomEvent("bytewave:background-sync", { detail: event.data }));
   });
 
   window.MapphexPWA = Object.freeze({

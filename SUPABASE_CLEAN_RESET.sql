@@ -1,4 +1,4 @@
--- BYTEWAAVE / MAPPHEX clean production reset
+-- Bytewave / MAPPHEX clean production reset
 -- Run this only when you intentionally want an empty Supabase ERP database.
 -- It removes all application organizations, users, workflows, reports, and KV data.
 
