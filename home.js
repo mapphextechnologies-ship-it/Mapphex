@@ -97,6 +97,19 @@
     });
   };
 
+  const setActivePageLink = () => {
+    const currentPage = location.pathname.split("/").pop() || "index.html";
+    navLinks.forEach((link) => {
+      const href = link.getAttribute("href") || "";
+      if (href.startsWith("#")) return;
+      const linkPage = new URL(href, location.href).pathname.split("/").pop() || "index.html";
+      const active = linkPage === currentPage || (currentPage === "service-detail.html" && linkPage === "services.html");
+      link.classList.toggle("active", active);
+      if (active) link.setAttribute("aria-current", "page");
+      else link.removeAttribute("aria-current");
+    });
+  };
+
   const serviceItems = {
     "book-store": [
       ["Book inventory", "Track titles, editions, quantities, reorder needs, and supplier sources."],
@@ -441,6 +454,7 @@
   document.addEventListener("DOMContentLoaded", () => {
     redirectActiveOrganization();
     setupServicePage();
+    setActivePageLink();
 
     navToggle?.addEventListener("click", () => {
       setNavOpen(!nav?.classList.contains("nav-open"));
