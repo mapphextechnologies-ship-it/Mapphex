@@ -7,6 +7,7 @@
   const compactViewport = window.matchMedia("(max-width: 760px), (pointer: coarse)").matches;
   const nav = document.querySelector("[data-nav]");
   const navToggle = document.querySelector("[data-nav-toggle]");
+  const navBackdrop = document.querySelector("[data-nav-backdrop]");
   const navLinks = [...document.querySelectorAll("[data-nav-menu] a")];
   const sectionIds = navLinks.map((link) => link.getAttribute("href")).filter((href) => href?.startsWith("#"));
   const sections = sectionIds.map((id) => document.querySelector(id)).filter(Boolean);
@@ -16,6 +17,7 @@
     nav.classList.toggle("nav-open", open);
     navToggle.setAttribute("aria-expanded", String(open));
     navToggle.setAttribute("aria-label", open ? "Close navigation" : "Open navigation");
+    navBackdrop?.setAttribute("aria-hidden", open ? "false" : "true");
   };
 
   const formatNumber = (value) => {
@@ -443,6 +445,7 @@
     navToggle?.addEventListener("click", () => {
       setNavOpen(!nav?.classList.contains("nav-open"));
     });
+    navBackdrop?.addEventListener("click", () => setNavOpen(false));
 
     navLinks.forEach((link) => {
       link.addEventListener("click", (event) => {

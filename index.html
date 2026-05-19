@@ -16,11 +16,17 @@
     <link rel="stylesheet" href="home.css" />
   </head>
   <body data-page="home" class="mapphex-home">
-    <header class="site-nav" data-nav>
+    <header class="site-nav home-drawer-nav" data-nav>
       <a class="site-brand" href="index.html" aria-label="MAPPHEX home">
         <img class="logo-img" src="/images/enterprise-logo.png" alt="MAPPHEX logo" />
         <span>MAPPHEX</span>
       </a>
+
+      <button class="nav-toggle" type="button" aria-label="Open navigation" aria-expanded="false" data-nav-toggle>
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
 
       <nav class="site-links" aria-label="Main navigation" data-nav-menu>
         <a href="index.html">Home</a>
@@ -35,6 +41,7 @@
         <a class="btn ghost" href="organization-login.html">Organization Login</a>
         <a class="btn primary" href="organization-register.html">Register Organization</a>
       </div>
+      <button class="home-nav-backdrop" type="button" aria-label="Close navigation" data-nav-backdrop></button>
     </header>
 
     <main id="top">
