@@ -85,9 +85,7 @@
             <article class="report-card"><div class="label">Stored files</div><div id="mon-files" class="value">0</div></article>
           </div>
           <div class="monitor-grid">
-            <div class="monitor-chart" aria-label="Organization growth chart">
-              <span style="height: 34%"></span><span style="height: 46%"></span><span style="height: 52%"></span><span style="height: 61%"></span><span style="height: 74%"></span><span style="height: 82%"></span><span style="height: 92%"></span>
-            </div>
+            <div id="monitor-chart" class="monitor-chart" aria-label="Organization activity chart"></div>
             <div class="monitor-stack">
               <div><strong id="mon-audit">0</strong><span>Audit events</span></div>
               <div><strong id="mon-modules">0</strong><span>Enabled modules</span></div>
@@ -115,12 +113,12 @@
         <section class="panel" id="users">
           <div class="panel-header"><h2>Global Users</h2><div class="panel-actions muted">Organization admins and staff across all tenants</div></div>
           <div class="table-wrap">
-            <table class="table"><thead><tr><th>User</th><th>Email</th><th>Role</th><th>Organization</th><th>Status</th></tr></thead><tbody id="global-users-table"></tbody></table>
+            <table class="table"><thead><tr><th>User</th><th>Email</th><th>Role</th><th>Organization</th><th>Status</th><th>Actions</th></tr></thead><tbody id="global-users-table"></tbody></table>
           </div>
         </section>
 
         <section class="panel" id="activity">
-          <div class="panel-header"><h2>Realtime Activity</h2><div class="panel-actions muted">Platform event stream</div></div>
+          <div class="panel-header"><h2>Realtime Activity</h2><div class="panel-actions"><button id="clear-platform-events" class="btn danger" type="button">Clear Platform Events</button></div></div>
           <div class="table-wrap">
             <table class="table"><thead><tr><th>Time</th><th>Type</th><th>Organization</th><th>Payload</th></tr></thead><tbody id="activity-table"></tbody></table>
           </div>
@@ -141,14 +139,23 @@
           <form id="broadcast-form" class="super-form">
             <label class="field"><span>Title</span><input name="title" required placeholder="Platform update" /></label>
             <label class="field"><span>Message</span><input name="body" required placeholder="Maintenance window, policy update, alert..." /></label>
+            <label class="field"><span>Priority</span><select name="priority"><option>normal</option><option>high</option><option>critical</option></select></label>
+            <label class="field"><span>Attachment URL</span><input name="attachmentUrl" placeholder="https://..." /></label>
+            <label class="field"><span>Format</span><select name="format"><option>plain</option><option>rich-text</option></select></label>
+            <label class="field"><span>Expires</span><input name="expiresAt" type="datetime-local" /></label>
             <button class="btn primary" type="submit">Send global notification</button>
           </form>
+          <div class="panel-header"><h2>Platform Settings</h2><div class="panel-actions"><button id="platform-settings-save" class="btn primary" type="button">Save settings</button></div></div>
+          <div class="super-form">
+            <label class="field"><span>Default subscription plan</span><input id="platform-default-plan" value="starter-monthly" /></label>
+            <label class="remember-row"><input id="platform-maintenance" type="checkbox" /> <span>Maintenance mode</span></label>
+          </div>
         </section>
       </main>
     </div>
 
     <script src="/super-admin-session.js"></script>
     <script src="ui-menu.js"></script>
-    <script src="internal-control.js"></script>
+    <script src="internal-control.js?v=3"></script>
   </body>
 </html>

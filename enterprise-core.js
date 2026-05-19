@@ -140,7 +140,7 @@
   };
 
   const getSession = () => {
-    const session = readJson(sessionStorage, SESSION_META_KEY, null) || readJson(localStorage, SESSION_META_KEY, null) || null;
+    const session = readJson(sessionStorage, SESSION_META_KEY, null) || null;
     if (!session) return null;
     if (session.expiresAt && Date.now() > Date.parse(session.expiresAt)) {
       clearSession();

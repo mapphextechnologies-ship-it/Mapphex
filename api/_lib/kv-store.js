@@ -77,6 +77,14 @@ const supabaseSetManyAtomic = async (items) => {
   });
 };
 
+const supabaseDelete = async (key) => {
+  await supabaseFetch(`mapphex_kv?key=eq.${encodeURIComponent(key)}`, { method: "DELETE" });
+};
+
+const supabaseDeleteMany = async (keys) => {
+  await Promise.all((Array.isArray(keys) ? keys : []).filter(Boolean).map(supabaseDelete));
+};
+
 const upstashFetch = async (url, opts = {}) => {
   const token = process.env.KV_REST_API_TOKEN;
   const headers = { ...(opts.headers || {}), Authorization: `Bearer ${token}` };
@@ -167,6 +175,22 @@ const upstashSetManyAtomic = async (items) => {
   return resArr;
 };
 
+const upstashDelete = async (key) => {
+  const base = normalizeUrl(process.env.KV_REST_API_URL);
+  await upstashFetch(`${base}/del/${encodeURIComponent(key)}`, { method: "POST" });
+};
+
+const upstashDeleteMany = async (keys) => {
+  const base = normalizeUrl(process.env.KV_REST_API_URL);
+  const tx = (Array.isArray(keys) ? keys : []).filter(Boolean).map((key) => ["DEL", key]);
+  if (!tx.length) return;
+  await upstashFetchTx(`${base}/multi-exec`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json; charset=utf-8" },
+    body: JSON.stringify(tx),
+  });
+};
+
 const ensureFileKv = async (kvPath) => {
   const dir = path.dirname(kvPath);
   await fsp.mkdir(dir, { recursive: true });
@@ -231,6 +255,24 @@ const fileSetManyAtomic = async (items, kvPath) => {
   });
 };
 
+const fileDelete = async (key, kvPath) => {
+  return withFileLock(kvPath, async () => {
+    const store = await fileReadAll(kvPath);
+    delete store.items[key];
+    store.version = Number(store.version || 1) + 1;
+    await fileWriteAll(kvPath, store);
+  });
+};
+
+const fileDeleteMany = async (keys, kvPath) => {
+  return withFileLock(kvPath, async () => {
+    const store = await fileReadAll(kvPath);
+    for (const key of Array.isArray(keys) ? keys : []) delete store.items[key];
+    store.version = Number(store.version || 1) + 1;
+    await fileWriteAll(kvPath, store);
+  });
+};
+
 const withFileLock = async (kvPath, fn) => {
   const prev = fileWriteQueues.get(kvPath) || Promise.resolve();
   let release;
@@ -256,6 +298,8 @@ const getStore = () => {
       mget: supabaseMget,
       set: supabaseSet,
       setManyAtomic: supabaseSetManyAtomic,
+      delete: supabaseDelete,
+      deleteMany: supabaseDeleteMany,
     };
   }
 
@@ -266,6 +310,8 @@ const getStore = () => {
       mget: upstashMget,
       set: upstashSet,
       setManyAtomic: upstashSetManyAtomic,
+      delete: upstashDelete,
+      deleteMany: upstashDeleteMany,
     };
   }
 
@@ -288,6 +334,8 @@ const getStore = () => {
     mget: (keys) => fileMget(keys, kvPath),
     set: (key, value) => fileSet(key, value, kvPath),
     setManyAtomic: (items) => fileSetManyAtomic(items, kvPath),
+    delete: (key) => fileDelete(key, kvPath),
+    deleteMany: (keys) => fileDeleteMany(keys, kvPath),
   };
 };
 

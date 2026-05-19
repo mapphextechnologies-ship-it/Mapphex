@@ -19,7 +19,7 @@
   let livebar;
   let notices;
   let status;
-  let lastSeq = Number(localStorage.getItem(LAST_EVENT_KEY) || 0) || 0;
+  let lastSeq = Number(sessionStorage.getItem(LAST_EVENT_KEY) || 0) || 0;
   let pollTimer = null;
   let eventSource = null;
 
@@ -53,7 +53,7 @@
     if (seq && seq <= lastSeq) return;
     if (seq) {
       lastSeq = seq;
-      localStorage.setItem(LAST_EVENT_KEY, String(seq));
+      sessionStorage.setItem(LAST_EVENT_KEY, String(seq));
     }
     window.dispatchEvent(new CustomEvent("enterprise:realtime", { detail: event }));
     if (event?.type === "kv.batch.updated" || event?.type === "kv.updated") {
@@ -62,8 +62,10 @@
     } else if (event?.type === "modules.updated") {
       notice("Modules updated", "The enabled business modules changed.");
       loadModules().catch(() => null);
+    } else if (event?.type === "platform.broadcast.received" || event?.type === "org.announcement.sent") {
+      notice(event.displayType || event.payload?.title || "Announcement", event.displayMessage || event.payload?.message || event.payload?.title || "A new announcement is available.");
     } else if (event?.type) {
-      notice(event.type, "A live platform event was received.");
+      notice(event.displayType || event.type, event.displayMessage || "A live platform event was received.");
     }
   };
 

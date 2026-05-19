@@ -44,7 +44,13 @@
       "org.modules.enabled": "Portals installed",
       "org.modules.disabled": "Portal uninstalled",
       "org.user.created": "User added",
+      "org.user.updated": "User permissions updated",
+      "org.user.status.changed": "User status changed",
       "org.settings.updated": "Settings updated",
+      "org.announcement.sent": "Announcement sent",
+      "org.live_activity.cleared": "Live activity cleared",
+      "auth.login.success": "User login",
+      "platform.broadcast.received": "Platform announcement",
       "erp.message.sent": "Department message sent",
       "admin.announcement.sent": "Announcement sent",
     };
@@ -65,8 +71,20 @@
         return `Removed ${(payload.portalIds || []).join(", ") || "selected portal"} from the workspace.`;
       case "org.user.created":
         return `Added ${payload.role || "user"} account.`;
+      case "org.user.updated":
+        return `Updated role and portal access for ${payload.email || "a user"}.`;
+      case "org.user.status.changed":
+        return `${payload.email || "User"} is now ${payload.status || "updated"}.`;
       case "org.settings.updated":
         return `Organization settings updated.`;
+      case "org.announcement.sent":
+        return `${payload.title || "Announcement"} was sent to selected staff.`;
+      case "org.live_activity.cleared":
+        return `Live activity was cleared by an organization admin.`;
+      case "auth.login.success":
+        return `${payload.email || "A user"} logged in.`;
+      case "platform.broadcast.received":
+        return payload.message || payload.title || "Global platform announcement received.";
       case "erp.message.sent":
         return `Message sent from ${payload.from || "one department"} to ${payload.to || "another department"}.`;
       case "admin.announcement.sent":
@@ -223,6 +241,47 @@
       window.EnterpriseCore?.audit?.("admin.announcement.sent", { tenantId });
       state.events.push({ at: new Date().toISOString(), type: "admin.announcement.sent", payload: { message } });
       render();
+    });
+    $("#org-announcement-form")?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const data = Object.fromEntries(new FormData(event.currentTarget).entries());
+      await fetchJson("/api/org-admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "send-announcement", ...data, portals: csv(data.portals) }),
+      });
+      event.currentTarget.reset();
+      await load();
+    });
+    $("#clear-org-activity")?.addEventListener("click", async () => {
+      if (!window.confirm("Clear visible organization activity records?")) return;
+      await fetchJson("/api/org-admin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "clear-live-activity" }) });
+      await load();
+    });
+    $("#clear-org-records")?.addEventListener("click", async () => {
+      if (!window.confirm("Clear module activity records for this organization?")) return;
+      await fetchJson("/api/org-admin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "clear-activity" }) });
+      await load();
+    });
+    $("#clear-org-audit")?.addEventListener("click", async () => {
+      if (!window.confirm("Clear audit logs for this organization?")) return;
+      await fetchJson("/api/org-admin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "clear-audit-logs" }) });
+      await load();
+    });
+    $("#clear-org-notifications")?.addEventListener("click", async () => {
+      if (!window.confirm("Clear notifications for this organization?")) return;
+      await fetchJson("/api/org-admin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "clear-notifications" }) });
+      await load();
+    });
+    $("#clear-org-messages")?.addEventListener("click", async () => {
+      if (!window.confirm("Clear organization messages?")) return;
+      await fetchJson("/api/org-admin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "clear-messages" }) });
+      await load();
+    });
+    $("#clear-org-reports")?.addEventListener("click", async () => {
+      if (!window.confirm("Clear generated reports for this organization?")) return;
+      await fetchJson("/api/org-admin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "clear-reports" }) });
+      await load();
     });
     window.addEventListener("enterprise:realtime", () => load().catch(() => null));
     load().catch((err) => window.EnterpriseCore?.notify?.("Organization Admin", err.message, "error"));

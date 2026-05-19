@@ -1,12 +1,18 @@
 const { sendJson, readJsonBody } = require("../api/_lib/http");
 const { getStore } = require("../api/_lib/kv-store");
 const { getTenantId, scopeTenantKey } = require("../api/_lib/tenant");
-const { appendEvent } = require("../api/_lib/events");
+const { appendEvent, clearEvents } = require("../api/_lib/events");
 const { assertIdempotent, assertObject, assertSameOrigin, rateLimit, requireOrgAdmin, requireTenantSession, safeString } = require("../api/_lib/security");
 const { hashOrganizationSecret, randomOrganizationToken } = require("./organizations");
 
 const USERS_KEY = "enterprise_org_users_v1";
 const SETTINGS_KEY = "enterprise_org_settings_v1";
+const NOTIFICATIONS_KEY = "enterprise_notifications_v1";
+const ANNOUNCEMENTS_KEY = "enterprise_announcements_v1";
+const AUDIT_KEY = "enterprise_audit_v1";
+const ACTIVITY_KEY = "enterprise_module_activity_v1";
+const MESSAGES_KEY = "enterprise_messages_v1";
+const REPORTS_KEY = "enterprise_reports_v1";
 
 const { PORTAL_CATALOG, VALID_PORTAL_IDS } = require("../api/_lib/portal-catalog");
 const { mergeUniqueStrings, normalizeEmail, normalizeText, uniqueBy } = require("../api/_lib/data-hygiene");
@@ -22,6 +28,26 @@ const sanitizeSettings = (settings = {}) => ({
 const publicUser = (user = {}) => {
   const { activationToken, passwordHash, passwordResetToken, passwordSetupToken, ...safe } = user;
   return safe;
+};
+
+const makeAnnouncement = (body, actor, scope = "organization") => ({
+  id: `ann-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+  title: safeString(body.title || "Announcement", 160),
+  body: safeString(body.body || body.message || "", 2000),
+  priority: safeString(body.priority || "normal", 40),
+  portals: Array.isArray(body.portals) ? body.portals.map((id) => safeString(id, 80)).filter(Boolean) : [],
+  departments: Array.isArray(body.departments) ? body.departments.map((id) => safeString(id, 120)).filter(Boolean) : [],
+  expiresAt: safeString(body.expiresAt || "", 80),
+  attachmentUrl: safeString(body.attachmentUrl || "", 500),
+  format: safeString(body.format || "plain", 40),
+  scope,
+  actor: safeString(actor || "system", 160),
+  createdAt: new Date().toISOString(),
+});
+
+const readArray = async (store, key) => {
+  const value = (await store.get(key)) || [];
+  return Array.isArray(value) ? value : [];
 };
 
 module.exports = async (req, res) => {
@@ -231,6 +257,76 @@ module.exports = async (req, res) => {
       await store.set(settingsKey, next);
       await appendEvent(store, tenantId, "org.modules.disabled", { portalIds, count: portalIds.length });
       return sendJson(res, 200, { ok: true, settings: next });
+    }
+
+    if (body.action === "send-announcement") {
+      const announcement = makeAnnouncement(body, session.sub || session.email || session.role);
+      const announcementsKey = scopeTenantKey(tenantId, ANNOUNCEMENTS_KEY);
+      const notificationsKey = scopeTenantKey(tenantId, NOTIFICATIONS_KEY);
+      const [announcements, notifications] = await Promise.all([readArray(store, announcementsKey), readArray(store, notificationsKey)]);
+      const notification = {
+        id: `ntf-${announcement.id}`,
+        at: announcement.createdAt,
+        moduleId: announcement.portals[0] || "admin",
+        title: announcement.title,
+        body: announcement.body,
+        priority: announcement.priority,
+        read: false,
+        payload: { announcementId: announcement.id, portals: announcement.portals, departments: announcement.departments },
+      };
+      await store.setManyAtomic({
+        [announcementsKey]: [announcement, ...announcements].slice(0, 500),
+        [notificationsKey]: [notification, ...notifications].slice(0, 1000),
+      });
+      await appendEvent(store, tenantId, "org.announcement.sent", { announcementId: announcement.id, title: announcement.title, priority: announcement.priority });
+      return sendJson(res, 200, { ok: true, announcement });
+    }
+
+    if (["delete-notification", "clear-notifications", "delete-audit-log", "clear-audit-logs", "delete-activity", "clear-activity", "clear-live-activity", "delete-message", "clear-messages", "delete-report", "clear-reports", "delete-branch"].includes(body.action)) {
+      const keyMap = {
+        "delete-notification": NOTIFICATIONS_KEY,
+        "clear-notifications": NOTIFICATIONS_KEY,
+        "delete-audit-log": AUDIT_KEY,
+        "clear-audit-logs": AUDIT_KEY,
+        "delete-activity": ACTIVITY_KEY,
+        "clear-activity": ACTIVITY_KEY,
+        "delete-message": MESSAGES_KEY,
+        "clear-messages": MESSAGES_KEY,
+        "delete-report": REPORTS_KEY,
+        "clear-reports": REPORTS_KEY,
+      };
+      if (body.action === "delete-branch") {
+        const name = normalizeText(body.name || body.branch || "", 120).toLowerCase();
+        const next = { ...settings, branches: (settings.branches || []).filter((branch) => normalizeText(branch, 120).toLowerCase() !== name), updatedAt: new Date().toISOString() };
+        await store.set(settingsKey, next);
+        await appendEvent(store, tenantId, "org.branch.deleted", { name });
+        return sendJson(res, 200, { ok: true, settings: next });
+      }
+      if (body.action === "clear-live-activity") {
+        await clearEvents(store, tenantId);
+        await appendEvent(store, tenantId, "org.live_activity.cleared", { actor: session.sub });
+        return sendJson(res, 200, { ok: true });
+      }
+      const keyName = keyMap[body.action];
+      const scopedKey = scopeTenantKey(tenantId, keyName);
+      if (body.action.startsWith("clear-")) {
+        await store.set(scopedKey, keyName === REPORTS_KEY ? {} : []);
+        await appendEvent(store, tenantId, `org.${body.action}`, { actor: session.sub });
+        return sendJson(res, 200, { ok: true });
+      }
+      const id = safeString(body.id, 180);
+      if (!id) return sendJson(res, 400, { ok: false, error: "Record id is required" });
+      const current = await store.get(scopedKey);
+      if (keyName === REPORTS_KEY && current && typeof current === "object" && !Array.isArray(current)) {
+        const next = { ...current };
+        delete next[id];
+        await store.set(scopedKey, next);
+      } else {
+        const rows = await readArray(store, scopedKey);
+        await store.set(scopedKey, rows.filter((row) => String(row.id || row.seq || "") !== id));
+      }
+      await appendEvent(store, tenantId, `org.${body.action}`, { id, actor: session.sub });
+      return sendJson(res, 200, { ok: true });
     }
 
     return sendJson(res, 400, { ok: false, error: "Unsupported org admin action" });

@@ -137,6 +137,29 @@ const loadOrganizations = async (store) => {
 
 const saveOrganizations = (store, rows) => store.set(ORGS_KEY, rows);
 
+const tenantDataKeys = (tenantId) => [
+  USERS_KEY,
+  PROFILE_KEY,
+  SETTINGS_KEY,
+  INVITES_KEY,
+  AUTH_ACTIVITY_KEY,
+  SESSION_DEVICES_KEY,
+  "enterprise_modules_v1",
+  "enterprise_module_records_v1",
+  "enterprise_module_activity_v1",
+  "enterprise_department_workflows_v1",
+  "enterprise_notifications_v1",
+  "enterprise_announcements_v1",
+  "enterprise_audit_v1",
+  "enterprise_transactions_v1",
+  "enterprise_reports_v1",
+  "enterprise_messages_v1",
+  "enterprise_documents_v1",
+  "enterprise_inventory_movements_v1",
+  "enterprise_finance_ledger_v1",
+  "enterprise_events_v1",
+].map((key) => scopeTenantKey(tenantId, key));
+
 const createOrganization = async (req, res, body) => {
   const store = getStore();
   const rows = await loadOrganizations(store);
@@ -338,6 +361,15 @@ module.exports = async (req, res) => {
       });
       await appendEvent(store, rows[idx].id, "organization.subscription.changed", { subscriptionStatus, plan });
       return sendJson(res, 200, { ok: true, organization: publicOrg(rows[idx]) });
+    }
+
+    if (body.action === "delete-organization") {
+      const org = rows[idx];
+      rows.splice(idx, 1);
+      await saveOrganizations(store, rows);
+      if (typeof store.deleteMany === "function") await store.deleteMany(tenantDataKeys(org.id));
+      await appendEvent(store, "platform", "organization.deleted", { organizationId: org.organizationId, tenantId: org.id, actor: superSession.sub });
+      return sendJson(res, 200, { ok: true, deleted: org.id });
     }
 
     if (body.action === "set-modules") {

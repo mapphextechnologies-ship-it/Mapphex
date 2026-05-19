@@ -7,6 +7,7 @@ const ERP_KEYS = Object.freeze({
   moduleActivity: "enterprise_module_activity_v1",
   departmentWorkflows: "enterprise_department_workflows_v1",
   notifications: "enterprise_notifications_v1",
+  announcements: "enterprise_announcements_v1",
   audit: "enterprise_audit_v1",
   transactions: "enterprise_transactions_v1",
   reports: "enterprise_reports_v1",

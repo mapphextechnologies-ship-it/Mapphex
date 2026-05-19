@@ -12,6 +12,9 @@ const AUDIT_KEY = "enterprise_audit_v1";
 const TASK_KEY = "enterprise_task_queue_v1";
 const FILES_KEY = "enterprise_files_v1";
 const BACKUPS_KEY = "platform_backups_v1";
+const ANNOUNCEMENTS_KEY = "enterprise_announcements_v1";
+const NOTIFICATIONS_KEY = "enterprise_notifications_v1";
+const PLATFORM_SETTINGS_KEY = "platform_settings_v1";
 
 const publicOrg = (org) => {
   const { adminPasswordHash, ...safe } = org || {};
@@ -72,12 +75,85 @@ module.exports = async (req, res) => {
       const body = assertObject(await readJsonBody(req));
       if (body.action === "broadcast") {
         const title = safeString(body.title || "Platform notification", 120);
-        const message = safeString(body.message || body.body || "", 500);
+        const message = safeString(body.message || body.body || "", 2000);
+        const announcement = {
+          id: `ann-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          title,
+          body: message,
+          priority: safeString(body.priority || "normal", 40),
+          expiresAt: safeString(body.expiresAt || "", 80),
+          attachmentUrl: safeString(body.attachmentUrl || "", 500),
+          format: safeString(body.format || "plain", 40),
+          scope: "global",
+          actor: superSession.sub,
+          createdAt: new Date().toISOString(),
+        };
         await appendEvent(store, "platform", "platform.broadcast.sent", { title, message, count: organizations.length, actor: superSession.sub });
         await Promise.all(
-          organizations.map((org) => appendEvent(store, org.id, "platform.broadcast.received", { title, message })),
+          organizations.map(async (org) => {
+            const annKey = scopeTenantKey(org.id, ANNOUNCEMENTS_KEY);
+            const ntfKey = scopeTenantKey(org.id, NOTIFICATIONS_KEY);
+            const [announcements, notifications] = await Promise.all([readArray(store, annKey), readArray(store, ntfKey)]);
+            await store.setManyAtomic({
+              [annKey]: [announcement, ...announcements].slice(0, 500),
+              [ntfKey]: [{ id: `ntf-${announcement.id}`, at: announcement.createdAt, moduleId: "admin", title, body: message, priority: announcement.priority, read: false, payload: { announcementId: announcement.id, global: true } }, ...notifications].slice(0, 1000),
+            });
+            await appendEvent(store, org.id, "platform.broadcast.received", { title, message, announcementId: announcement.id });
+          }),
         );
         return sendJson(res, 200, { ok: true, delivered: organizations.length });
+      }
+      if (body.action === "save-global-settings") {
+        const settings = {
+          maintenanceMode: body.maintenanceMode === true,
+          defaultSubscriptionPlan: safeString(body.defaultSubscriptionPlan || "starter-monthly", 80),
+          permissionPolicy: safeString(body.permissionPolicy || "rbac-obac", 80),
+          updatedAt: new Date().toISOString(),
+          updatedBy: superSession.sub,
+        };
+        await store.set(PLATFORM_SETTINGS_KEY, settings);
+        await appendEvent(store, "platform", "platform.settings.updated", { actor: superSession.sub });
+        return sendJson(res, 200, { ok: true, settings });
+      }
+      if (body.action === "delete-platform-events") {
+        const tenantId = safeString(body.tenantId || "platform", 80);
+        if (typeof store.delete === "function") await store.delete(scopeTenantKey(tenantId, "enterprise_events_v1"));
+        else await store.set(scopeTenantKey(tenantId, "enterprise_events_v1"), []);
+        await appendEvent(store, "platform", "platform.events.deleted", { tenantId, actor: superSession.sub });
+        return sendJson(res, 200, { ok: true });
+      }
+      if (["delete-user", "delete-module", "delete-notification", "delete-audit-log"].includes(body.action)) {
+        const tenantId = safeString(body.tenantId, 80);
+        const id = safeString(body.id || body.userId || body.moduleId, 180);
+        const org = organizations.find((row) => row.id === tenantId);
+        if (!org) return sendJson(res, 404, { ok: false, error: "Organization not found" });
+        if (!id) return sendJson(res, 400, { ok: false, error: "Record id is required" });
+        if (body.action === "delete-user") {
+          const key = scopeTenantKey(tenantId, USERS_KEY);
+          await store.set(key, (await readArray(store, key)).filter((user) => user.id !== id));
+        }
+        if (body.action === "delete-module") {
+          const key = scopeTenantKey(tenantId, SETTINGS_KEY);
+          const settings = (await store.get(key)) || {};
+          const remove = new Set([id]);
+          await store.set(key, {
+            ...settings,
+            installedPortals: (settings.installedPortals || []).filter((moduleId) => !remove.has(moduleId)),
+            modules: (settings.modules || []).filter((moduleId) => !remove.has(moduleId)),
+            navigation: (settings.navigation || []).filter((moduleId) => !remove.has(moduleId)),
+            updatedAt: new Date().toISOString(),
+          });
+        }
+        if (body.action === "delete-notification") {
+          const key = scopeTenantKey(tenantId, NOTIFICATIONS_KEY);
+          await store.set(key, (await readArray(store, key)).filter((row) => row.id !== id));
+        }
+        if (body.action === "delete-audit-log") {
+          const key = scopeTenantKey(tenantId, AUDIT_KEY);
+          await store.set(key, (await readArray(store, key)).filter((row) => row.id !== id));
+        }
+        await appendEvent(store, "platform", `platform.${body.action}`, { tenantId, id, actor: superSession.sub });
+        return sendJson(res, 200, { ok: true });
       }
       if (body.action === "backup-organization") {
         const org = organizations.find((row) => row.id === safeString(body.tenantId || body.id, 80));
@@ -171,6 +247,8 @@ module.exports = async (req, res) => {
       alerts: row.metrics.securityAlerts,
     }));
 
+    const platformSettings = (await store.get(PLATFORM_SETTINGS_KEY)) || {};
+
     return sendJson(res, 200, {
       ok: true,
       totals,
@@ -178,6 +256,7 @@ module.exports = async (req, res) => {
       activity,
       globalSearch,
       heatmap,
+      platformSettings,
       health: {
         database: "online",
         realtime: "online",

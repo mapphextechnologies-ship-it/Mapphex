@@ -42,8 +42,14 @@ const listEvents = async (store, tenantId, after = 0) => {
   return events.filter((event) => Number(event.seq || 0) > seq).slice(-200);
 };
 
+const clearEvents = async (store, tenantId) => {
+  const key = `tenant:${tenantId || "default-company"}:${EVENT_KEY}`;
+  await store.set(key, []);
+};
+
 module.exports = {
   EVENT_KEY,
   appendEvent,
+  clearEvents,
   listEvents,
 };

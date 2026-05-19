@@ -32,8 +32,9 @@
           <a class="sidebar-link" href="#branches" data-icon="B">Branches</a>
           <a class="sidebar-link" href="#modules" data-icon="M">Modules</a>
           <a class="sidebar-link" href="#tenant-controls" data-icon="S">Settings</a>
+          <a class="sidebar-link" href="#announcements" data-icon="A">Announcements</a>
           <a class="sidebar-link" href="#notifications" data-icon="N">Notifications</a>
-          <a class="sidebar-link" href="#activity" data-icon="A">Audit Logs</a>
+          <a class="sidebar-link" href="#activity" data-icon="L">Audit Logs</a>
         </nav>
       </aside>
       <div id="menu-backdrop" class="menu-backdrop" aria-hidden="true"></div>
@@ -53,7 +54,7 @@
           <div class="table-wrap"><table class="table"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Portals</th><th>Status</th><th>Actions</th></tr></thead><tbody id="org-users-table"></tbody></table></div>
         </section>
         <section class="panel" id="tenant-controls">
-          <div class="panel-header"><h2>Organization Controls</h2><div class="panel-actions"><button id="export-admin-audit" class="btn" type="button">Export Audit</button><button id="send-global-announcement" class="btn primary" type="button">Send Announcement</button></div></div>
+          <div class="panel-header"><h2>Organization Controls</h2><div class="panel-actions"><button id="clear-org-messages" class="btn danger" type="button">Clear Messages</button><button id="clear-org-reports" class="btn danger" type="button">Clear Reports</button><button id="export-admin-audit" class="btn" type="button">Export Audit</button><button id="send-global-announcement" class="btn primary" type="button">Send Announcement</button></div></div>
           <div class="module-shared-grid">
             <article><strong>Company Profile</strong><span>Manage this organization, branches, departments, and active modules only.</span></article>
             <article><strong>Permissions</strong><span>Assign company users to portal roles and department access inside this tenant.</span></article>
@@ -71,6 +72,19 @@
               </tbody>
             </table>
           </div>
+        </section>
+        <section class="panel" id="announcements">
+          <div class="panel-header"><h2>Organization Announcement</h2><div class="panel-actions muted">Send to employees, departments, portals, or the whole organization</div></div>
+          <form id="org-announcement-form" class="super-form">
+            <label class="field"><span>Title</span><input name="title" required /></label>
+            <label class="field"><span>Message</span><input name="body" required /></label>
+            <label class="field"><span>Portals</span><input name="portals" placeholder="finance, hr, staff" /></label>
+            <label class="field"><span>Priority</span><select name="priority"><option>normal</option><option>high</option><option>critical</option></select></label>
+            <label class="field"><span>Attachment URL</span><input name="attachmentUrl" placeholder="https://..." /></label>
+            <label class="field"><span>Format</span><select name="format"><option>plain</option><option>rich-text</option></select></label>
+            <label class="field"><span>Expires</span><input name="expiresAt" type="datetime-local" /></label>
+            <button class="btn primary" type="submit">Send announcement</button>
+          </form>
         </section>
         <section class="panel" id="roles">
           <div class="panel-header"><h2>Roles & Permissions</h2><div class="panel-actions muted">Company-level RBAC</div></div>
@@ -94,10 +108,10 @@
           <div class="super-form"><label class="field"><span>Branches</span><input id="org-branches" placeholder="HQ, Branch 1, Branch 2" /></label><label class="field"><span>Departments</span><input id="org-departments" placeholder="Sales, Finance, HR" /></label><label class="field"><span>Modules</span><input id="org-modules" placeholder="inventory, orders, finance" /></label></div>
         </section>
         <section class="panel" id="notifications">
-          <div class="panel-header"><h2>Notifications</h2><div class="panel-actions muted">Company announcements and alerts</div></div>
+          <div class="panel-header"><h2>Notifications</h2><div class="panel-actions"><button id="clear-org-notifications" class="btn danger" type="button">Clear Notifications</button></div></div>
           <p class="muted">Use Organization Controls to send company announcements. Workflow alerts continue to use the shared notification center.</p>
         </section>
-        <section class="panel" id="activity"><div class="panel-header"><h2>Live Activity</h2><div class="panel-actions muted">Important organization updates</div></div><div class="table-wrap"><table class="table"><thead><tr><th>Time</th><th>Event</th><th>Detail</th></tr></thead><tbody id="org-activity-table"></tbody></table></div></section>
+        <section class="panel" id="activity"><div class="panel-header"><h2>Live Activity</h2><div class="panel-actions"><button id="clear-org-audit" class="btn danger" type="button">Clear Audit Logs</button><button id="clear-org-records" class="btn danger" type="button">Clear Activity Records</button><button id="clear-org-activity" class="btn danger" type="button">Clear Live Activity</button></div></div><div class="table-wrap"><table class="table"><thead><tr><th>Time</th><th>Event</th><th>Detail</th></tr></thead><tbody id="org-activity-table"></tbody></table></div></section>
       </main>
     </div>
     <script src="enterprise-core.js"></script>
@@ -107,6 +121,6 @@
     <script src="enterprise-platform.js"></script>
     <script src="ui-menu.js"></script>
     <script src="pwa.js"></script>
-    <script src="organization-admin.js?v=5"></script>
+    <script src="organization-admin.js?v=6"></script>
   </body>
 </html>

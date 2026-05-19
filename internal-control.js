@@ -70,6 +70,7 @@
               <button class="btn" data-action="verified" data-id="${escapeHtml(org.id)}" type="button">Verify</button>
               <button class="btn" data-action="restricted" data-id="${escapeHtml(org.id)}" type="button">Restrict</button>
               <button class="btn danger" data-action="suspended" data-id="${escapeHtml(org.id)}" type="button">Suspend</button>
+              <button class="btn danger" data-action="delete" data-id="${escapeHtml(org.id)}" type="button">Delete</button>
               <button class="btn" data-action="modules-core" data-id="${escapeHtml(org.id)}" type="button">Core Modules</button>
               <button class="btn" data-action="backup" data-id="${escapeHtml(org.id)}" type="button">Backup</button>
             </td>
@@ -91,6 +92,7 @@
             <td>${escapeHtml(user.role)}</td>
             <td>${escapeHtml(user.organization)}</td>
             <td>${escapeHtml(user.status || "active")}</td>
+            <td><button class="btn danger" type="button" data-delete-user="${escapeHtml(user.id)}" data-tenant="${escapeHtml(user.tenantId)}">Delete</button></td>
           </tr>`,
       )
       .join("");
@@ -147,6 +149,16 @@
       .join("");
   };
 
+  const renderMonitorChart = () => {
+    const target = $("#monitor-chart");
+    if (!target) return;
+    const rows = (monitoring.heatmap || []).slice(0, 7);
+    const max = Math.max(1, ...rows.map((row) => Number(row.activity || 0)));
+    target.innerHTML = rows.length
+      ? rows.map((row) => `<span title="${escapeHtml(row.name)}: ${Number(row.activity || 0)} events" style="height:${Math.max(8, Math.round((Number(row.activity || 0) / max) * 100))}%"></span>`).join("")
+      : `<span style="height:8%"></span>`;
+  };
+
   const load = async () => {
     const q = encodeURIComponent(String($("#global-search-input")?.value || "").trim());
     const [orgs, monitor] = await Promise.all([fetchJson("/api/organizations"), fetchJson(`/api/platform-monitoring${q ? `?q=${q}` : ""}`)]);
@@ -157,6 +169,9 @@
     renderActivity();
     renderSearch();
     renderHeatmap();
+    renderMonitorChart();
+    $("#platform-default-plan") && ($("#platform-default-plan").value = monitoring.platformSettings?.defaultSubscriptionPlan || "starter-monthly");
+    $("#platform-maintenance") && ($("#platform-maintenance").checked = monitoring.platformSettings?.maintenanceMode === true);
     await renderKpis();
   };
 
@@ -178,12 +193,35 @@
     await load();
   };
 
+  const deleteOrganization = async (id) => {
+    if (!window.confirm("Delete this organization and its tenant data? This cannot be undone.")) return;
+    await fetchJson("/api/organizations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "delete-organization", id }),
+    });
+    await load();
+  };
+
+  const saveGlobalSettings = async () => {
+    await fetchJson("/api/platform-monitoring", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "save-global-settings",
+        defaultSubscriptionPlan: $("#platform-default-plan")?.value || "starter-monthly",
+        maintenanceMode: $("#platform-maintenance")?.checked === true,
+      }),
+    });
+    await load();
+  };
+
   const broadcast = async (form) => {
     const data = new FormData(form);
     await fetchJson("/api/platform-monitoring", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "broadcast", title: data.get("title"), message: data.get("body") }),
+      body: JSON.stringify({ action: "broadcast", title: data.get("title"), message: data.get("body"), priority: data.get("priority"), expiresAt: data.get("expiresAt"), attachmentUrl: data.get("attachmentUrl"), format: data.get("format") }),
     });
     notify(data.get("title"), data.get("body"));
     form.reset();
@@ -195,6 +233,26 @@
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "backup-organization", tenantId }),
+    });
+    await load();
+  };
+
+  const deleteUser = async (tenantId, id) => {
+    if (!window.confirm("Delete this user from the organization?")) return;
+    await fetchJson("/api/platform-monitoring", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "delete-user", tenantId, id }),
+    });
+    await load();
+  };
+
+  const clearPlatformEvents = async () => {
+    if (!window.confirm("Clear platform-level realtime events?")) return;
+    await fetchJson("/api/platform-monitoring", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "delete-platform-events", tenantId: "platform" }),
     });
     await load();
   };
@@ -215,14 +273,22 @@
     $("#org-table")?.addEventListener("click", (event) => {
       const btn = event.target.closest("button[data-action]");
       if (!btn) return;
+      if (btn.dataset.action === "delete") return deleteOrganization(btn.dataset.id).catch((err) => notify("Delete failed", err.message));
       if (btn.dataset.action === "backup") return backupOrganization(btn.dataset.id).catch((err) => notify("Backup failed", err.message));
       if (btn.dataset.action === "modules-core") return setCoreModules(btn.dataset.id).catch((err) => notify("Module update failed", err.message));
       setStatus(btn.dataset.id, btn.dataset.action).catch((err) => notify("Organization update failed", err.message));
+    });
+    $("#global-users-table")?.addEventListener("click", (event) => {
+      const btn = event.target.closest("[data-delete-user]");
+      if (!btn) return;
+      deleteUser(btn.dataset.tenant, btn.dataset.deleteUser).catch((err) => notify("User delete failed", err.message));
     });
     $("#broadcast-form")?.addEventListener("submit", (event) => {
       event.preventDefault();
       broadcast(event.currentTarget).catch((err) => notify("Broadcast failed", err.message));
     });
+    $("#platform-settings-save")?.addEventListener("click", () => saveGlobalSettings().catch((err) => notify("Settings failed", err.message)));
+    $("#clear-platform-events")?.addEventListener("click", () => clearPlatformEvents().catch((err) => notify("Clear activity failed", err.message)));
     window.addEventListener("enterprise:realtime", () => load().catch(() => null));
     load().catch((err) => notify("Super Admin load failed", err.message));
   });
