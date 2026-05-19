@@ -4,7 +4,16 @@ const { getStore } = require("./kv-store");
 const SESSION_TTL_MS = 4 * 60 * 60 * 1000;
 const SUPER_ADMIN_CREDENTIALS_KEY = "platform:super_admin_credentials_v1";
 
-const secret = () => process.env.SUPER_ADMIN_SESSION_SECRET || process.env.SESSION_SECRET || process.env.AUTH_SECRET || "development-super-admin-secret";
+const isProduction = () => process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production";
+
+const requireProductionSecret = (value, name, fallback) => {
+  const secret = String(value || "");
+  if (secret) return secret;
+  if (!isProduction()) return fallback;
+  throw new Error(`${name} is required in production`);
+};
+
+const secret = () => requireProductionSecret(process.env.SUPER_ADMIN_SESSION_SECRET || process.env.SESSION_SECRET || process.env.AUTH_SECRET, "SUPER_ADMIN_SESSION_SECRET", "development-super-admin-secret");
 
 const sign = (payload) => crypto.createHmac("sha256", secret()).update(payload).digest("base64url");
 
@@ -34,7 +43,7 @@ const configuredIdentity = () => {
   const usernames = [
     process.env.SUPER_ADMIN_USERNAME,
     process.env.SUPER_ADMIN_EMAIL,
-    !process.env.SUPER_ADMIN_USERNAME && !process.env.SUPER_ADMIN_EMAIL ? "platform-admin" : "",
+    !isProduction() && !process.env.SUPER_ADMIN_USERNAME && !process.env.SUPER_ADMIN_EMAIL ? "platform-admin" : "",
   ]
     .map((value) => String(value || "").trim().toLowerCase())
     .filter(Boolean);
@@ -42,14 +51,14 @@ const configuredIdentity = () => {
     process.env.SUPER_ADMIN_PASSWORD,
     process.env.SUPER_ADMIN_KEY,
     process.env.INTERNAL_ADMIN_KEY,
-    !process.env.SUPER_ADMIN_PASSWORD && !process.env.SUPER_ADMIN_KEY && !process.env.INTERNAL_ADMIN_KEY ? "mapphex-internal" : "",
+    !isProduction() && !process.env.SUPER_ADMIN_PASSWORD && !process.env.SUPER_ADMIN_KEY && !process.env.INTERNAL_ADMIN_KEY ? "mapphex-internal" : "",
   ]
     .map((value) => String(value || ""))
     .filter(Boolean);
   return {
-    username: usernames[0] || "platform-admin",
+    username: usernames[0] || (isProduction() ? "" : "platform-admin"),
     usernames,
-    password: passwords[0] || "mapphex-internal",
+    password: passwords[0] || (isProduction() ? "" : "mapphex-internal"),
     passwords,
   };
 };

@@ -2,7 +2,7 @@ const { sendJson, readJsonBody } = require("../api/_lib/http");
 const { getStore } = require("../api/_lib/kv-store");
 const { getTenantId, scopeTenantKey } = require("../api/_lib/tenant");
 const { appendEvent, clearEvents } = require("../api/_lib/events");
-const { assertIdempotent, assertObject, assertSameOrigin, rateLimit, requireOrgAdmin, requireTenantSession, safeString } = require("../api/_lib/security");
+const { assertIdempotent, assertObject, assertSameOrigin, rateLimit, requireActiveOrgAdmin, requireActiveTenantSession, safeString } = require("../api/_lib/security");
 const { hashOrganizationSecret, randomOrganizationToken } = require("./organizations");
 
 const USERS_KEY = "enterprise_org_users_v1";
@@ -56,7 +56,7 @@ module.exports = async (req, res) => {
     const store = getStore();
     const body = req.method === "POST" ? assertObject(await readJsonBody(req)) : null;
     const tenantId = getTenantId(req, body);
-    const session = requireTenantSession(req, tenantId);
+    const session = await requireActiveTenantSession(req, tenantId);
     assertSameOrigin(req);
     const usersKey = scopeTenantKey(tenantId, USERS_KEY);
     const settingsKey = scopeTenantKey(tenantId, SETTINGS_KEY);
@@ -70,7 +70,7 @@ module.exports = async (req, res) => {
     }
 
     if (req.method !== "POST") return sendJson(res, 405, { ok: false, error: "Method not allowed" });
-    requireOrgAdmin(req, tenantId);
+    await requireActiveOrgAdmin(req, tenantId);
     assertIdempotent(req, body);
     const users = uniqueBy((await store.get(usersKey)) || [], (user) => normalizeEmail(user.email || user.username));
     const settings = sanitizeSettings((await store.get(settingsKey)) || {});

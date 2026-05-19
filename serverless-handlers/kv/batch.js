@@ -3,7 +3,7 @@ const { sanitizeKey } = require("../../api/_lib/keys");
 const { getStore } = require("../../api/_lib/kv-store");
 const { getTenantId, scopeTenantKey } = require("../../api/_lib/tenant");
 const { appendEvent } = require("../../api/_lib/events");
-const { assertIdempotent, assertObject, assertSameOrigin, rateLimit, requireTenantSession } = require("../../api/_lib/security");
+const { assertIdempotent, assertObject, assertSameOrigin, rateLimit, requireActiveTenantSession } = require("../../api/_lib/security");
 const { allPublicKvKeys } = require("../../api/_lib/public-kv-keys");
 
 module.exports = async (req, res) => {
@@ -28,7 +28,7 @@ module.exports = async (req, res) => {
       items[k] = v ?? null;
       changed += 1;
     }
-    if (!allPublicKvKeys(Object.keys(items))) requireTenantSession(req, tenantId);
+    if (!allPublicKvKeys(Object.keys(items))) await requireActiveTenantSession(req, tenantId);
 
     await store.setManyAtomic(items);
     await appendEvent(store, tenantId, "kv.batch.updated", { changed, keys: Object.keys(items).slice(0, 25) });

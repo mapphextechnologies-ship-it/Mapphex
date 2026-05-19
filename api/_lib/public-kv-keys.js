@@ -1,11 +1,4 @@
-const PUBLIC_KV_KEYS = new Set([
-  "enterprise_agent_accounts_v1",
-  "enterprise_branch_accounts_v1",
-  "enterprise_teamleader_accounts_v1",
-  "enterprise_departments_accounts_v1",
-  "enterprise_director_account_v1",
-  "enterprise_erp_v1",
-]);
+const PUBLIC_KV_KEYS = new Set([]);
 
 const unscopedTenantKey = (key) => {
   const value = String(key || "");

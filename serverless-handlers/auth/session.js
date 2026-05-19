@@ -11,11 +11,20 @@ const {
   verifyOrganizationAdmin,
   verifyOrganizationUser,
 } = require("../organizations");
-const { assertSameOrigin, decodeSessionToken, rateLimit } = require("../../api/_lib/security");
+const { assertSameOrigin, decodeSessionToken, rateLimit, requireActiveTenantSession } = require("../../api/_lib/security");
 
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
 
-const secret = () => process.env.SESSION_SECRET || process.env.AUTH_SECRET || "development-session-secret";
+const isProduction = () => process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production";
+
+const secret = () => {
+  const value = process.env.SESSION_SECRET || process.env.AUTH_SECRET;
+  if (value) return value;
+  if (!isProduction()) return "development-session-secret";
+  const err = new Error("SESSION_SECRET is required in production");
+  err.statusCode = 500;
+  throw err;
+};
 
 const sign = (payload) =>
   crypto.createHmac("sha256", secret()).update(payload).digest("base64url");
@@ -171,7 +180,9 @@ module.exports = async (req, res) => {
     if (req.method === "GET") {
       const token = String(req.headers.authorization || "").replace(/^Bearer\s+/i, "");
       const session = decodeSessionToken(token);
-      return sendJson(res, session ? 200 : 401, session ? { ok: true, session } : { ok: false, error: "Invalid session" });
+      if (!session) return sendJson(res, 401, { ok: false, error: "Invalid session" });
+      await requireActiveTenantSession(req, session.tenantId);
+      return sendJson(res, 200, { ok: true, session });
     }
 
     return sendJson(res, 405, { ok: false, error: "Method not allowed" });

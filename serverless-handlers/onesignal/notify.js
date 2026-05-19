@@ -1,6 +1,6 @@
 const { sendJson, readJsonBody } = require("../../api/_lib/http");
 const { getTenantId } = require("../../api/_lib/tenant");
-const { requireTenantSession } = require("../../api/_lib/security");
+const { requireActiveTenantSession } = require("../../api/_lib/security");
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") return sendJson(res, 405, { ok: false, error: "Method not allowed" });
@@ -12,7 +12,7 @@ module.exports = async (req, res) => {
   try {
     const body = await readJsonBody(req);
     if (!body || typeof body !== "object") return sendJson(res, 400, { ok: false, error: "Invalid body" });
-    requireTenantSession(req, getTenantId(req, body));
+    await requireActiveTenantSession(req, getTenantId(req, body));
 
     const payload = {
       app_id: appId,

@@ -8,7 +8,7 @@ const {
   assertIdempotent,
   assertSameOrigin,
   rateLimit,
-  requireTenantSession,
+  requireActiveTenantSession,
   safeString,
 } = require("../api/_lib/security");
 const { recordFingerprint, uniqueBy } = require("../api/_lib/data-hygiene");
@@ -340,7 +340,7 @@ module.exports = async (req, res) => {
 
     if (req.method === "GET") {
       const tenantId = getTenantId(req);
-      requireTenantSession(req, tenantId);
+      await requireActiveTenantSession(req, tenantId);
       const state = await readState(store, tenantId);
       return sendJson(res, 200, { ok: true, ...publicState(tenantId, state) });
     }
@@ -350,7 +350,7 @@ module.exports = async (req, res) => {
     const body = assertObject(await readJsonBody(req));
     assertIdempotent(req, body);
     const tenantId = getTenantId(req, body);
-    const session = requireTenantSession(req, tenantId);
+    const session = await requireActiveTenantSession(req, tenantId);
     const actor = safeString(body.actor || body.actorName || session.sub || req.headers["x-actor"] || "system", 120);
     const action = safeString(body.action || body.kind || "", 80);
 

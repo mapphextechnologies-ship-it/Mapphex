@@ -4,7 +4,7 @@ const fs = require("fs");
 const fsp = require("fs/promises");
 const path = require("path");
 const crypto = require("crypto");
-const { requireTenantSession, setSecurityHeaders } = require("../api/_lib/security");
+const { requireActiveTenantSession, setSecurityHeaders } = require("../api/_lib/security");
 const { decodeSuperAdminToken } = require("../api/_lib/super-admin-auth");
 const { allPublicKvKeys, isPublicKvKey } = require("../api/_lib/public-kv-keys");
 require("../bytewave-pricing");
@@ -282,7 +282,7 @@ const handleApi = async (req, res, url) => {
   req.query = Object.fromEntries(url.searchParams.entries());
 
   if (url.pathname === "/api/realtime" && req.method === "GET") {
-    requireTenantSession(req, getTenantId(req));
+    await requireActiveTenantSession(req, getTenantId(req));
     return handleRealtime(req, res, url);
   }
 
@@ -300,7 +300,7 @@ const handleApi = async (req, res, url) => {
     const store = await readKv();
 
     if (key) {
-      if (!isPublicKvKey(key)) requireTenantSession(req, tenantId);
+      if (!isPublicKvKey(key)) await requireActiveTenantSession(req, tenantId);
       return ok(res, { key, value: Object.prototype.hasOwnProperty.call(store.items, key) ? store.items[key] : null });
     }
 
@@ -309,7 +309,7 @@ const handleApi = async (req, res, url) => {
         .split(",")
         .map((k) => sanitizeKey(scopeTenantKey(tenantId, k)))
         .filter(Boolean);
-      if (!allPublicKvKeys(keys)) requireTenantSession(req, tenantId);
+      if (!allPublicKvKeys(keys)) await requireActiveTenantSession(req, tenantId);
       const items = {};
       for (const k of keys) {
         const value = Object.prototype.hasOwnProperty.call(store.items, k) ? store.items[k] : null;
@@ -328,7 +328,7 @@ const handleApi = async (req, res, url) => {
     const tenantId = getTenantId(req, body);
     const key = sanitizeKey(scopeTenantKey(tenantId, body.key));
     if (!key) return badRequest(res, "Invalid key");
-    if (!isPublicKvKey(key)) requireTenantSession(req, tenantId);
+    if (!isPublicKvKey(key)) await requireActiveTenantSession(req, tenantId);
 
     const saved = await withKvWriteLock(async () => {
       const store = await readKv();
@@ -359,7 +359,7 @@ const handleApi = async (req, res, url) => {
         store.items[k] = v ?? null;
         changed += 1;
       }
-      if (!allPublicKvKeys(keys)) requireTenantSession(req, tenantId);
+      if (!allPublicKvKeys(keys)) await requireActiveTenantSession(req, tenantId);
       store.version = Number(store.version || 1) + 1;
       return writeKv(store);
     });

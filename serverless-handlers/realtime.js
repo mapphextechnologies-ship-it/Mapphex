@@ -2,7 +2,7 @@ const { sendJson, readJsonBody } = require("../api/_lib/http");
 const { getStore } = require("../api/_lib/kv-store");
 const { getTenantId } = require("../api/_lib/tenant");
 const { appendEvent, listEvents } = require("../api/_lib/events");
-const { assertObject, rateLimit, requireTenantSession, safeString } = require("../api/_lib/security");
+const { assertObject, rateLimit, requireActiveTenantSession, safeString } = require("../api/_lib/security");
 
 const visibleEvent = (event) => !String(event?.type || "").startsWith("kv.");
 
@@ -51,7 +51,7 @@ module.exports = async (req, res) => {
 
     if (req.method === "GET") {
       const tenantId = getTenantId(req);
-      requireTenantSession(req, tenantId);
+      await requireActiveTenantSession(req, tenantId);
       const after = Number(req.query?.after || 0) || 0;
       const events = (await listEvents(store, tenantId, after)).filter(visibleEvent).map(cleanEvent);
       return sendJson(res, 200, { ok: true, tenantId, events });
@@ -60,7 +60,7 @@ module.exports = async (req, res) => {
     if (req.method === "POST") {
       const body = assertObject(await readJsonBody(req));
       const tenantId = getTenantId(req, body);
-      requireTenantSession(req, tenantId);
+      await requireActiveTenantSession(req, tenantId);
       const event = await appendEvent(store, tenantId, safeString(body.type || "notification", 80), body.payload || {});
       return sendJson(res, 200, { ok: true, event });
     }

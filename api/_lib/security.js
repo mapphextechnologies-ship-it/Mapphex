@@ -1,4 +1,6 @@
 const crypto = require("crypto");
+const { getStore } = require("./kv-store");
+const { scopeTenantKey } = require("./tenant");
 
 const buckets = new Map();
 const seenRequests = new Map();
@@ -25,11 +27,22 @@ const setSecurityHeaders = (res) => {
   res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
   res.setHeader(
     "Content-Security-Policy",
-    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'",
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'",
   );
 };
 
-const sessionSecret = () => process.env.SESSION_SECRET || process.env.AUTH_SECRET || "development-session-secret";
+const isProduction = () => process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production";
+
+const requireProductionSecret = (value, name, fallback) => {
+  const secret = String(value || "");
+  if (secret) return secret;
+  if (!isProduction()) return fallback;
+  const err = new Error(`${name} is required in production`);
+  err.statusCode = 500;
+  throw err;
+};
+
+const sessionSecret = () => requireProductionSecret(process.env.SESSION_SECRET || process.env.AUTH_SECRET, "SESSION_SECRET", "development-session-secret");
 
 const signSessionPayload = (payload) => crypto.createHmac("sha256", sessionSecret()).update(payload).digest("base64url");
 
@@ -61,6 +74,33 @@ const requireTenantSession = (req, tenantId) => {
   return session;
 };
 
+const readArray = async (store, key) => {
+  const value = (await store.get(key)) || [];
+  return Array.isArray(value) ? value : [];
+};
+
+const requireActiveTenantSession = async (req, tenantId) => {
+  const session = requireTenantSession(req, tenantId);
+  const store = getStore();
+  const orgs = await readArray(store, "platform_organizations_v1");
+  const org = orgs.find((row) => String(row.id || "") === String(tenantId));
+  if (!org || !["active", "verified"].includes(String(org.status || "").toLowerCase())) {
+    const err = new Error("Organization is not active");
+    err.statusCode = 403;
+    throw err;
+  }
+  if (session.userId && session.userId !== "organization-admin") {
+    const users = await readArray(store, scopeTenantKey(tenantId, "enterprise_org_users_v1"));
+    const user = users.find((row) => String(row.id || "") === String(session.userId) || String(row.email || "").toLowerCase() === String(session.sub || "").toLowerCase());
+    if (!user || String(user.status || "active").toLowerCase() !== "active") {
+      const err = new Error("User account is not active");
+      err.statusCode = 403;
+      throw err;
+    }
+  }
+  return session;
+};
+
 const normalizeRole = (role) => String(role || "").trim().toLowerCase();
 
 const elevatedOrgRoles = new Set(["org_admin", "admin"]);
@@ -76,6 +116,17 @@ const requireOrgRole = (req, tenantId, roles = []) => {
 };
 
 const requireOrgAdmin = (req, tenantId) => requireOrgRole(req, tenantId, ["org_admin", "admin"]);
+
+const requireActiveOrgAdmin = async (req, tenantId) => {
+  const session = await requireActiveTenantSession(req, tenantId);
+  const role = normalizeRole(session.role);
+  if (!elevatedOrgRoles.has(role)) {
+    const err = new Error("Access denied");
+    err.statusCode = 403;
+    throw err;
+  }
+  return session;
+};
 
 const rateLimit = (req, opts = {}) => {
   const limit = Number(opts.limit || 180);
@@ -153,8 +204,10 @@ module.exports = {
   decodeSessionToken,
   getBearerSession,
   requireTenantSession,
+  requireActiveTenantSession,
   requireOrgRole,
   requireOrgAdmin,
+  requireActiveOrgAdmin,
   rateLimit,
   assertSameOrigin,
   assertObject,

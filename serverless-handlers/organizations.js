@@ -3,7 +3,7 @@ const { sendJson, readJsonBody } = require("../api/_lib/http");
 const { getStore } = require("../api/_lib/kv-store");
 const { cleanTenantId, getTenantId, scopeTenantKey } = require("../api/_lib/tenant");
 const { appendEvent, listEvents } = require("../api/_lib/events");
-const { assertIdempotent, assertObject, assertSameOrigin, rateLimit, requireTenantSession, safeString } = require("../api/_lib/security");
+const { assertIdempotent, assertObject, assertSameOrigin, rateLimit, requireActiveTenantSession, safeString } = require("../api/_lib/security");
 const { requireSuperAdmin } = require("../api/_lib/super-admin-auth");
 const { VALID_PORTAL_IDS } = require("../api/_lib/portal-catalog");
 const { mergeUniqueStrings, normalizeEmail, normalizeText } = require("../api/_lib/data-hygiene");
@@ -305,7 +305,7 @@ module.exports = async (req, res) => {
       const rows = await loadOrganizations(store);
       const tenantId = getTenantId(req);
       if (req.query?.scope === "mine") {
-        requireTenantSession(req, tenantId);
+        await requireActiveTenantSession(req, tenantId);
         const org = rows.find((row) => row.id === tenantId);
         return sendJson(res, 200, { ok: true, organization: org ? publicOrg(org) : null });
       }
@@ -417,7 +417,7 @@ module.exports.verifyOrganizationAdmin = async (identifier, email, password, org
         String(row.admin?.email || "").toLowerCase() === mail ||
         String(row.contact?.email || "").toLowerCase() === mail),
   );
-  if (!org || org.status !== "active" || !verifySecret(password, org.adminPasswordHash)) return null;
+  if (!org || !["active", "verified"].includes(String(org.status || "").toLowerCase()) || !verifySecret(password, org.adminPasswordHash)) return null;
   return publicOrg(org);
 };
 
@@ -437,7 +437,7 @@ module.exports.verifyOrganizationUser = async (identifier, email, password, orga
         String(row.admin?.email || "").toLowerCase() === mail ||
         String(row.contact?.email || "").toLowerCase() === mail),
   );
-  if (!org || org.status !== "active") return null;
+  if (!org || !["active", "verified"].includes(String(org.status || "").toLowerCase())) return null;
   const usersKey = scopeTenantKey(org.id, USERS_KEY);
   const users = (await store.get(usersKey)) || [];
   const user = (Array.isArray(users) ? users : []).find((row) => String(row.email || "").trim().toLowerCase() === mail);
