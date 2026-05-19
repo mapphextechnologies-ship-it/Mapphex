@@ -653,6 +653,8 @@ body {
 .founder-card img.profile-photo {
   object-fit: cover;
   padding: 0;
+  border: 0;
+  background: transparent;
 }
 
 .founder-card span {
