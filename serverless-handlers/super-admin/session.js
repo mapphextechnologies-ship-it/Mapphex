@@ -6,7 +6,7 @@ const {
   createSuperAdminSession,
   getSuperAdminBearer,
   requireSuperAdmin,
-  verifySuperAdminCredentials,
+  verifySuperAdminCredentialsAny,
 } = require("../../api/_lib/super-admin-auth");
 
 const cookieAttrs = "HttpOnly; SameSite=Strict; Path=/_internal/mapphex-control; Max-Age=14400";
@@ -20,7 +20,7 @@ module.exports = async (req, res) => {
       const body = assertObject(await readJsonBody(req));
       const username = safeString(body.username || body.email, 160).toLowerCase();
       const password = String(body.password || "");
-      if (!verifySuperAdminCredentials(username, password)) {
+      if (!(await verifySuperAdminCredentialsAny(username, password))) {
         await appendEvent(getStore(), "platform", "super_admin.login.failed", { username });
         return sendJson(res, 401, { ok: false, error: "Invalid Super Admin credentials" });
       }

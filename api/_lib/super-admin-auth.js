@@ -1,6 +1,8 @@
 const crypto = require("crypto");
+const { getStore } = require("./kv-store");
 
 const SESSION_TTL_MS = 4 * 60 * 60 * 1000;
+const SUPER_ADMIN_CREDENTIALS_KEY = "platform:super_admin_credentials_v1";
 
 const secret = () => process.env.SUPER_ADMIN_SESSION_SECRET || process.env.SESSION_SECRET || process.env.AUTH_SECRET || "development-super-admin-secret";
 
@@ -59,6 +61,33 @@ const verifySuperAdminCredentials = (username, password) => {
   return configured.usernames.includes(providedUser) && configured.passwords.includes(providedPassword);
 };
 
+const sha256 = (value) => crypto.createHash("sha256").update(String(value || "")).digest("hex");
+
+const verifyStoredSuperAdminCredentials = async (username, password) => {
+  try {
+    const value = await getStore().get(SUPER_ADMIN_CREDENTIALS_KEY);
+    if (!value || typeof value !== "object") return false;
+    const providedUser = String(username || "").trim().toLowerCase();
+    const providedPassword = String(password || "");
+    const usernames = Array.isArray(value.usernames)
+      ? value.usernames
+      : [value.username, value.email];
+    const allowedUsers = usernames.map((item) => String(item || "").trim().toLowerCase()).filter(Boolean);
+    if (!allowedUsers.includes(providedUser)) return false;
+
+    const hash = String(value.passwordHash || value.password_hash || "").trim().toLowerCase();
+    if (hash && hash === sha256(providedPassword)) return true;
+
+    const plain = String(value.password || "").trim();
+    return !!plain && plain === providedPassword;
+  } catch {
+    return false;
+  }
+};
+
+const verifySuperAdminCredentialsAny = async (username, password) =>
+  verifySuperAdminCredentials(username, password) || (await verifyStoredSuperAdminCredentials(username, password));
+
 const createSuperAdminSession = (username) => {
   const now = Date.now();
   const claims = {
@@ -99,4 +128,5 @@ module.exports = {
   getSuperAdminBearer,
   requireSuperAdmin,
   verifySuperAdminCredentials,
+  verifySuperAdminCredentialsAny,
 };
