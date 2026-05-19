@@ -6,6 +6,7 @@ const path = require("path");
 const crypto = require("crypto");
 const { requireTenantSession, setSecurityHeaders } = require("../api/_lib/security");
 const { decodeSuperAdminToken } = require("../api/_lib/super-admin-auth");
+const { allPublicKvKeys, isPublicKvKey } = require("../api/_lib/public-kv-keys");
 
 const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || "127.0.0.1";
@@ -264,13 +265,13 @@ const handleApi = async (req, res, url) => {
 
   if (url.pathname === "/api/kv" && req.method === "GET") {
     const tenantId = getTenantId(req);
-    requireTenantSession(req, tenantId);
     const key = sanitizeKey(scopeTenantKey(tenantId, url.searchParams.get("key")));
     const keysRaw = String(url.searchParams.get("keys") || "").trim();
 
     const store = await readKv();
 
     if (key) {
+      if (!isPublicKvKey(key)) requireTenantSession(req, tenantId);
       return ok(res, { key, value: Object.prototype.hasOwnProperty.call(store.items, key) ? store.items[key] : null });
     }
 
@@ -279,6 +280,7 @@ const handleApi = async (req, res, url) => {
         .split(",")
         .map((k) => sanitizeKey(scopeTenantKey(tenantId, k)))
         .filter(Boolean);
+      if (!allPublicKvKeys(keys)) requireTenantSession(req, tenantId);
       const items = {};
       for (const k of keys) {
         const value = Object.prototype.hasOwnProperty.call(store.items, k) ? store.items[k] : null;
@@ -295,9 +297,9 @@ const handleApi = async (req, res, url) => {
     const body = await readBodyJson(req);
     if (!body || typeof body !== "object") return badRequest(res, "Invalid body");
     const tenantId = getTenantId(req, body);
-    requireTenantSession(req, tenantId);
     const key = sanitizeKey(scopeTenantKey(tenantId, body.key));
     if (!key) return badRequest(res, "Invalid key");
+    if (!isPublicKvKey(key)) requireTenantSession(req, tenantId);
 
     const saved = await withKvWriteLock(async () => {
       const store = await readKv();
@@ -316,17 +318,19 @@ const handleApi = async (req, res, url) => {
     const items = body.items;
     if (!items || typeof items !== "object") return badRequest(res, "Invalid items");
     const tenantId = getTenantId(req, body);
-    requireTenantSession(req, tenantId);
 
     let changed = 0;
     const saved = await withKvWriteLock(async () => {
       const store = await readKv();
+      const keys = [];
       for (const [kRaw, v] of Object.entries(items)) {
         const k = sanitizeKey(scopeTenantKey(tenantId, kRaw));
         if (!k) continue;
+        keys.push(k);
         store.items[k] = v ?? null;
         changed += 1;
       }
+      if (!allPublicKvKeys(keys)) requireTenantSession(req, tenantId);
       store.version = Number(store.version || 1) + 1;
       return writeKv(store);
     });

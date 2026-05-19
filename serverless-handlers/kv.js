@@ -4,12 +4,7 @@ const { getStore } = require("../api/_lib/kv-store");
 const { getTenantId, scopeTenantKey } = require("../api/_lib/tenant");
 const { appendEvent } = require("../api/_lib/events");
 const { assertIdempotent, assertObject, assertSameOrigin, rateLimit, requireTenantSession } = require("../api/_lib/security");
-
-const unscopedTenantKey = (key) => {
-  const value = String(key || "");
-  const match = value.match(/^tenant:[^:]+:(.+)$/);
-  return match ? match[1] : value;
-};
+const { allPublicKvKeys, isPublicKvKey, unscopedTenantKey } = require("../api/_lib/public-kv-keys");
 
 module.exports = async (req, res) => {
   const store = getStore();
@@ -20,11 +15,11 @@ module.exports = async (req, res) => {
 
     if (req.method === "GET") {
       const tenantId = getTenantId(req);
-      requireTenantSession(req, tenantId);
       const key = sanitizeKey(scopeTenantKey(tenantId, req.query?.key));
       const keysRaw = String(req.query?.keys || "").trim();
 
       if (key) {
+        if (!isPublicKvKey(key)) requireTenantSession(req, tenantId);
         const value = await store.get(key);
         return sendJson(res, 200, { ok: true, key, value });
       }
@@ -35,6 +30,7 @@ module.exports = async (req, res) => {
           .map((k) => sanitizeKey(scopeTenantKey(tenantId, k)))
           .filter(Boolean);
         if (!keys.length) return sendJson(res, 400, { ok: false, error: "Invalid keys" });
+        if (!allPublicKvKeys(keys)) requireTenantSession(req, tenantId);
         const storedItems = await store.mget(keys);
         const items = {};
         keys.forEach((key) => {
@@ -52,9 +48,9 @@ module.exports = async (req, res) => {
       const body = assertObject(await readJsonBody(req));
       assertIdempotent(req, body);
       const tenantId = getTenantId(req, body);
-      requireTenantSession(req, tenantId);
       const key = sanitizeKey(scopeTenantKey(tenantId, body.key));
       if (!key) return sendJson(res, 400, { ok: false, error: "Invalid key" });
+      if (!isPublicKvKey(key)) requireTenantSession(req, tenantId);
       await store.set(key, body.value ?? null);
       await appendEvent(store, tenantId, "kv.updated", { key });
       return sendJson(res, 200, { ok: true, key, tenantId });

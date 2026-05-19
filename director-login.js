@@ -73,9 +73,9 @@
 
   const apiEnabled = () => {
     try {
-      return storageGetItem(API_ENABLED_KEY) === "1";
+      return storageGetItem(API_ENABLED_KEY) === "1" || typeof fetch === "function";
     } catch {
-      return false;
+      return typeof fetch === "function";
     }
   };
 

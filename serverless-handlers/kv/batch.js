@@ -4,6 +4,7 @@ const { getStore } = require("../../api/_lib/kv-store");
 const { getTenantId, scopeTenantKey } = require("../../api/_lib/tenant");
 const { appendEvent } = require("../../api/_lib/events");
 const { assertIdempotent, assertObject, assertSameOrigin, rateLimit, requireTenantSession } = require("../../api/_lib/security");
+const { allPublicKvKeys } = require("../../api/_lib/public-kv-keys");
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") return sendJson(res, 405, { ok: false, error: "Method not allowed" });
@@ -18,7 +19,6 @@ module.exports = async (req, res) => {
     const itemsRaw = body.items;
     if (!itemsRaw || typeof itemsRaw !== "object") return sendJson(res, 400, { ok: false, error: "Invalid items" });
     const tenantId = getTenantId(req, body);
-    requireTenantSession(req, tenantId);
 
     const items = {};
     let changed = 0;
@@ -28,6 +28,7 @@ module.exports = async (req, res) => {
       items[k] = v ?? null;
       changed += 1;
     }
+    if (!allPublicKvKeys(Object.keys(items))) requireTenantSession(req, tenantId);
 
     await store.setManyAtomic(items);
     await appendEvent(store, tenantId, "kv.batch.updated", { changed, keys: Object.keys(items).slice(0, 25) });

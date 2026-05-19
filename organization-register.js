@@ -444,7 +444,10 @@
     try {
       return text ? JSON.parse(text) : null;
     } catch {
-      const err = new Error("Registration service returned an invalid response. Using local workspace mode.");
+      const contentType = res.headers?.get?.("content-type") || "";
+      const err = new Error(
+        `Registration service returned an invalid response${contentType ? ` (${contentType})` : ""}. Using local workspace mode.`,
+      );
       err.invalidJson = true;
       err.status = res.status;
       err.preview = text.slice(0, 80);
