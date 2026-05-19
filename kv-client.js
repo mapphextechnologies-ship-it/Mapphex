@@ -6,6 +6,7 @@
   const FLUSH_RETRY_MS = 1200;
   const IDB_NAME = "enterprise_erp_indexeddb_v1";
   const IDB_STORE = "kv";
+  const ALLOW_PERSISTENT_CACHE = ["localhost", "127.0.0.1", ""].includes(location.hostname);
 
   const mem = new Map();
   const pending = new Map();
@@ -73,6 +74,10 @@
   };
 
   const openIdb = () => {
+    if (!ALLOW_PERSISTENT_CACHE) {
+      idbState = "disabled";
+      return Promise.resolve(null);
+    }
     if (!("indexedDB" in window)) {
       idbState = "down";
       return Promise.resolve(null);

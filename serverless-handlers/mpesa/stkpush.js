@@ -1,5 +1,7 @@
 const { sendJson, readJsonBody } = require("../../api/_lib/http");
 const { getStore } = require("../../api/_lib/kv-store");
+const { getTenantId } = require("../../api/_lib/tenant");
+const { requireTenantSession } = require("../../api/_lib/security");
 const { baseUrl, mustEnv, nowTimestamp, normalizeMsisdn, getAccessToken, stkPassword } = require("../../api/_lib/mpesa");
 
 module.exports = async (req, res) => {
@@ -8,6 +10,8 @@ module.exports = async (req, res) => {
   try {
     const body = await readJsonBody(req);
     if (!body || typeof body !== "object") return sendJson(res, 400, { ok: false, error: "Invalid body" });
+    const tenantId = getTenantId(req, body);
+    requireTenantSession(req, tenantId);
 
     const amount = Math.round(Number(body.amount || 0));
     const phone = normalizeMsisdn(body.phoneNumber || body.phone || "");
@@ -56,7 +60,7 @@ module.exports = async (req, res) => {
 
     // Store a small audit trail so Finance can reconcile later.
     const store = getStore();
-    const logKey = "enterprise_mpesa_stk_requests_v1";
+    const logKey = `tenant:${tenantId}:enterprise_mpesa_stk_requests_v1`;
     const current = (await store.get(logKey)) || [];
     const arr = Array.isArray(current) ? current : [];
     arr.push({

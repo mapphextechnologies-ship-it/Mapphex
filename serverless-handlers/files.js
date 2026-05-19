@@ -4,7 +4,7 @@ const { getStore } = require("../api/_lib/kv-store");
 const { getTenantId, scopeTenantKey } = require("../api/_lib/tenant");
 const { encryptJson } = require("../api/_lib/crypto-box");
 const { appendEvent } = require("../api/_lib/events");
-const { assertIdempotent, assertObject, rateLimit, safeString } = require("../api/_lib/security");
+const { assertIdempotent, assertObject, rateLimit, requireTenantSession, safeString } = require("../api/_lib/security");
 
 const FILES_KEY = "enterprise_files_v1";
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
@@ -29,6 +29,7 @@ module.exports = async (req, res) => {
 
     if (req.method === "GET") {
       const tenantId = getTenantId(req);
+      requireTenantSession(req, tenantId);
       const key = scopeTenantKey(tenantId, FILES_KEY);
       const files = (await store.get(key)) || [];
       return sendJson(res, 200, { ok: true, tenantId, files: Array.isArray(files) ? files : [] });
@@ -38,6 +39,7 @@ module.exports = async (req, res) => {
     const body = assertObject(await readJsonBody(req));
     assertIdempotent(req, body);
     const tenantId = getTenantId(req, body);
+    requireTenantSession(req, tenantId);
     const mime = safeString(body.mime || body.type, 120);
     if (!ALLOWED_TYPES.has(mime)) return sendJson(res, 415, { ok: false, error: "Unsupported file type" });
 

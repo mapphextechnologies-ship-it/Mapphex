@@ -4,7 +4,7 @@ const fs = require("fs");
 const fsp = require("fs/promises");
 const path = require("path");
 const crypto = require("crypto");
-const { setSecurityHeaders } = require("../api/_lib/security");
+const { requireTenantSession, setSecurityHeaders } = require("../api/_lib/security");
 const { decodeSuperAdminToken } = require("../api/_lib/super-admin-auth");
 
 const PORT = Number(process.env.PORT || 3000);
@@ -252,15 +252,19 @@ const handleApi = async (req, res, url) => {
   req.query = Object.fromEntries(url.searchParams.entries());
 
   if (url.pathname === "/api/realtime" && req.method === "GET") {
+    requireTenantSession(req, getTenantId(req));
     return handleRealtime(req, res, url);
   }
 
   if (req.method === "GET" && url.pathname === "/api/health") {
+    const superSession = decodeSuperAdminToken(String(req.headers.authorization || "").replace(/^Bearer\s+/i, ""));
+    if (!superSession) return sendJson(res, 403, { ok: false, error: "Super admin authorization required" });
     return ok(res, { time: new Date().toISOString(), realtimeClients: sseClients.size });
   }
 
   if (url.pathname === "/api/kv" && req.method === "GET") {
     const tenantId = getTenantId(req);
+    requireTenantSession(req, tenantId);
     const key = sanitizeKey(scopeTenantKey(tenantId, url.searchParams.get("key")));
     const keysRaw = String(url.searchParams.get("keys") || "").trim();
 
@@ -291,6 +295,7 @@ const handleApi = async (req, res, url) => {
     const body = await readBodyJson(req);
     if (!body || typeof body !== "object") return badRequest(res, "Invalid body");
     const tenantId = getTenantId(req, body);
+    requireTenantSession(req, tenantId);
     const key = sanitizeKey(scopeTenantKey(tenantId, body.key));
     if (!key) return badRequest(res, "Invalid key");
 
@@ -311,6 +316,7 @@ const handleApi = async (req, res, url) => {
     const items = body.items;
     if (!items || typeof items !== "object") return badRequest(res, "Invalid items");
     const tenantId = getTenantId(req, body);
+    requireTenantSession(req, tenantId);
 
     let changed = 0;
     const saved = await withKvWriteLock(async () => {

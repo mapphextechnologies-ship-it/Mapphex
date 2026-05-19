@@ -1,6 +1,7 @@
 const { sendJson, readJsonBody } = require("../api/_lib/http");
 const { getStore } = require("../api/_lib/kv-store");
 const { getTenantId, scopeTenantKey } = require("../api/_lib/tenant");
+const { requireTenantSession } = require("../api/_lib/security");
 
 const AUDIT_KEY = "enterprise_audit_v1";
 
@@ -8,6 +9,7 @@ module.exports = async (req, res) => {
   try {
     const body = req.method === "POST" ? await readJsonBody(req) : null;
     const tenantId = getTenantId(req, body);
+    requireTenantSession(req, tenantId);
     const key = scopeTenantKey(tenantId, AUDIT_KEY);
     const store = getStore();
     const rows = (await store.get(key)) || [];

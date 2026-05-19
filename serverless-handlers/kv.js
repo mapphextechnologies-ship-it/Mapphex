@@ -3,7 +3,7 @@ const { sanitizeKey } = require("../api/_lib/keys");
 const { getStore } = require("../api/_lib/kv-store");
 const { getTenantId, scopeTenantKey } = require("../api/_lib/tenant");
 const { appendEvent } = require("../api/_lib/events");
-const { assertIdempotent, assertObject, assertSameOrigin, rateLimit } = require("../api/_lib/security");
+const { assertIdempotent, assertObject, assertSameOrigin, rateLimit, requireTenantSession } = require("../api/_lib/security");
 
 const unscopedTenantKey = (key) => {
   const value = String(key || "");
@@ -20,6 +20,7 @@ module.exports = async (req, res) => {
 
     if (req.method === "GET") {
       const tenantId = getTenantId(req);
+      requireTenantSession(req, tenantId);
       const key = sanitizeKey(scopeTenantKey(tenantId, req.query?.key));
       const keysRaw = String(req.query?.keys || "").trim();
 
@@ -51,6 +52,7 @@ module.exports = async (req, res) => {
       const body = assertObject(await readJsonBody(req));
       assertIdempotent(req, body);
       const tenantId = getTenantId(req, body);
+      requireTenantSession(req, tenantId);
       const key = sanitizeKey(scopeTenantKey(tenantId, body.key));
       if (!key) return sendJson(res, 400, { ok: false, error: "Invalid key" });
       await store.set(key, body.value ?? null);

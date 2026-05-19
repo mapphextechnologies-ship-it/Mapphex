@@ -2,7 +2,7 @@ const { sendJson, readJsonBody } = require("../../api/_lib/http");
 const { getStore } = require("../../api/_lib/kv-store");
 const { getTenantId, scopeTenantKey } = require("../../api/_lib/tenant");
 const { appendEvent } = require("../../api/_lib/events");
-const { assertIdempotent, rateLimit, safeString } = require("../../api/_lib/security");
+const { assertIdempotent, getBearerSession, rateLimit, safeString } = require("../../api/_lib/security");
 
 const ERP_KEY = "enterprise_erp_v1";
 const BRANCH_COUNT = 47;
@@ -146,7 +146,7 @@ module.exports = async (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
     res.setHeader("Vary", "Origin");
     res.setHeader("Access-Control-Allow-Methods", "POST,OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type,X-Asset-Sync-Token,X-Tenant-ID");
+    res.setHeader("Access-Control-Allow-Headers", "Authorization,Content-Type,X-Asset-Sync-Token,X-Tenant-ID");
 
     if (req.method === "OPTIONS") {
       res.statusCode = 204;
@@ -159,12 +159,15 @@ module.exports = async (req, res) => {
     rateLimit(req, { scope: "assets-sync", limit: 120, windowMs: 60_000 });
     assertIdempotent(req, body);
     const token = String(req.headers["x-asset-sync-token"] || body?.token || "").trim();
-    if (process.env.ASSET_SYNC_TOKEN && token !== process.env.ASSET_SYNC_TOKEN) {
+    const tenantId = getTenantId(req, body);
+    const session = getBearerSession(req);
+    const tokenAllowed = !!process.env.ASSET_SYNC_TOKEN && token === process.env.ASSET_SYNC_TOKEN;
+    const sessionAllowed = !!session?.tenantId && String(session.tenantId) === String(tenantId);
+    if (!tokenAllowed && !sessionAllowed) {
       return sendJson(res, 401, { ok: false, error: "Unauthorized" });
     }
 
     const store = getStore();
-    const tenantId = getTenantId(req, body);
     const scopedErpKey = scopeTenantKey(tenantId, ERP_KEY);
     const erpRaw = await store.get(scopedErpKey);
     const erp = erpRaw && typeof erpRaw === "object" && Array.isArray(erpRaw.branches) ? erpRaw : makeDefaultErp();

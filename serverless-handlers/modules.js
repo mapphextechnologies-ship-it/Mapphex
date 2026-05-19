@@ -1,7 +1,7 @@
 const { sendJson, readJsonBody } = require("../api/_lib/http");
 const { getStore } = require("../api/_lib/kv-store");
 const { getTenantId, scopeTenantKey } = require("../api/_lib/tenant");
-const { assertObject, rateLimit, safeString } = require("../api/_lib/security");
+const { assertObject, rateLimit, requireTenantSession, safeString } = require("../api/_lib/security");
 const { appendEvent } = require("../api/_lib/events");
 
 const MODULES_KEY = "enterprise_modules_v1";
@@ -38,6 +38,7 @@ module.exports = async (req, res) => {
     const store = getStore();
     const body = req.method === "POST" ? assertObject(await readJsonBody(req)) : null;
     const tenantId = getTenantId(req, body);
+    requireTenantSession(req, tenantId);
     const key = scopeTenantKey(tenantId, MODULES_KEY);
     const existing = (await store.get(key)) || defaultConfig;
 
