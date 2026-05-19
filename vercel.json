@@ -5,6 +5,16 @@
       "maxDuration": 15
     }
   },
+  "rewrites": [
+    {
+      "source": "/_internal/mapphex-control",
+      "destination": "/super-admin-login.html"
+    },
+    {
+      "source": "/_internal/mapphex-control/dashboard",
+      "destination": "/super-admin.html"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
