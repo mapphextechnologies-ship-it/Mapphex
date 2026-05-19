@@ -7,6 +7,7 @@
     "access-denied",
     "organization-login",
     "organization-register",
+    "portal-auth",
     "agent-login",
     "agent-register",
     "branch-login",

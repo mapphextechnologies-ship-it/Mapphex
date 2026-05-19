@@ -579,6 +579,7 @@
       result.textContent = "Creating organization...";
       const body = Object.fromEntries(new FormData(event.currentTarget).entries());
       body.action = "register";
+      body.registrationSource = "organization-onboarding";
       const selected = selectedServiceConfig(body);
       body.serviceCategory = selected.category;
       body.serviceTitle = selected.serviceTitle;

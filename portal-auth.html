@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Portal Login • Bytewave</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/images/bytewave-icon-192.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/images/bytewave-icon-192.png" />
+    <meta name="theme-color" content="#06101f" />
+    <link rel="stylesheet" href="director.css" />
+    <link rel="stylesheet" href="management.css" />
+    <link rel="stylesheet" href="onboarding.css" />
+    <link rel="stylesheet" href="auth.css" />
+  </head>
+  <body class="auth-page" data-page="portal-auth">
+    <main class="auth-shell">
+      <section class="auth-card" aria-label="Portal authentication">
+        <div class="auth-brand">
+          <img src="/images/bytewave-logo.jpg" alt="" />
+          <div>
+            <h1 id="portal-auth-title">Portal Login</h1>
+            <p id="portal-auth-subtitle">Sign in with your organization account.</p>
+          </div>
+        </div>
+
+        <div class="auth-tabs" role="tablist" aria-label="Portal access">
+          <button id="portal-login-tab" class="btn primary" type="button" data-auth-mode="login">Login</button>
+          <button id="portal-register-tab" class="btn" type="button" data-auth-mode="register">Activate invite</button>
+          <button id="portal-forgot-tab" class="btn" type="button" data-auth-mode="forgot">Forgot password</button>
+        </div>
+
+        <form id="portal-login-form" class="auth-form" autocomplete="on">
+          <label class="field"><span>Organization name</span><input name="organizationName" required autocomplete="organization" /></label>
+          <label class="field"><span>Organization email / ID</span><input name="identifier" required autocomplete="organization-title" /></label>
+          <label class="field"><span>Your email</span><input name="email" type="email" required autocomplete="username" /></label>
+          <label class="field"><span>Password</span><input name="password" type="password" required autocomplete="current-password" minlength="6" /></label>
+          <label class="remember-row"><input name="remember" type="checkbox" checked /> <span>Keep me signed in on this device</span></label>
+          <button id="portal-login-btn" class="btn primary" type="submit">Open Portal</button>
+        </form>
+
+        <form id="portal-register-form" class="auth-form" autocomplete="off" hidden>
+          <label class="field"><span>Invitation token</span><input name="token" required /></label>
+          <label class="field"><span>New password</span><input name="password" type="password" required minlength="8" autocomplete="new-password" /></label>
+          <button class="btn primary" type="submit">Activate Account</button>
+        </form>
+
+        <form id="portal-forgot-form" class="auth-form" autocomplete="off" hidden>
+          <label class="field"><span>Organization email / ID</span><input name="identifier" required /></label>
+          <label class="field"><span>Your email</span><input name="email" type="email" required /></label>
+          <button class="btn primary" type="submit">Request Reset</button>
+        </form>
+
+        <p id="portal-auth-result" class="form-error" role="alert" aria-live="polite"></p>
+        <div class="auth-footer"><a id="portal-auth-back" class="btn" href="organization-workspace.html">Back to workspace</a></div>
+      </section>
+    </main>
+    <script src="enterprise-core.js"></script>
+    <script src="enterprise-modules.js"></script>
+    <script src="pwa.js"></script>
+    <script src="portal-auth.js"></script>
+  </body>
+</html>

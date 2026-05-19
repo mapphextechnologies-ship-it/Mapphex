@@ -53,15 +53,14 @@
 
   const portalUrl = (portal, org) => {
     const tenant = window.EnterpriseCore?.currentTenantId?.() || "";
-    const href = String(portal?.href || "organization-workspace.html");
     try {
-      const url = new URL(href, location.origin);
+      const url = new URL("portal-auth.html", location.origin);
       url.searchParams.set("tenant", tenant);
       url.searchParams.set("portal", portal.id);
       if (org?.organizationId) url.searchParams.set("org", org.organizationId);
       return url.href;
     } catch {
-      return `${href}${href.includes("?") ? "&" : "?"}tenant=${encodeURIComponent(tenant)}&portal=${encodeURIComponent(portal.id)}`;
+      return `portal-auth.html?tenant=${encodeURIComponent(tenant)}&portal=${encodeURIComponent(portal.id)}`;
     }
   };
 

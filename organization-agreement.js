@@ -166,9 +166,11 @@
           if (!isLocalDevelopment()) throw apiErr;
           nextSettings = saveLocalAgreement(data);
         }
-        setResult("Agreement accepted. Opening portal manager...", "var(--ok)");
+        const hasInstalled = Array.isArray(nextSettings?.installedPortals) && nextSettings.installedPortals.length > 0;
+        setResult(hasInstalled ? "Agreement accepted. Opening workspace..." : "Agreement accepted. Opening portal manager...", "var(--ok)");
         setTimeout(() => {
-          location.href = `portal-selection.html?tenant=${encodeURIComponent(window.EnterpriseCore?.currentTenantId?.() || tenant)}`;
+          const nextPage = hasInstalled ? "organization-workspace.html" : "portal-selection.html";
+          location.href = `${nextPage}?tenant=${encodeURIComponent(window.EnterpriseCore?.currentTenantId?.() || tenant)}`;
         }, 450);
       } catch (err) {
         submit.disabled = false;

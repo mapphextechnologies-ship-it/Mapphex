@@ -67,6 +67,19 @@
   margin-top: 4px;
 }
 
+.auth-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 18px 0;
+}
+
+.auth-tabs .btn {
+  min-height: 44px;
+  padding-inline: 10px;
+  white-space: normal;
+}
+
 input::placeholder {
   color: rgba(255, 255, 255, 0.45);
 }

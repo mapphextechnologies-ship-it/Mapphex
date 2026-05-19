@@ -12,6 +12,9 @@ const ORGS_KEY = "platform_organizations_v1";
 const USERS_KEY = "enterprise_org_users_v1";
 const PROFILE_KEY = "enterprise_org_profile_v1";
 const SETTINGS_KEY = "enterprise_org_settings_v1";
+const INVITES_KEY = "enterprise_user_invites_v1";
+const AUTH_ACTIVITY_KEY = "enterprise_auth_activity_v1";
+const SESSION_DEVICES_KEY = "enterprise_session_devices_v1";
 const BASE_PORTALS = ["admin", "staff", "reporting"];
 const SERVICE_PORTALS = {
   company: ["admin", "departments", "staff", "reporting"],
@@ -109,6 +112,23 @@ const verifySecret = (value, encoded) => {
   return crypto.timingSafeEqual(Buffer.from(actual), Buffer.from(expected));
 };
 
+const randomToken = (prefix = "token") => `${prefix}-${crypto.randomBytes(18).toString("base64url")}`;
+
+const modulePermissionsFor = (portalIds = []) =>
+  Object.fromEntries(Array.from(new Set(portalIds)).map((id) => [id, [`${id}.read`, `${id}.manage`]]));
+
+const defaultRoleTemplates = (portalIds = []) => {
+  const portals = Array.from(new Set(portalIds));
+  return [
+    { id: "org_admin", name: "Organization Admin", permissions: ["*"], portals },
+    { id: "hr", name: "HR", permissions: ["hr.read", "hr.manage", "staff.read"], portals: portals.filter((id) => ["hr", "staff", "departments"].includes(id)) },
+    { id: "finance", name: "Finance", permissions: ["finance.read", "finance.manage", "reporting.read"], portals: portals.filter((id) => ["finance", "reporting", "analytics"].includes(id)) },
+    { id: "manager", name: "Manager", permissions: ["reports.read", "staff.read"], portals: portals.filter((id) => id !== "admin") },
+    { id: "staff", name: "Staff", permissions: ["staff.read"], portals: portals.filter((id) => id === "staff") },
+    { id: "agent", name: "Agent", permissions: ["agent.read", "sales.create"], portals: portals.filter((id) => ["agent", "sales", "customer"].includes(id)) },
+  ].map((role) => ({ ...role, modulePermissions: modulePermissionsFor(role.portals) }));
+};
+
 const loadOrganizations = async (store) => {
   const rows = (await store.get(ORGS_KEY)) || [];
   return Array.isArray(rows) ? rows : [];
@@ -119,6 +139,10 @@ const saveOrganizations = (store, rows) => store.set(ORGS_KEY, rows);
 const createOrganization = async (req, res, body) => {
   const store = getStore();
   const rows = await loadOrganizations(store);
+  const registrationSource = safeString(body.registrationSource || body.source || "", 80);
+  if (!["organization-onboarding", "authorized-agent", "super-admin"].includes(registrationSource)) {
+    return sendJson(res, 403, { ok: false, error: "Organization registration must use the authorized onboarding flow" });
+  }
   const name = safeString(body.name || body.organizationName, 140);
   const businessType = safeString(body.businessType || "retail", 80);
   const serviceCategory = safeString(body.serviceCategory || "", 80);
@@ -133,7 +157,8 @@ const createOrganization = async (req, res, body) => {
     : safeString(body.selectedComponents || "", 500).split(",").map((id) => safeString(id, 40)).filter(Boolean);
   const requestedPortalPricing = body.portalPricing && typeof body.portalPricing === "object" && !Array.isArray(body.portalPricing) ? body.portalPricing : {};
   const servicePortals = Array.from(new Set(Array.isArray(body.recommendedPortals) && body.recommendedPortals.length ? body.recommendedPortals.map((id) => safeString(id, 40)).filter(Boolean) : SERVICE_PORTALS[businessType] || BASE_PORTALS));
-  const billablePortals = selectedComponents.length ? selectedComponents : servicePortals;
+  const installedPortals = Array.from(new Set((selectedComponents.length ? selectedComponents : servicePortals).filter((id) => VALID_PORTAL_IDS.has(id))));
+  const billablePortals = installedPortals.length ? installedPortals : servicePortals;
   const portalPricing = Object.fromEntries(
     billablePortals.map((id) => [id, Math.max(0, Number(requestedPortalPricing[id] ?? pricing.priceFor(id)) || 0)]),
   );
@@ -156,6 +181,9 @@ const createOrganization = async (req, res, body) => {
   const tenantId = cleanTenantId(`${base}-${unique.toLowerCase()}`);
   const orgCode = `${base.toUpperCase().replace(/-/g, "").slice(0, 10)}-${unique}`;
   const now = new Date().toISOString();
+  const adminUsername = adminEmail;
+  const passwordSetupToken = randomToken("setup");
+  const adminPasswordHash = hashSecret(adminPassword);
   const org = {
     id: tenantId,
     organizationId: `ORG-${orgCode}`,
@@ -165,7 +193,8 @@ const createOrganization = async (req, res, body) => {
     serviceCategory,
     serviceTitle,
     servicePricing,
-    selectedComponents,
+    registrationSource,
+    selectedComponents: installedPortals,
     estimatedTotal,
     monthlyAmount,
     portalPricing,
@@ -173,40 +202,50 @@ const createOrganization = async (req, res, body) => {
     companySize,
     status: "active",
     subscriptionStatus: "trial",
-    admin: { name: adminName, email: adminEmail, role: "org_admin" },
+    admin: { name: adminName, email: adminEmail, username: adminUsername, role: "org_admin", passwordSetupRequired: false },
     metrics: { users: 1, branches: branchCount, inventoryItems: 0, orders: 0, revenue: 0 },
     createdAt: now,
     updatedAt: now,
-    adminPasswordHash: hashSecret(adminPassword),
+    adminPasswordHash,
   };
 
   const usersKey = scopeTenantKey(tenantId, USERS_KEY);
   const profileKey = scopeTenantKey(tenantId, PROFILE_KEY);
   const settingsKey = scopeTenantKey(tenantId, SETTINGS_KEY);
+  const invitesKey = scopeTenantKey(tenantId, INVITES_KEY);
   await store.set(usersKey, [
     {
       id: `user-${Date.now()}`,
       name: adminName,
       email: adminEmail,
+      username: adminUsername,
       role: "org_admin",
       permissions: ["*"],
+      portalAccess: installedPortals,
+      passwordHash: adminPasswordHash,
+      passwordSetupToken,
+      emailVerified: false,
       status: "active",
       createdAt: now,
     },
   ]);
+  await store.set(invitesKey, []);
   await store.set(profileKey, publicOrg(org));
   await store.set(settingsKey, {
-    modules: ["dashboard"],
-    installedPortals: [],
+    modules: Array.from(new Set(["dashboard", ...installedPortals])),
+    installedPortals,
     recommendedPortals: servicePortals,
     allowedPortals: servicePortals,
+    navigation: installedPortals,
+    defaultRoles: defaultRoleTemplates(installedPortals),
+    modulePermissions: modulePermissionsFor(installedPortals),
     agreementAccepted: false,
     onboardingComplete: false,
     businessType,
     serviceCategory,
     serviceTitle,
     servicePricing,
-    selectedComponents,
+    selectedComponents: installedPortals,
     estimatedTotal,
     monthlyAmount,
     portalPricing,
@@ -217,7 +256,14 @@ const createOrganization = async (req, res, body) => {
   await saveOrganizations(store, [org, ...rows]);
   await appendEvent(store, "platform", "organization.registered", { organizationId: org.organizationId, name, tenantId });
   await appendEvent(store, tenantId, "organization.workspace.created", { organizationId: org.organizationId, name });
-  return sendJson(res, 201, { ok: true, organization: publicOrg(org), tenantId, organizationId: org.organizationId });
+  return sendJson(res, 201, {
+    ok: true,
+    organization: publicOrg(org),
+    tenantId,
+    organizationId: org.organizationId,
+    adminAccount: { email: adminEmail, username: adminUsername, passwordSetupToken },
+    installedPortals,
+  });
 };
 
 module.exports = async (req, res) => {
@@ -361,3 +407,8 @@ module.exports.verifyOrganizationUser = async (identifier, email, password, orga
 };
 
 module.exports.hashOrganizationSecret = hashSecret;
+module.exports.verifyOrganizationSecret = verifySecret;
+module.exports.randomOrganizationToken = randomToken;
+module.exports.AUTH_ACTIVITY_KEY = AUTH_ACTIVITY_KEY;
+module.exports.SESSION_DEVICES_KEY = SESSION_DEVICES_KEY;
+module.exports.INVITES_KEY = INVITES_KEY;

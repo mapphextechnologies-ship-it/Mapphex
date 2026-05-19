@@ -1,4 +1,4 @@
-const CACHE_NAME = "enterprise-erp-v63";
+const CACHE_NAME = "enterprise-erp-v64";
 const APP_SHELL = [
   "./",
   "./manifest.webmanifest",
@@ -10,6 +10,7 @@ const APP_SHELL = [
   "./organization-login.html",
   "./organization-agreement.html",
   "./portal-selection.html",
+  "./portal-auth.html",
   "./organization-workspace.html",
   "./organization-module.html",
   "./organization-admin.html",
@@ -44,6 +45,7 @@ const APP_SHELL = [
   "./organization-login.js",
   "./organization-agreement.js",
   "./portal-selection.js",
+  "./portal-auth.js",
   "./organization-workspace.js",
   "./organization-module.js",
   "./organization-admin.js",

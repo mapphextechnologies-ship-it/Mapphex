@@ -3,7 +3,7 @@ const { getStore } = require("../api/_lib/kv-store");
 const { getTenantId, scopeTenantKey } = require("../api/_lib/tenant");
 const { appendEvent } = require("../api/_lib/events");
 const { assertIdempotent, assertObject, assertSameOrigin, rateLimit, requireOrgAdmin, requireTenantSession, safeString } = require("../api/_lib/security");
-const { hashOrganizationSecret } = require("./organizations");
+const { hashOrganizationSecret, randomOrganizationToken } = require("./organizations");
 
 const USERS_KEY = "enterprise_org_users_v1";
 const SETTINGS_KEY = "enterprise_org_settings_v1";
@@ -19,7 +19,7 @@ const sanitizeSettings = (settings = {}) => ({
 });
 
 const publicUser = (user = {}) => {
-  const { passwordHash, ...safe } = user;
+  const { activationToken, passwordHash, passwordResetToken, passwordSetupToken, ...safe } = user;
   return safe;
 };
 
@@ -50,13 +50,25 @@ module.exports = async (req, res) => {
 
     if (body.action === "add-user") {
       const password = safeString(body.password || body.tempPassword || "", 240);
+      const activationToken = randomOrganizationToken("invite");
+      const role = safeString(body.role || "staff", 80);
+      const roleTemplate = (settings.defaultRoles || []).find((item) => item.id === role) || null;
+      const permissions = Array.isArray(body.permissions) && body.permissions.length
+        ? body.permissions.map((p) => safeString(p, 80)).filter(Boolean)
+        : roleTemplate?.permissions || [];
+      const portalAccess = Array.isArray(body.portalAccess) && body.portalAccess.length
+        ? body.portalAccess.map((p) => safeString(p, 80)).filter(Boolean)
+        : roleTemplate?.portals || [];
       const user = {
         id: `user-${Date.now()}-${Math.random().toString(16).slice(2)}`,
         name: safeString(body.name, 120),
         email: safeString(body.email, 160).toLowerCase(),
-        role: safeString(body.role || "staff", 80),
-        permissions: Array.isArray(body.permissions) ? body.permissions.map((p) => safeString(p, 80)).filter(Boolean) : [],
+        role,
+        permissions,
+        portalAccess,
         passwordHash: password ? hashOrganizationSecret(password) : "",
+        activationToken,
+        emailVerified: false,
         status: "active",
         createdAt: new Date().toISOString(),
       };
@@ -65,7 +77,7 @@ module.exports = async (req, res) => {
       const next = [user, ...(Array.isArray(users) ? users : [])].slice(0, 2000);
       await store.set(usersKey, next);
       await appendEvent(store, tenantId, "org.user.created", { userId: user.id, role: user.role });
-      return sendJson(res, 200, { ok: true, user: publicUser(user), users: next.map(publicUser) });
+      return sendJson(res, 200, { ok: true, user: publicUser(user), activationToken, users: next.map(publicUser) });
     }
 
     if (body.action === "save-settings") {
