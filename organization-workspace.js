@@ -37,7 +37,7 @@
     const link = event.target.closest("a[href]");
     if (!link) return;
     if (!link.href.includes("organization-module.html") && !link.href.includes("organization-admin.html")) return;
-    const session = window.EnterpriseCore?.getSession?.();
+    const session = window.EnterpriseCore?.requireOrganizationSession?.();
     if (session?.tenantId) return;
     event.preventDefault();
     location.href = "organization-login.html";
@@ -125,7 +125,7 @@
     const fromQuery = new URLSearchParams(location.search).get("tenant");
     const tenant = fromQuery || window.EnterpriseCore?.currentTenantId?.();
     if (tenant) window.EnterpriseCore?.setTenant?.(tenant);
-    const session = window.EnterpriseCore?.getSession?.();
+    const session = window.EnterpriseCore?.requireOrganizationSession?.(tenant);
     if (!session?.tenantId) {
       location.href = "organization-login.html";
       return;

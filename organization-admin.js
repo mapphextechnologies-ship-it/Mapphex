@@ -70,7 +70,7 @@
   document.addEventListener("DOMContentLoaded", () => {
     const fromQuery = new URLSearchParams(location.search).get("tenant");
     setTenant(fromQuery || window.EnterpriseCore?.currentTenantId?.() || "default-company");
-    const session = window.EnterpriseCore?.getSession?.();
+    const session = window.EnterpriseCore?.requireOrganizationSession?.(fromQuery || tenantId);
     if (!session?.tenantId || session.role === "super_admin" || new URLSearchParams(location.search).get("support") === "1") {
       location.href = "organization-login.html";
       return;

@@ -58,7 +58,7 @@
 
   const resolveTenant = () => {
     const queryTenant = new URLSearchParams(location.search).get("tenant");
-    const session = window.EnterpriseCore?.getSession?.();
+    const session = window.EnterpriseCore?.requireOrganizationSession?.(queryTenant) || null;
     const tenant = session?.tenantId || queryTenant || window.EnterpriseCore?.currentTenantId?.();
     if (tenant) window.EnterpriseCore?.setTenant?.(tenant);
     return { tenant, session };

@@ -164,6 +164,23 @@
     return permissions.has("*") || permissions.has(permission);
   };
 
+  const requireOrganizationSession = (expectedTenant = "") => {
+    const session = getSession();
+    const tenant = cleanId(expectedTenant) || currentTenantId();
+    const role = String(session?.role || "").toLowerCase();
+    const sessionTenant = cleanId(session?.tenantId);
+    if (!sessionTenant || role === "super_admin") {
+      clearSession();
+      return null;
+    }
+    if (tenant && sessionTenant !== tenant) {
+      clearSession();
+      return null;
+    }
+    setRaw(localStorage, TENANT_KEY, sessionTenant);
+    return { ...session, tenantId: sessionTenant };
+  };
+
   const audit = (action, detail = {}) => {
     const session = getSession() || {};
     const entry = {
@@ -281,6 +298,7 @@
     getSession,
     setSession,
     clearSession,
+    requireOrganizationSession,
     hasPermission,
     audit,
     enqueue,

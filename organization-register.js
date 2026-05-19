@@ -559,49 +559,11 @@
           data = await createLocalOrganization(body);
         }
         window.EnterpriseCore?.setTenant?.(data.tenantId);
-        let sessionData = null;
-        try {
-          const sessionResponse = await postJson("/api/auth/session", {
-            action: "organization-login",
-            role: "org_admin",
-            organizationName: body.name,
-            identifier: data.organizationId || data.tenantId || body.email,
-            tenantId: data.tenantId,
-            email: body.adminEmail,
-            password: body.adminPassword,
-          });
-          if (sessionResponse.res.ok && sessionResponse.data?.ok) sessionData = sessionResponse.data;
-        } catch {
-          sessionData = null;
-        }
-        if (sessionData?.ok) {
-          window.EnterpriseCore?.setSession?.(
-            {
-              role: "org_admin",
-              email: body.adminEmail,
-              tenantId: data.tenantId,
-              token: sessionData.token,
-              organizationId: data.organizationId,
-              expiresAt: new Date(sessionData.session.exp).toISOString(),
-            },
-            true,
-          );
-        } else {
-          window.EnterpriseCore?.setSession?.(
-            {
-              role: "org_admin",
-              email: body.adminEmail,
-              tenantId: data.tenantId,
-              organizationId: data.organizationId,
-              localMode: data.localMode === true,
-            },
-            true,
-          );
-        }
+        window.EnterpriseCore?.clearSession?.();
         result.style.color = "var(--ok)";
-        result.textContent = `Created ${data.organization.name}. ID: ${data.organizationId}`;
+        result.textContent = `Created ${data.organization.name}. ID: ${data.organizationId}. Please login to continue.`;
         setTimeout(() => {
-          location.href = `organization-agreement.html?tenant=${encodeURIComponent(data.tenantId)}`;
+          location.href = `organization-login.html?tenant=${encodeURIComponent(data.tenantId)}`;
         }, 900);
       } catch (err) {
         result.style.color = "var(--danger)";

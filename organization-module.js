@@ -739,7 +739,7 @@
     const tenant = params.get("tenant") || window.EnterpriseCore?.currentTenantId?.();
     if (tenant) window.EnterpriseCore?.setTenant?.(tenant);
 
-    const session = window.EnterpriseCore?.getSession?.();
+    const session = window.EnterpriseCore?.requireOrganizationSession?.(tenant);
     if (!session?.tenantId) {
       location.href = "organization-login.html";
       return;
