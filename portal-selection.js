@@ -211,7 +211,7 @@
             <div class="portal-card-actions">
               ${
                 isInstalled
-                  ? `<a class="btn primary" href="${escapeHtml(portalUrl(portal))}">Open Portal</a><button class="btn" data-portal-install-app="${escapeHtml(portal.id)}" type="button">Install Portal App</button><button class="btn" data-portal-deactivate="${escapeHtml(portal.id)}" type="button">Deactivate</button>`
+                  ? `<a class="btn primary" href="${escapeHtml(portalUrl(portal))}">Open Portal</a><button class="btn" data-portal-deactivate="${escapeHtml(portal.id)}" type="button">Uninstall</button>`
                   : `<button class="btn" data-portal-toggle="${escapeHtml(portal.id)}" type="button">${isSelected ? "Remove from install" : "Add to install"}</button>`
               }
             </div>
@@ -226,6 +226,7 @@
     const count = selected.size;
     const installed = new Set(settings.installedPortals || []);
     const available = catalog.filter((portal) => !installed.has(portal.id));
+    const hasAvailable = available.length > 0;
     const names = [...selected]
       .map((id) => catalog.find((portal) => portal.id === id)?.title)
       .filter(Boolean)
@@ -244,15 +245,24 @@
           : "All portals for this registered service are already installed.";
     }
     if (installBtn) {
-      installBtn.disabled = count === 0;
-      installBtn.classList.toggle("is-disabled", count === 0);
-      installBtn.setAttribute("aria-disabled", String(count === 0));
-      installBtn.textContent = count === 0 ? "Select Portals First" : "Install Selected Portals";
+      const disabled = count === 0 || !hasAvailable;
+      installBtn.disabled = disabled;
+      installBtn.classList.toggle("is-disabled", disabled);
+      installBtn.setAttribute("aria-disabled", String(disabled));
+      installBtn.textContent = hasAvailable ? (count === 0 ? "Select Portals First" : "Install Selected Portals") : "All Portals Installed";
     }
     if (clearBtn) {
       clearBtn.disabled = count === 0;
       clearBtn.setAttribute("aria-disabled", String(count === 0));
     }
+    const coreBtn = $("#portal-select-core");
+    const allBtn = $("#portal-select-all");
+    [coreBtn, allBtn].forEach((btn) => {
+      if (!btn) return;
+      btn.disabled = !hasAvailable;
+      btn.classList.toggle("is-disabled", !hasAvailable);
+      btn.setAttribute("aria-disabled", String(!hasAvailable));
+    });
   };
 
   const toggleSelection = (portalId, force) => {
@@ -266,23 +276,38 @@
 
   const selectCoreSet = () => {
     const installed = new Set(settings.installedPortals || []);
+    let changed = false;
     ["admin", "branch", "departments", "staff", "inventory", "finance", "reporting", "analytics"].forEach((id) => {
-      if (!installed.has(id) && catalog.some((portal) => portal.id === id)) selected.add(id);
+      if (!installed.has(id) && catalog.some((portal) => portal.id === id)) {
+        selected.add(id);
+        changed = true;
+      }
     });
+    if (!changed) {
+      const progress = $("#portal-progress");
+      if (progress) progress.textContent = "All matching core portals are already installed.";
+    }
     render();
   };
 
   const selectAllAvailable = () => {
     const installed = new Set(settings.installedPortals || []);
+    let changed = false;
     catalog.forEach((portal) => {
-      if (!installed.has(portal.id)) selected.add(portal.id);
+      if (!installed.has(portal.id)) {
+        selected.add(portal.id);
+        changed = true;
+      }
     });
+    if (!changed) {
+      const progress = $("#portal-progress");
+      if (progress) progress.textContent = "All matching portals are already installed.";
+    }
     render();
   };
 
   const promptWorkspacePwa = async () => {
-    if (!window.MapphexPWA?.promptInstall) return { ok: false, reason: "pwa-unavailable" };
-    return window.MapphexPWA.promptInstall();
+    return { ok: false, reason: "pwa-disabled-on-portal-manager" };
   };
 
   const promptPortalApp = async (portalId) => {
@@ -480,9 +505,9 @@
     });
     $("#portal-install-selected")?.addEventListener("click", (event) => {
       const btn = event.currentTarget;
-      if (!selected.size) {
+      if (btn.disabled || btn.getAttribute("aria-disabled") === "true" || !selected.size) {
         const progress = $("#portal-progress");
-        if (progress) progress.textContent = "Select at least one portal before installing.";
+        if (progress) progress.textContent = catalog.every((portal) => (settings.installedPortals || []).includes(portal.id)) ? "All matching portals are already installed." : "Select at least one portal before installing.";
         renderBulkBar();
         return;
       }
