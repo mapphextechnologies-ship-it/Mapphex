@@ -25,9 +25,8 @@
   };
 
   const setMode = (mode) => {
-    const safeMode = ["login", "register", "forgot"].includes(mode) ? mode : "login";
+    const safeMode = ["login", "forgot"].includes(mode) ? mode : "login";
     $("#portal-login-form").hidden = safeMode !== "login";
-    $("#portal-register-form").hidden = safeMode !== "register";
     $("#portal-forgot-form").hidden = safeMode !== "forgot";
     document.querySelectorAll("[data-auth-mode]").forEach((button) => {
       const active = button.dataset.authMode === safeMode;
@@ -59,7 +58,7 @@
     const title = portal?.title || "Bytewave Portal";
     document.title = `${title} Login • Bytewave`;
     $("#portal-auth-title").textContent = `${title} Login`;
-    $("#portal-auth-subtitle").textContent = "Use your organization account. New users must be invited by an admin or HR.";
+    $("#portal-auth-subtitle").textContent = "Use the account created by your organization admin.";
     $("#portal-login-btn").textContent = `Open ${title}`;
     $("#portal-auth-back").href = `organization-workspace.html${tenant ? `?tenant=${encodeURIComponent(tenant)}` : ""}`;
     setMode(modeParam);
@@ -108,27 +107,6 @@
         location.replace(portalTarget());
       } catch (err) {
         window.EnterpriseCore?.clearSession?.();
-        result.style.color = "var(--danger)";
-        result.textContent = err.message;
-      }
-    });
-
-    $("#portal-register-form")?.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const result = $("#portal-auth-result");
-      result.style.color = "var(--muted)";
-      result.textContent = "Activating account...";
-      const body = Object.fromEntries(new FormData(event.currentTarget).entries());
-      try {
-        await fetchJson("/api/auth/session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "activate-invite", token: body.token, password: body.password }),
-        });
-        result.style.color = "var(--ok)";
-        result.textContent = "Account activated. Login with your new password.";
-        setMode("login");
-      } catch (err) {
         result.style.color = "var(--danger)";
         result.textContent = err.message;
       }
