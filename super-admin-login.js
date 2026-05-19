@@ -3,10 +3,12 @@
 
   const form = () => document.querySelector("#super-admin-login-form");
   const errorEl = () => document.querySelector("#super-admin-login-error");
+  const isLocal = () => ["localhost", "127.0.0.1", ""].includes(location.hostname);
+  const dashboardUrl = () => (isLocal() ? "/_internal/mapphex-control/dashboard" : "/super-admin.html");
 
   document.addEventListener("DOMContentLoaded", async () => {
     if (window.SuperAdminSession?.readSession?.()) {
-      location.replace("/_internal/mapphex-control/dashboard");
+      location.replace(dashboardUrl());
       return;
     }
 
@@ -27,7 +29,7 @@
         const body = await res.json().catch(() => null);
         if (!res.ok || !body?.ok) throw new Error(body?.error || "Login failed");
         window.SuperAdminSession.writeSession({ token: body.token, session: body.session });
-        location.replace("/_internal/mapphex-control/dashboard");
+        location.replace(dashboardUrl());
       } catch (error) {
         if (err) err.textContent = error.message || "Login failed";
       }

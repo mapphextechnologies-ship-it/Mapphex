@@ -7,6 +7,7 @@
 
   let state = { organizations: [], events: [], totals: {}, activity: [], health: {} };
   let monitoring = { organizations: [], totals: {}, activity: [], health: {} };
+  const loginUrl = () => (["localhost", "127.0.0.1", ""].includes(location.hostname) ? "/_internal/mapphex-control" : "/super-admin-login.html");
 
   const notify = (title, body) => {
     const message = body ? `${title}: ${body}` : title;
@@ -15,7 +16,7 @@
 
   const fetchJson = async (url, opts = {}) => {
     if (!window.SuperAdminSession?.readSession?.()) {
-      location.replace("/_internal/mapphex-control");
+      location.replace(loginUrl());
       throw new Error("Super Admin session required");
     }
     return window.SuperAdminSession.apiFetch(url, opts);
@@ -200,13 +201,13 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     if (!window.SuperAdminSession?.readSession?.()) {
-      location.replace("/_internal/mapphex-control");
+      location.replace(loginUrl());
       return;
     }
     $("#super-admin-logout")?.addEventListener("click", async () => {
       await fetchJson("/api/super-admin/session", { method: "DELETE" }).catch(() => null);
       window.SuperAdminSession.clearSession();
-      location.replace("/_internal/mapphex-control");
+      location.replace(loginUrl());
     });
     $("#super-refresh")?.addEventListener("click", () => load().catch((err) => notify("Super Admin", err.message)));
     $("#super-search")?.addEventListener("input", renderOrgs);
