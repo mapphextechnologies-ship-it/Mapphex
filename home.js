@@ -451,10 +451,10 @@
       link.addEventListener("click", (event) => {
         const id = link.getAttribute("href");
         const target = id?.startsWith("#") ? document.querySelector(id) : null;
+        setNavOpen(false);
         if (!target) return;
         event.preventDefault();
         setActiveLink(id);
-        setNavOpen(false);
         target.classList.add("section-focus");
         target.scrollIntoView({ behavior: prefersReducedMotion || compactViewport ? "auto" : "smooth", block: "start" });
         history.replaceState(null, "", id);
