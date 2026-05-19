@@ -58,7 +58,7 @@
     const title = portal?.title || "Bytewave Portal";
     document.title = `${title} Login • Bytewave`;
     $("#portal-auth-title").textContent = `${title} Login`;
-    $("#portal-auth-subtitle").textContent = "Use the account created by your organization admin.";
+    $("#portal-auth-subtitle").textContent = "Use your organization account. New users must be invited by an admin or HR.";
     $("#portal-login-btn").textContent = `Open ${title}`;
     $("#portal-auth-back").href = `organization-workspace.html${tenant ? `?tenant=${encodeURIComponent(tenant)}` : ""}`;
     setMode(modeParam);
