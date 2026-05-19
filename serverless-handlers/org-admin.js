@@ -9,6 +9,7 @@ const USERS_KEY = "enterprise_org_users_v1";
 const SETTINGS_KEY = "enterprise_org_settings_v1";
 
 const { PORTAL_CATALOG, VALID_PORTAL_IDS } = require("../api/_lib/portal-catalog");
+const { mergeUniqueStrings, normalizeEmail, normalizeText, uniqueBy } = require("../api/_lib/data-hygiene");
 const pricing = require("../bytewave-pricing");
 const sanitizeSettings = (settings = {}) => ({
   ...settings,
@@ -37,7 +38,7 @@ module.exports = async (req, res) => {
     if (req.method === "GET") {
       const role = String(session.role || "").toLowerCase();
       const canManageUsers = ["org_admin", "admin"].includes(role);
-      const users = canManageUsers ? (await store.get(usersKey)) || [] : [];
+      const users = canManageUsers ? uniqueBy((await store.get(usersKey)) || [], (user) => normalizeEmail(user.email || user.username)) : [];
       const settings = sanitizeSettings((await store.get(settingsKey)) || {});
       return sendJson(res, 200, { ok: true, tenantId, users: Array.isArray(users) ? users.map(publicUser) : [], settings, portalCatalog: PORTAL_CATALOG });
     }
@@ -45,7 +46,7 @@ module.exports = async (req, res) => {
     if (req.method !== "POST") return sendJson(res, 405, { ok: false, error: "Method not allowed" });
     requireOrgAdmin(req, tenantId);
     assertIdempotent(req, body);
-    const users = (await store.get(usersKey)) || [];
+    const users = uniqueBy((await store.get(usersKey)) || [], (user) => normalizeEmail(user.email || user.username));
     const settings = sanitizeSettings((await store.get(settingsKey)) || {});
 
     if (body.action === "add-user") {
@@ -74,6 +75,9 @@ module.exports = async (req, res) => {
       };
       if (!user.name || !user.email) return sendJson(res, 400, { ok: false, error: "Name and email are required" });
       if (password.length < 6) return sendJson(res, 400, { ok: false, error: "A 6+ character user password is required" });
+      if (users.some((row) => normalizeEmail(row.email || row.username) === normalizeEmail(user.email))) {
+        return sendJson(res, 409, { ok: false, error: "User email already exists in this organization" });
+      }
       const next = [user, ...(Array.isArray(users) ? users : [])].slice(0, 2000);
       await store.set(usersKey, next);
       await appendEvent(store, tenantId, "org.user.created", { userId: user.id, role: user.role });
@@ -84,9 +88,9 @@ module.exports = async (req, res) => {
       const next = {
         ...settings,
         businessType: safeString(body.businessType || settings.businessType || "retail", 80),
-        modules: Array.isArray(body.modules) ? body.modules.map((m) => safeString(m, 80)).filter(Boolean) : settings.modules || [],
-        branches: Array.isArray(body.branches) ? body.branches.map((b) => safeString(b, 120)).filter(Boolean) : settings.branches || [],
-        departments: Array.isArray(body.departments) ? body.departments.map((d) => safeString(d, 120)).filter(Boolean) : settings.departments || [],
+        modules: Array.isArray(body.modules) ? mergeUniqueStrings(body.modules) : mergeUniqueStrings(settings.modules || []),
+        branches: uniqueBy(Array.isArray(body.branches) ? body.branches.map((b) => normalizeText(b, 120)).filter(Boolean) : settings.branches || [], (value) => value),
+        departments: uniqueBy(Array.isArray(body.departments) ? body.departments.map((d) => normalizeText(d, 120)).filter(Boolean) : settings.departments || [], (value) => value),
         updatedAt: new Date().toISOString(),
       };
       await store.set(settingsKey, next);
@@ -115,13 +119,13 @@ module.exports = async (req, res) => {
       const portals = portalIds.map((portalId) => PORTAL_CATALOG.find((item) => item.id === portalId)).filter(Boolean);
       if (!portals.length || portals.length !== portalIds.length) return sendJson(res, 404, { ok: false, error: "One or more portals were not found" });
       if (settings.agreementAccepted !== true) return sendJson(res, 403, { ok: false, error: "Accept licensing terms before installing portals" });
-      const installedPortals = Array.from(new Set([...(settings.installedPortals || []), ...portalIds]));
-      const modules = Array.from(new Set([...(settings.modules || []), ...portalIds]));
+      const installedPortals = mergeUniqueStrings(settings.installedPortals || [], portalIds).filter((id) => VALID_PORTAL_IDS.has(id));
+      const modules = mergeUniqueStrings(settings.modules || [], portalIds);
       const modulePermissions = { ...(settings.modulePermissions || {}) };
       portalIds.forEach((portalId) => {
         modulePermissions[portalId] = Array.from(new Set([`${portalId}.read`, `${portalId}.manage`]));
       });
-      const navigation = Array.from(new Set([...(settings.navigation || []), ...portalIds]));
+      const navigation = mergeUniqueStrings(settings.navigation || [], portalIds).filter((id) => VALID_PORTAL_IDS.has(id));
       const portalPricing = {
         ...(settings.portalPricing || {}),
         ...Object.fromEntries(portalIds.map((id) => [id, Math.max(0, Number(body.portalPricing?.[id] ?? pricing.priceFor(id)) || 0)])),

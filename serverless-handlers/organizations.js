@@ -6,6 +6,7 @@ const { appendEvent, listEvents } = require("../api/_lib/events");
 const { assertIdempotent, assertObject, assertSameOrigin, rateLimit, requireTenantSession, safeString } = require("../api/_lib/security");
 const { requireSuperAdmin } = require("../api/_lib/super-admin-auth");
 const { VALID_PORTAL_IDS } = require("../api/_lib/portal-catalog");
+const { mergeUniqueStrings, normalizeEmail, normalizeText } = require("../api/_lib/data-hygiene");
 const pricing = require("../bytewave-pricing");
 
 const ORGS_KEY = "platform_organizations_v1";
@@ -156,8 +157,8 @@ const createOrganization = async (req, res, body) => {
     ? body.selectedComponents.map((id) => safeString(id, 40)).filter(Boolean)
     : safeString(body.selectedComponents || "", 500).split(",").map((id) => safeString(id, 40)).filter(Boolean);
   const requestedPortalPricing = body.portalPricing && typeof body.portalPricing === "object" && !Array.isArray(body.portalPricing) ? body.portalPricing : {};
-  const servicePortals = Array.from(new Set(Array.isArray(body.recommendedPortals) && body.recommendedPortals.length ? body.recommendedPortals.map((id) => safeString(id, 40)).filter(Boolean) : SERVICE_PORTALS[businessType] || BASE_PORTALS));
-  const installedPortals = Array.from(new Set((selectedComponents.length ? selectedComponents : servicePortals).filter((id) => VALID_PORTAL_IDS.has(id))));
+  const servicePortals = mergeUniqueStrings(Array.isArray(body.recommendedPortals) && body.recommendedPortals.length ? body.recommendedPortals : SERVICE_PORTALS[businessType] || BASE_PORTALS).filter((id) => VALID_PORTAL_IDS.has(id));
+  const installedPortals = mergeUniqueStrings(selectedComponents.length ? selectedComponents : servicePortals).filter((id) => VALID_PORTAL_IDS.has(id));
   const billablePortals = installedPortals.length ? installedPortals : servicePortals;
   const portalPricing = Object.fromEntries(
     billablePortals.map((id) => [id, Math.max(0, Number(requestedPortalPricing[id] ?? pricing.priceFor(id)) || 0)]),
@@ -175,6 +176,12 @@ const createOrganization = async (req, res, body) => {
   if (!name || !adminEmail || adminPassword.length < 6) {
     return sendJson(res, 400, { ok: false, error: "Organization name, admin email, and 6+ character password are required" });
   }
+  const duplicate = rows.find((row) => {
+    const existingName = normalizeText(row.name, 140).toLowerCase();
+    const existingAdmin = normalizeEmail(row.admin?.email || row.contact?.email);
+    return existingName === normalizeText(name, 140).toLowerCase() || existingAdmin === normalizeEmail(adminEmail) || existingAdmin === normalizeEmail(orgEmail);
+  });
+  if (duplicate) return sendJson(res, 409, { ok: false, error: "Organization or admin email already exists" });
 
   const base = slug(name);
   const unique = crypto.randomBytes(3).toString("hex").toUpperCase();

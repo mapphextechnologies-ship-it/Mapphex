@@ -11,6 +11,7 @@ const {
   requireTenantSession,
   safeString,
 } = require("../api/_lib/security");
+const { recordFingerprint, uniqueBy } = require("../api/_lib/data-hygiene");
 
 const nowIso = () => new Date().toISOString();
 const makeId = (prefix) => `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -36,16 +37,16 @@ const readState = async (store, tenantId) => {
     enabledModules,
     users: asArray(value("users", [])),
     moduleRecords: asObject(value("moduleRecords", {})),
-    moduleActivity: asArray(value("moduleActivity", [])),
+    moduleActivity: uniqueBy(asArray(value("moduleActivity", [])), (row) => row.id || recordFingerprint([row.at, row.moduleId, row.action])),
     departmentWorkflows: asObject(value("departmentWorkflows", {})),
-    notifications: asArray(value("notifications", [])),
-    audit: asArray(value("audit", [])),
-    transactions: asArray(value("transactions", [])),
+    notifications: uniqueBy(asArray(value("notifications", [])), (row) => row.id || recordFingerprint([row.moduleId, row.title, row.body, row.at])),
+    audit: uniqueBy(asArray(value("audit", [])), (row) => row.id || recordFingerprint([row.at, row.actor, row.action])),
+    transactions: uniqueBy(asArray(value("transactions", [])), (row) => row.ref || row.id),
     reports: asObject(value("reports", {})),
-    messages: asArray(value("messages", [])),
-    documents: asArray(value("documents", [])),
-    inventoryMovements: asArray(value("inventoryMovements", [])),
-    financeLedger: asArray(value("financeLedger", [])),
+    messages: uniqueBy(asArray(value("messages", [])), (row) => row.id || recordFingerprint([row.createdAt, row.from, row.to, row.body])),
+    documents: uniqueBy(asArray(value("documents", [])), (row) => row.id || row.title),
+    inventoryMovements: uniqueBy(asArray(value("inventoryMovements", [])), (row) => row.id || recordFingerprint([row.transactionId, row.itemId, row.quantity])),
+    financeLedger: uniqueBy(asArray(value("financeLedger", [])), (row) => row.transactionId || row.id),
   };
 };
 
@@ -219,6 +220,11 @@ const postTransaction = async (store, tenantId, body, actor) => {
   const quantity = Math.max(0, Number(body.quantity || 1) || 0);
   const itemId = safeString(body.itemId || body.serial || body.sku || "", 160);
   const ref = safeString(body.ref || body.reference || makeId("ref"), 160);
+  if (ref && asArray(state.transactions).some((row) => safeString(row.ref, 160).toLowerCase() === ref.toLowerCase())) {
+    const err = new Error("Duplicate transaction reference");
+    err.statusCode = 409;
+    throw err;
+  }
   const createdAt = nowIso();
   const transaction = {
     id: makeId("txn"),

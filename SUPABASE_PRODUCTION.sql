@@ -436,6 +436,14 @@ create table if not exists public.mapphex_customers (
   updated_at timestamptz not null default now()
 );
 
+create unique index if not exists mapphex_customers_tenant_email_unique
+  on public.mapphex_customers (tenant_id, lower(email))
+  where email is not null and length(trim(email)) > 0;
+
+create unique index if not exists mapphex_customers_tenant_phone_unique
+  on public.mapphex_customers (tenant_id, phone)
+  where phone is not null and length(trim(phone)) > 0;
+
 create table if not exists public.mapphex_inventory_movements (
   id uuid primary key default gen_random_uuid(),
   tenant_id text not null references public.mapphex_organizations(id) on delete cascade,
@@ -449,6 +457,13 @@ create table if not exists public.mapphex_inventory_movements (
   payload jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now()
 );
+
+create unique index if not exists mapphex_transactions_tenant_reference_unique
+  on public.mapphex_transactions (tenant_id, reference)
+  where reference is not null and length(trim(reference)) > 0;
+
+create unique index if not exists mapphex_industry_records_tenant_module_title_unique
+  on public.mapphex_industry_records (tenant_id, module_id, lower(title), record_type);
 
 create table if not exists public.mapphex_purchase_orders (
   id uuid primary key default gen_random_uuid(),

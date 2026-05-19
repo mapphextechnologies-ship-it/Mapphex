@@ -24,6 +24,9 @@
   const rawLocalGet = Storage.prototype.getItem;
   const rawLocalSet = Storage.prototype.setItem;
   const rawLocalRemove = Storage.prototype.removeItem;
+  const memoryAudit = [];
+  const memoryQueue = [];
+  const memoryNotifications = [];
 
   const getRaw = (storage, key) => {
     try {
@@ -154,7 +157,7 @@
       expiresAt: session?.expiresAt || new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
     };
     writeJson(sessionStorage, SESSION_META_KEY, payload);
-    if (persistent) writeJson(localStorage, SESSION_META_KEY, payload);
+    rawLocalRemove.call(localStorage, scopeKey(SESSION_META_KEY));
     return payload;
   };
 
@@ -191,9 +194,8 @@
       action: String(action || "event"),
       detail,
     };
-    const rows = readJson(localStorage, AUDIT_KEY, []);
-    rows.push(entry);
-    writeJson(localStorage, AUDIT_KEY, rows.slice(-1000));
+    memoryAudit.push(entry);
+    while (memoryAudit.length > 1000) memoryAudit.shift();
     window.dispatchEvent(new CustomEvent("enterprise:audit", { detail: entry }));
     return entry;
   };
@@ -207,9 +209,8 @@
       tenantId: currentTenantId(),
       createdAt: new Date().toISOString(),
     };
-    const queue = readJson(localStorage, QUEUE_KEY, []);
-    queue.push(task);
-    writeJson(localStorage, QUEUE_KEY, queue.slice(-500));
+    memoryQueue.push(task);
+    while (memoryQueue.length > 500) memoryQueue.shift();
     return task;
   };
 
@@ -223,9 +224,8 @@
       read: false,
       createdAt: new Date().toISOString(),
     };
-    const list = readJson(localStorage, NOTIFY_KEY, []);
-    list.push(item);
-    writeJson(localStorage, NOTIFY_KEY, list.slice(-300));
+    memoryNotifications.push(item);
+    while (memoryNotifications.length > 300) memoryNotifications.shift();
     window.dispatchEvent(new CustomEvent("enterprise:notify", { detail: item }));
     return item;
   };
@@ -303,6 +303,8 @@
     audit,
     enqueue,
     notify,
+    recentAudit: () => memoryAudit.slice(),
+    recentNotifications: () => memoryNotifications.slice(),
     rolePermissions,
     roleHierarchy,
   });

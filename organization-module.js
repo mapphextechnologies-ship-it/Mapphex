@@ -364,7 +364,7 @@
   const renderForm = (workflow) => {
     $("#module-record-form").innerHTML =
       workflow.labels
-        .map((label, idx) => `<label class="field"><span>${escapeHtml(label)}</span><input name="field${idx}" required value="${escapeHtml(workflow.sample?.[idx] || "")}" /></label>`)
+        .map((label, idx) => `<label class="field"><span>${escapeHtml(label)}</span><input name="field${idx}" required /></label>`)
         .join("") + `<button class="btn primary" type="submit">Add Record</button>`;
   };
 
@@ -918,6 +918,11 @@
         if (values.some((value) => !value)) return;
         const data = moduleData();
         const rows = Array.isArray(data[moduleId]) ? data[moduleId] : [];
+        const fingerprint = values.map((value) => value.toLowerCase().replace(/\s+/g, " ")).join("|");
+        if (rows.some((row) => (row.values || []).map((value) => String(value || "").toLowerCase().replace(/\s+/g, " ")).join("|") === fingerprint)) {
+          window.EnterpriseCore?.notify?.("Duplicate record", "This module record already exists.", "error");
+          return;
+        }
         const row = { id: `${moduleId}-${Date.now()}`, values, updatedAt: nowIso(), tenantId: session.tenantId };
         rows.unshift(row);
         data[moduleId] = rows.slice(0, 500);
