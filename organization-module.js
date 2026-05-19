@@ -28,10 +28,12 @@
     }
   };
 
+  const isLocalDevelopment = () => ["localhost", "127.0.0.1", ""].includes(location.hostname);
+
   const writeJson = (key, value) => localStorage.setItem(key, JSON.stringify(value ?? null));
-  const storeGet = (key, fallback) => store()?.getJson?.(key, null) ?? readJson(key, fallback);
+  const storeGet = (key, fallback) => store()?.getJson?.(key, null) ?? (isLocalDevelopment() ? readJson(key, fallback) : fallback);
   const storeSet = (key, value) => {
-    writeJson(key, value);
+    if (isLocalDevelopment()) writeJson(key, value);
     store()?.setJson?.(key, value);
   };
 
@@ -809,7 +811,8 @@
       let mine;
       try {
         [admin, mine] = await Promise.all([fetchJson("/api/org-admin"), fetchJson("/api/organizations?scope=mine").catch(() => null)]);
-      } catch {
+      } catch (apiErr) {
+        if (!isLocalDevelopment()) throw apiErr;
         admin = { ok: true, users: readJson(USERS_KEY, []), settings: readJson(SETTINGS_KEY, {}), portalCatalog: PORTAL_CATALOG };
         mine = { ok: true, organization: localOrg(session.tenantId) };
       }

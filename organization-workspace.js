@@ -120,6 +120,8 @@
     target.innerHTML = installedCards;
   };
 
+  const isLocalDevelopment = () => ["localhost", "127.0.0.1", ""].includes(location.hostname);
+
   document.addEventListener("DOMContentLoaded", async () => {
     document.addEventListener("click", guardPortalLink);
     const fromQuery = new URLSearchParams(location.search).get("tenant");
@@ -139,7 +141,8 @@
         if (!responses[0].res.ok || !responses[0].data?.ok) throw new Error(responses[0].data?.error || "Unable to load Portal Hub");
         admin = responses[0].data;
         mine = responses[1].res.ok && responses[1].data?.ok ? responses[1].data : { ok: true, organization: localOrg(session.tenantId) };
-      } catch {
+      } catch (apiErr) {
+        if (!isLocalDevelopment()) throw apiErr;
         admin = {
           ok: true,
           settings: readJson(SETTINGS_KEY, {}),

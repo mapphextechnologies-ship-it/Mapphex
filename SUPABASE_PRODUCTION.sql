@@ -189,7 +189,7 @@ create table if not exists public.mapphex_workflow_requests (
   request_type text not null,
   title text not null,
   amount numeric(14,2) default 0,
-  status text not null default 'pending' check (status in ('pending', 'approved', 'rejected', 'returned', 'cancelled')),
+  status text not null default 'pending',
   reason text,
   payload jsonb not null default '{}'::jsonb,
   created_by text,
@@ -197,6 +197,13 @@ create table if not exists public.mapphex_workflow_requests (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.mapphex_workflow_requests
+  drop constraint if exists mapphex_workflow_requests_status_check;
+
+alter table public.mapphex_workflow_requests
+  add constraint mapphex_workflow_requests_status_check
+  check (status in ('pending', 'approved', 'rejected', 'returned', 'paid', 'cancelled'));
 
 create table if not exists public.mapphex_messages (
   id uuid primary key default gen_random_uuid(),
@@ -301,6 +308,231 @@ create table if not exists public.mapphex_technology_projects (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.mapphex_employees (
+  id uuid primary key default gen_random_uuid(),
+  tenant_id text not null references public.mapphex_organizations(id) on delete cascade,
+  branch_id uuid references public.mapphex_branches(id) on delete set null,
+  employee_code text,
+  full_name text not null,
+  email text,
+  phone text,
+  department text,
+  job_title text,
+  employment_status text not null default 'active',
+  salary numeric(14,2) not null default 0,
+  tax_pin text,
+  hire_date date,
+  payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (tenant_id, employee_code),
+  unique (tenant_id, email)
+);
+
+create table if not exists public.mapphex_attendance (
+  id uuid primary key default gen_random_uuid(),
+  tenant_id text not null references public.mapphex_organizations(id) on delete cascade,
+  employee_id uuid references public.mapphex_employees(id) on delete cascade,
+  work_date date not null default current_date,
+  status text not null default 'present',
+  check_in timestamptz,
+  check_out timestamptz,
+  payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  unique (tenant_id, employee_id, work_date)
+);
+
+create table if not exists public.mapphex_leave_requests (
+  id uuid primary key default gen_random_uuid(),
+  tenant_id text not null references public.mapphex_organizations(id) on delete cascade,
+  employee_id uuid references public.mapphex_employees(id) on delete cascade,
+  leave_type text not null,
+  start_date date not null,
+  end_date date not null,
+  status text not null default 'pending',
+  reason text,
+  decided_by text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.mapphex_payroll_runs (
+  id uuid primary key default gen_random_uuid(),
+  tenant_id text not null references public.mapphex_organizations(id) on delete cascade,
+  period_month date not null,
+  source_module text not null default 'hr',
+  target_module text not null default 'finance',
+  status text not null default 'draft',
+  gross_amount numeric(14,2) not null default 0,
+  tax_amount numeric(14,2) not null default 0,
+  deduction_amount numeric(14,2) not null default 0,
+  bonus_amount numeric(14,2) not null default 0,
+  net_amount numeric(14,2) not null default 0,
+  approval_request_id uuid references public.mapphex_workflow_requests(id) on delete set null,
+  prepared_by text,
+  approved_by text,
+  paid_by text,
+  rejection_reason text,
+  paid_at timestamptz,
+  payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (tenant_id, period_month)
+);
+
+create table if not exists public.mapphex_payroll_items (
+  id uuid primary key default gen_random_uuid(),
+  tenant_id text not null references public.mapphex_organizations(id) on delete cascade,
+  payroll_run_id uuid not null references public.mapphex_payroll_runs(id) on delete cascade,
+  employee_id uuid references public.mapphex_employees(id) on delete set null,
+  employee_name text not null,
+  department text,
+  base_salary numeric(14,2) not null default 0,
+  tax_amount numeric(14,2) not null default 0,
+  bonus_amount numeric(14,2) not null default 0,
+  deduction_amount numeric(14,2) not null default 0,
+  net_pay numeric(14,2) not null default 0,
+  payment_status text not null default 'pending',
+  payslip_payload jsonb not null default '{}'::jsonb,
+  paid_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.mapphex_approval_decisions (
+  id uuid primary key default gen_random_uuid(),
+  tenant_id text not null references public.mapphex_organizations(id) on delete cascade,
+  workflow_request_id uuid references public.mapphex_workflow_requests(id) on delete cascade,
+  decision text not null,
+  comment text,
+  decided_by text,
+  payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.mapphex_suppliers (
+  id uuid primary key default gen_random_uuid(),
+  tenant_id text not null references public.mapphex_organizations(id) on delete cascade,
+  name text not null,
+  email text,
+  phone text,
+  address text,
+  status text not null default 'active',
+  payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (tenant_id, name)
+);
+
+create table if not exists public.mapphex_customers (
+  id uuid primary key default gen_random_uuid(),
+  tenant_id text not null references public.mapphex_organizations(id) on delete cascade,
+  name text not null,
+  email text,
+  phone text,
+  customer_type text not null default 'customer',
+  status text not null default 'active',
+  payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.mapphex_inventory_movements (
+  id uuid primary key default gen_random_uuid(),
+  tenant_id text not null references public.mapphex_organizations(id) on delete cascade,
+  item_id uuid references public.mapphex_catalog_items(id) on delete set null,
+  branch_id uuid references public.mapphex_branches(id) on delete set null,
+  movement_type text not null,
+  quantity numeric(14,3) not null default 0,
+  unit_cost numeric(14,2) not null default 0,
+  reference text,
+  source_module text,
+  payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.mapphex_purchase_orders (
+  id uuid primary key default gen_random_uuid(),
+  tenant_id text not null references public.mapphex_organizations(id) on delete cascade,
+  supplier_id uuid references public.mapphex_suppliers(id) on delete set null,
+  request_id uuid references public.mapphex_workflow_requests(id) on delete set null,
+  po_number text not null,
+  status text not null default 'draft',
+  total_amount numeric(14,2) not null default 0,
+  expected_delivery date,
+  payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (tenant_id, po_number)
+);
+
+create table if not exists public.mapphex_invoices (
+  id uuid primary key default gen_random_uuid(),
+  tenant_id text not null references public.mapphex_organizations(id) on delete cascade,
+  customer_id uuid references public.mapphex_customers(id) on delete set null,
+  invoice_number text not null,
+  module_id text not null default 'finance',
+  status text not null default 'draft',
+  subtotal numeric(14,2) not null default 0,
+  tax_amount numeric(14,2) not null default 0,
+  total_amount numeric(14,2) not null default 0,
+  due_date date,
+  payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (tenant_id, invoice_number)
+);
+
+create table if not exists public.mapphex_invoice_items (
+  id uuid primary key default gen_random_uuid(),
+  tenant_id text not null references public.mapphex_organizations(id) on delete cascade,
+  invoice_id uuid not null references public.mapphex_invoices(id) on delete cascade,
+  item_id uuid references public.mapphex_catalog_items(id) on delete set null,
+  description text not null,
+  quantity numeric(14,3) not null default 1,
+  unit_price numeric(14,2) not null default 0,
+  tax_amount numeric(14,2) not null default 0,
+  line_total numeric(14,2) not null default 0
+);
+
+create table if not exists public.mapphex_payments (
+  id uuid primary key default gen_random_uuid(),
+  tenant_id text not null references public.mapphex_organizations(id) on delete cascade,
+  invoice_id uuid references public.mapphex_invoices(id) on delete set null,
+  transaction_id uuid references public.mapphex_transactions(id) on delete set null,
+  amount numeric(14,2) not null default 0,
+  payment_method text,
+  status text not null default 'posted',
+  reference text,
+  paid_at timestamptz not null default now(),
+  payload jsonb not null default '{}'::jsonb
+);
+
+create table if not exists public.mapphex_subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  tenant_id text not null references public.mapphex_organizations(id) on delete cascade,
+  plan_code text not null,
+  status text not null default 'trial',
+  billing_period text not null default 'monthly',
+  amount numeric(14,2) not null default 0,
+  starts_at timestamptz not null default now(),
+  ends_at timestamptz,
+  payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.mapphex_industry_records (
+  id uuid primary key default gen_random_uuid(),
+  tenant_id text not null references public.mapphex_organizations(id) on delete cascade,
+  module_id text not null,
+  record_type text not null,
+  title text not null,
+  status text not null default 'active',
+  amount numeric(14,2) not null default 0,
+  payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 alter table public.mapphex_organizations enable row level security;
 alter table public.mapphex_users enable row level security;
 alter table public.mapphex_modules enable row level security;
@@ -320,6 +552,38 @@ alter table public.mapphex_transactions enable row level security;
 alter table public.mapphex_reports enable row level security;
 alter table public.mapphex_documents enable row level security;
 alter table public.mapphex_technology_projects enable row level security;
+alter table public.mapphex_employees enable row level security;
+alter table public.mapphex_attendance enable row level security;
+alter table public.mapphex_leave_requests enable row level security;
+alter table public.mapphex_payroll_runs enable row level security;
+alter table public.mapphex_payroll_items enable row level security;
+alter table public.mapphex_approval_decisions enable row level security;
+alter table public.mapphex_suppliers enable row level security;
+alter table public.mapphex_customers enable row level security;
+alter table public.mapphex_inventory_movements enable row level security;
+alter table public.mapphex_purchase_orders enable row level security;
+alter table public.mapphex_invoices enable row level security;
+alter table public.mapphex_invoice_items enable row level security;
+alter table public.mapphex_payments enable row level security;
+alter table public.mapphex_subscriptions enable row level security;
+alter table public.mapphex_industry_records enable row level security;
+
+create index if not exists mapphex_users_tenant_idx on public.mapphex_users (tenant_id);
+create index if not exists mapphex_modules_tenant_idx on public.mapphex_modules (tenant_id);
+create index if not exists mapphex_branches_tenant_idx on public.mapphex_branches (tenant_id);
+create index if not exists mapphex_items_tenant_status_idx on public.mapphex_catalog_items (tenant_id, status);
+create index if not exists mapphex_workflows_tenant_status_idx on public.mapphex_workflow_requests (tenant_id, status, created_at desc);
+create index if not exists mapphex_messages_tenant_time_idx on public.mapphex_messages (tenant_id, created_at desc);
+create index if not exists mapphex_notifications_tenant_time_idx on public.mapphex_notifications (tenant_id, created_at desc);
+create index if not exists mapphex_audit_tenant_time_idx on public.mapphex_audit_logs (tenant_id, created_at desc);
+create index if not exists mapphex_transactions_tenant_time_idx on public.mapphex_transactions (tenant_id, created_at desc);
+create index if not exists mapphex_reports_tenant_period_idx on public.mapphex_reports (tenant_id, module_id, period_start, period_end);
+create index if not exists mapphex_employees_tenant_status_idx on public.mapphex_employees (tenant_id, employment_status);
+create index if not exists mapphex_payroll_runs_tenant_period_idx on public.mapphex_payroll_runs (tenant_id, period_month desc);
+create index if not exists mapphex_payroll_items_run_idx on public.mapphex_payroll_items (payroll_run_id);
+create index if not exists mapphex_inventory_movements_tenant_time_idx on public.mapphex_inventory_movements (tenant_id, created_at desc);
+create index if not exists mapphex_invoices_tenant_status_idx on public.mapphex_invoices (tenant_id, status, created_at desc);
+create index if not exists mapphex_industry_records_tenant_module_idx on public.mapphex_industry_records (tenant_id, module_id, created_at desc);
 
 -- No direct browser access to enterprise data tables.
 -- Vercel API routes use SUPABASE_SERVICE_ROLE_KEY and enforce organization sessions.
@@ -342,6 +606,21 @@ drop policy if exists "mapphex_transactions_no_public_access" on public.mapphex_
 drop policy if exists "mapphex_reports_no_public_access" on public.mapphex_reports;
 drop policy if exists "mapphex_documents_no_public_access" on public.mapphex_documents;
 drop policy if exists "mapphex_tech_projects_no_public_access" on public.mapphex_technology_projects;
+drop policy if exists "mapphex_employees_no_public_access" on public.mapphex_employees;
+drop policy if exists "mapphex_attendance_no_public_access" on public.mapphex_attendance;
+drop policy if exists "mapphex_leave_requests_no_public_access" on public.mapphex_leave_requests;
+drop policy if exists "mapphex_payroll_runs_no_public_access" on public.mapphex_payroll_runs;
+drop policy if exists "mapphex_payroll_items_no_public_access" on public.mapphex_payroll_items;
+drop policy if exists "mapphex_approval_decisions_no_public_access" on public.mapphex_approval_decisions;
+drop policy if exists "mapphex_suppliers_no_public_access" on public.mapphex_suppliers;
+drop policy if exists "mapphex_customers_no_public_access" on public.mapphex_customers;
+drop policy if exists "mapphex_inventory_movements_no_public_access" on public.mapphex_inventory_movements;
+drop policy if exists "mapphex_purchase_orders_no_public_access" on public.mapphex_purchase_orders;
+drop policy if exists "mapphex_invoices_no_public_access" on public.mapphex_invoices;
+drop policy if exists "mapphex_invoice_items_no_public_access" on public.mapphex_invoice_items;
+drop policy if exists "mapphex_payments_no_public_access" on public.mapphex_payments;
+drop policy if exists "mapphex_subscriptions_no_public_access" on public.mapphex_subscriptions;
+drop policy if exists "mapphex_industry_records_no_public_access" on public.mapphex_industry_records;
 
 create policy "mapphex_orgs_no_public_access" on public.mapphex_organizations
 for all to anon, authenticated using (false) with check (false);
@@ -398,6 +677,51 @@ create policy "mapphex_documents_no_public_access" on public.mapphex_documents
 for all to anon, authenticated using (false) with check (false);
 
 create policy "mapphex_tech_projects_no_public_access" on public.mapphex_technology_projects
+for all to anon, authenticated using (false) with check (false);
+
+create policy "mapphex_employees_no_public_access" on public.mapphex_employees
+for all to anon, authenticated using (false) with check (false);
+
+create policy "mapphex_attendance_no_public_access" on public.mapphex_attendance
+for all to anon, authenticated using (false) with check (false);
+
+create policy "mapphex_leave_requests_no_public_access" on public.mapphex_leave_requests
+for all to anon, authenticated using (false) with check (false);
+
+create policy "mapphex_payroll_runs_no_public_access" on public.mapphex_payroll_runs
+for all to anon, authenticated using (false) with check (false);
+
+create policy "mapphex_payroll_items_no_public_access" on public.mapphex_payroll_items
+for all to anon, authenticated using (false) with check (false);
+
+create policy "mapphex_approval_decisions_no_public_access" on public.mapphex_approval_decisions
+for all to anon, authenticated using (false) with check (false);
+
+create policy "mapphex_suppliers_no_public_access" on public.mapphex_suppliers
+for all to anon, authenticated using (false) with check (false);
+
+create policy "mapphex_customers_no_public_access" on public.mapphex_customers
+for all to anon, authenticated using (false) with check (false);
+
+create policy "mapphex_inventory_movements_no_public_access" on public.mapphex_inventory_movements
+for all to anon, authenticated using (false) with check (false);
+
+create policy "mapphex_purchase_orders_no_public_access" on public.mapphex_purchase_orders
+for all to anon, authenticated using (false) with check (false);
+
+create policy "mapphex_invoices_no_public_access" on public.mapphex_invoices
+for all to anon, authenticated using (false) with check (false);
+
+create policy "mapphex_invoice_items_no_public_access" on public.mapphex_invoice_items
+for all to anon, authenticated using (false) with check (false);
+
+create policy "mapphex_payments_no_public_access" on public.mapphex_payments
+for all to anon, authenticated using (false) with check (false);
+
+create policy "mapphex_subscriptions_no_public_access" on public.mapphex_subscriptions
+for all to anon, authenticated using (false) with check (false);
+
+create policy "mapphex_industry_records_no_public_access" on public.mapphex_industry_records
 for all to anon, authenticated using (false) with check (false);
 
 -- Storage bucket for future document uploads.

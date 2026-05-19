@@ -324,6 +324,8 @@
     localStorage.setItem(key, JSON.stringify(value ?? null));
   };
 
+  const isLocalDevelopment = () => ["localhost", "127.0.0.1", ""].includes(location.hostname);
+
   const formatKsh = (amount) => `KSh ${Number(amount || 0).toLocaleString("en-KE")} / month`;
 
   const readSelectedPackage = () => {
@@ -556,6 +558,7 @@
           data = response.data;
           if (!response.res.ok || !data?.ok) throw new Error(data?.error || "Registration failed");
         } catch (apiErr) {
+          if (!isLocalDevelopment()) throw apiErr;
           data = await createLocalOrganization(body);
         }
         window.EnterpriseCore?.setTenant?.(data.tenantId);

@@ -17,6 +17,8 @@
     localStorage.setItem(key, JSON.stringify(value ?? null));
   };
 
+  const isLocalDevelopment = () => ["localhost", "127.0.0.1", ""].includes(location.hostname);
+
   const postJson = async (url, body) => {
     const res = await fetch(url, {
       method: "POST",
@@ -112,6 +114,7 @@
           if (!response.res.ok || !response.data?.ok) throw new Error(response.data?.error || "Agreement failed");
           nextSettings = response.data.settings || null;
         } catch (apiErr) {
+          if (!isLocalDevelopment()) throw apiErr;
           nextSettings = saveLocalAgreement(data);
         }
         setResult("Agreement accepted. Opening portal manager...", "var(--ok)");

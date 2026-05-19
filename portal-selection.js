@@ -22,6 +22,8 @@
     localStorage.setItem(key, JSON.stringify(value ?? null));
   };
 
+  const isLocalDevelopment = () => ["localhost", "127.0.0.1", ""].includes(location.hostname);
+
   const enrichPortal = (portal) => ({
     ...(window.EnterpriseModules?.get?.(portal?.id) || {}),
     ...(portal || {}),
@@ -134,7 +136,8 @@
       if (!responses[0].res.ok || !responses[0].data?.ok) throw new Error(responses[0].data?.error || "Unable to load portals");
       admin = responses[0].data;
       mine = responses[1].res.ok && responses[1].data?.ok ? responses[1].data : { ok: true, organization: localOrg(session.tenantId) };
-    } catch {
+    } catch (apiErr) {
+      if (!isLocalDevelopment()) throw apiErr;
       admin = localAdminPayload(session.tenantId);
       mine = { ok: true, organization: localOrg(session.tenantId) };
     }
@@ -338,7 +341,8 @@
       });
       data = response.data;
       if (!response.res.ok || !data?.ok) throw new Error(data?.error || "Install failed");
-    } catch {
+    } catch (apiErr) {
+      if (!isLocalDevelopment()) throw apiErr;
       const portals = ids.map((id) => PORTAL_CATALOG.find((item) => item.id === id)).filter(Boolean);
       if (portals.length !== ids.length) throw new Error("One or more portals were not found");
       const installedPortals = Array.from(new Set([...(settings.installedPortals || []), ...ids]));
@@ -395,7 +399,8 @@
       });
       if (!response.res.ok || !response.data?.ok) throw new Error(response.data?.error || "Deactivate failed");
       settings = response.data.settings;
-    } catch {
+    } catch (apiErr) {
+      if (!isLocalDevelopment()) throw apiErr;
       const remove = new Set([portalId]);
       const modulePermissions = { ...(settings.modulePermissions || {}) };
       delete modulePermissions[portalId];

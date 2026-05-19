@@ -269,6 +269,10 @@ const getStore = () => {
     };
   }
 
+  if (process.env.VERCEL && process.env.ALLOW_FILE_KV_FALLBACK !== "1") {
+    throw new Error("Production KV is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Vercel.");
+  }
+
   const legacyEnvName = "JIX" + "ELS_KV_FILE_PATH";
   const filePathEnv = process.env.ENTERPRISE_KV_FILE_PATH || process.env[legacyEnvName];
   const kvPath = filePathEnv
