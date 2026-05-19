@@ -38,6 +38,7 @@
   const money = (value) => `KES ${Number(value || 0).toLocaleString()}`;
   const nowIso = () => new Date().toISOString();
   const humanDate = (value) => new Date(value || Date.now()).toLocaleString();
+  const REPORT_PERIODS = ["daily", "weekly", "monthly", "yearly"];
 
   const defaultBlueprint = {
     kpis: [],
@@ -471,7 +472,16 @@
       ? messages.map((item) => `<article><strong>${escapeHtml(item.from)} to ${escapeHtml(item.to)}</strong><span>${escapeHtml(item.body)}</span><small>${escapeHtml(humanDate(item.createdAt))}</small></article>`).join("")
       : `<div class="empty-state">No messages yet.</div>`;
 
-    $("#erp-reports").innerHTML = blueprint.reports.map((item) => `<button class="btn" data-report-name="${escapeHtml(item)}" type="button">${escapeHtml(item)}</button>`).join("");
+    $("#erp-reports").innerHTML = blueprint.reports
+      .map(
+        (item) => `<article class="erp-report-card">
+          <strong>${escapeHtml(item)}</strong>
+          <div class="erp-report-periods">
+            ${REPORT_PERIODS.map((period) => `<button class="btn" data-report-name="${escapeHtml(item)}" data-report-period="${period}" type="button">${period[0].toUpperCase()}${period.slice(1)}</button>`).join("")}
+          </div>
+        </article>`,
+      )
+      .join("");
     $("#erp-activity").innerHTML = activities.length
       ? activities.map((item) => `<article><strong>${escapeHtml(item.action)}</strong><span>${escapeHtml(item.detail?.message || item.detail?.label || "Activity recorded")}</span><small>${escapeHtml(humanDate(item.at))}</small></article>`).join("")
       : `<div class="empty-state">Activity will appear as this portal is used.</div>`;
@@ -668,10 +678,32 @@
     URL.revokeObjectURL(link.href);
   };
 
-  const exportPayrollReport = (moduleId, reportName) => {
+  const periodStart = (period) => {
+    const now = new Date();
+    const start = new Date(now);
+    start.setHours(0, 0, 0, 0);
+    if (period === "weekly") start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+    if (period === "monthly") start.setDate(1);
+    if (period === "yearly") {
+      start.setMonth(0, 1);
+      start.setHours(0, 0, 0, 0);
+    }
+    return start;
+  };
+
+  const inPeriod = (dateValue, period) => {
+    const date = new Date(dateValue || Date.now());
+    if (Number.isNaN(date.getTime())) return false;
+    return date >= periodStart(period);
+  };
+
+  const csvCell = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+
+  const exportPayrollReport = (moduleId, reportName, period = "monthly") => {
     const history = Array.isArray(erpState().payrollHistory) ? erpState().payrollHistory : [];
+    const periodHistory = history.filter((row) => inPeriod(row.createdAt, period));
     if (/payslip/i.test(reportName)) {
-      const paid = history.filter((row) => row.status === "paid");
+      const paid = periodHistory.filter((row) => row.status === "paid");
       const payslips = paid
         .flatMap((row) =>
           (row.employees || []).map(
@@ -680,13 +712,13 @@
           ),
         )
         .join("\n---\n");
-      downloadText(`${moduleId}-payslips.txt`, payslips || "No paid payrolls available for payslip generation.");
+      downloadText(`${moduleId}-${period}-payslips.txt`, payslips || `No paid payrolls available for ${period} payslip generation.`);
       return true;
     }
     if (/payroll history|approval logs|tax deductions|payroll payments/i.test(reportName)) {
       const csv = [
         "Month,Title,Status,Amount,Employees,Reason,Created",
-        ...history.map((row) =>
+        ...periodHistory.map((row) =>
           [
             row.month,
             row.title,
@@ -700,10 +732,36 @@
             .join(","),
         ),
       ].join("\n");
-      downloadText(`${moduleId}-${reportName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.csv`, csv, "text/csv");
+      downloadText(`${moduleId}-${period}-${reportName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.csv`, csv, "text/csv");
       return true;
     }
     return false;
+  };
+
+  const exportPeriodReport = (moduleId, reportName, period = "monthly") => {
+    if (exportPayrollReport(moduleId, reportName, period)) return true;
+    const rows = Array.isArray(moduleData()[moduleId]) ? moduleData()[moduleId] : [];
+    const state = ensurePortalState(moduleId);
+    const activities = Array.isArray(storeGet(ACTIVITY_KEY, [])) ? storeGet(ACTIVITY_KEY, []) : [];
+    const transactions = Array.isArray(storeGet(TRANSACTIONS_KEY, [])) ? storeGet(TRANSACTIONS_KEY, []) : [];
+    const filteredRecords = rows.filter((row) => inPeriod(row.updatedAt, period));
+    const filteredApprovals = (state.approvals || []).filter((item) => (item.target === moduleId || item.moduleId === moduleId || item.source === moduleId) && inPeriod(item.updatedAt || item.createdAt, period));
+    const filteredMessages = (state.messages || []).filter((item) => (item.moduleId === moduleId || item.to === moduleId || item.from === moduleId) && inPeriod(item.createdAt, period));
+    const filteredActivities = activities.filter((item) => item.moduleId === moduleId && inPeriod(item.at, period));
+    const filteredTransactions = transactions.filter((item) => item.sourceModule === moduleId && inPeriod(item.createdAt, period));
+    const csv = [
+      "Section,Date,Reference,Status,Amount,Details",
+      ...filteredRecords.map((row) => ["Record", row.updatedAt, row.id, "active", "", row.values?.join(" | ")]),
+      ...filteredApprovals.map((row) => ["Approval", row.updatedAt || row.createdAt, row.id, row.status, row.amount, `${row.title} - ${row.reason || row.note || ""}`]),
+      ...filteredMessages.map((row) => ["Message", row.createdAt, row.id, "sent", "", `${row.from} to ${row.to}: ${row.body}`]),
+      ...filteredActivities.map((row) => ["Activity", row.at, row.id, row.action, "", row.detail?.message || row.detail?.label || JSON.stringify(row.detail || {})]),
+      ...filteredTransactions.map((row) => ["Transaction", row.createdAt, row.id, row.status, row.amount, `${row.type} ${row.ref || ""}`]),
+    ]
+      .map((row) => row.map(csvCell).join(","))
+      .join("\n");
+    const filename = `${moduleId}-${period}-${reportName.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "report"}.csv`;
+    downloadText(filename, csv, "text/csv");
+    return true;
   };
 
   const postModuleRecordTransaction = async (moduleId, row) => {
@@ -877,8 +935,9 @@
         }
         const report = event.target.closest("[data-report-name]");
         if (report) {
-          if (exportPayrollReport(moduleId, report.dataset.reportName || "")) {
-            appendActivity(moduleId, "payroll.report.generated", { label: report.dataset.reportName, message: `${report.dataset.reportName} generated.` });
+          const period = report.dataset.reportPeriod || "monthly";
+          if (exportPeriodReport(moduleId, report.dataset.reportName || "", period)) {
+            appendActivity(moduleId, "report.downloaded", { label: report.dataset.reportName, message: `${period} ${report.dataset.reportName} downloaded.` });
             refreshEnterpriseSections(moduleId);
             return;
           }

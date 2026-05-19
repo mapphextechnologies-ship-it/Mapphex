@@ -611,6 +611,31 @@
   justify-content: center;
 }
 
+.erp-report-card {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(173, 122, 82, 0.20);
+  border-radius: 8px;
+  background: rgba(23, 16, 12, 0.74);
+}
+
+.erp-report-card strong {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.erp-report-periods {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.erp-report-periods .btn {
+  min-width: 0;
+  padding-inline: 8px;
+  font-size: 12px;
+}
+
 .portal-hub-page {
   background:
     radial-gradient(900px 560px at 12% -10%, rgba(0, 119, 255, 0.24), transparent 60%),
@@ -787,7 +812,8 @@
   .erp-dashboard-grid,
   .erp-work-grid,
   .erp-message-form,
-  .erp-report-grid {
+  .erp-report-grid,
+  .erp-report-periods {
     grid-template-columns: 1fr;
   }
 
