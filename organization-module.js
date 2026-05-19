@@ -374,9 +374,9 @@
     const q = query.trim().toLowerCase();
     const visible = q ? rows.filter((row) => row.values.join(" ").toLowerCase().includes(q)) : rows;
     $("#module-empty").hidden = visible.length > 0;
-    $("#module-table-head").innerHTML = [...workflow.labels, "Updated"].map((label) => `<th>${escapeHtml(label)}</th>`).join("");
+    $("#module-table-head").innerHTML = [...workflow.labels, "Updated", "Actions"].map((label) => `<th>${escapeHtml(label)}</th>`).join("");
     $("#module-table-body").innerHTML = visible
-      .map((row) => `<tr>${row.values.map((value) => `<td>${escapeHtml(value)}</td>`).join("")}<td>${escapeHtml(humanDate(row.updatedAt))}</td></tr>`)
+      .map((row) => `<tr>${row.values.map((value) => `<td>${escapeHtml(value)}</td>`).join("")}<td>${escapeHtml(humanDate(row.updatedAt))}</td><td><button class="btn danger" type="button" data-record-delete="${escapeHtml(row.id)}">Delete</button></td></tr>`)
       .join("");
     $("#module-kpi-a").textContent = rows.length;
   };
@@ -912,6 +912,20 @@
       });
       setActivePortalNav();
       $("#module-search")?.addEventListener("input", (event) => renderRows(moduleId, workflow, event.currentTarget.value));
+      $("#module-table-body")?.addEventListener("click", async (event) => {
+        const btn = event.target.closest("[data-record-delete]");
+        if (!btn) return;
+        if (!window.confirm("Delete this module record?")) return;
+        const data = moduleData();
+        const rows = Array.isArray(data[moduleId]) ? data[moduleId] : [];
+        const row = rows.find((item) => item.id === btn.dataset.recordDelete);
+        data[moduleId] = rows.filter((item) => item.id !== btn.dataset.recordDelete);
+        saveModuleData(data);
+        appendActivity(moduleId, "record.deleted", { id: btn.dataset.recordDelete, message: `${row?.values?.[0] || "Record"} deleted.` });
+        renderRows(moduleId, workflow, $("#module-search")?.value || "");
+        refreshEnterpriseSections(moduleId);
+        await store()?.flush?.().catch(() => null);
+      });
       $("#module-record-form")?.addEventListener("submit", async (event) => {
         event.preventDefault();
         const values = workflow.labels.map((_, idx) => String(new FormData(event.currentTarget).get(`field${idx}`) || "").trim());

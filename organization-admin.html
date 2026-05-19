@@ -97,11 +97,11 @@
         </section>
         <section class="panel" id="branches">
           <div class="panel-header"><h2>Branches</h2><div class="panel-actions muted">Locations and operating units</div></div>
-          <p class="muted">Manage branch names in Settings. Branch users inherit this organization scope.</p>
+          <div class="table-wrap"><table class="table"><thead><tr><th>Branch</th><th>Status</th><th>Actions</th></tr></thead><tbody id="org-branches-table"></tbody></table></div>
         </section>
         <section class="panel" id="modules">
           <div class="panel-header"><h2>Modules</h2><div class="panel-actions muted">Activated portal list</div></div>
-          <p class="muted">Enabled modules are listed in Settings and installed through the portal manager.</p>
+          <div class="table-wrap"><table class="table"><thead><tr><th>Module</th><th>ID</th><th>Status</th><th>Actions</th></tr></thead><tbody id="org-modules-table"></tbody></table></div>
         </section>
         <section class="panel" id="settings">
           <div class="panel-header"><h2>Branches, Departments & Modules</h2><div class="panel-actions"><button id="save-org-settings" class="btn primary" type="button">Save settings</button></div></div>
@@ -121,6 +121,6 @@
     <script src="enterprise-platform.js"></script>
     <script src="ui-menu.js"></script>
     <script src="pwa.js"></script>
-    <script src="organization-admin.js?v=6"></script>
+    <script src="organization-admin.js?v=7"></script>
   </body>
 </html>

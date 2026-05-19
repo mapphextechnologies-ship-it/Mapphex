@@ -151,6 +151,26 @@ module.exports = async (req, res) => {
       return sendJson(res, 200, { ok: true, user: publicUser(next[idx]), users: next.map(publicUser) });
     }
 
+    if (body.action === "delete-user") {
+      const userId = safeString(body.userId || body.id, 120);
+      const idx = users.findIndex((user) => user.id === userId);
+      if (idx < 0) return sendJson(res, 404, { ok: false, error: "User not found" });
+      if (
+        String(users[idx].id || "") === String(session.userId || "") ||
+        normalizeEmail(users[idx].email || users[idx].username) === normalizeEmail(session.sub || session.email)
+      ) {
+        return sendJson(res, 400, { ok: false, error: "You cannot delete your own admin account" });
+      }
+      const activeAdmins = users.filter((user) => ["org_admin", "admin"].includes(String(user.role || "").toLowerCase()) && user.status !== "disabled");
+      if (["org_admin", "admin"].includes(String(users[idx].role || "").toLowerCase()) && activeAdmins.length <= 1) {
+        return sendJson(res, 400, { ok: false, error: "At least one active organization admin is required" });
+      }
+      const next = users.filter((user) => user.id !== userId);
+      await store.set(usersKey, next);
+      await appendEvent(store, tenantId, "org.user.deleted", { userId, email: users[idx].email });
+      return sendJson(res, 200, { ok: true, deleted: userId, users: next.map(publicUser) });
+    }
+
     if (body.action === "issue-user-invite" || body.action === "issue-password-reset") {
       const userId = safeString(body.userId || body.id, 120);
       const idx = users.findIndex((user) => user.id === userId);
@@ -240,6 +260,7 @@ module.exports = async (req, res) => {
       const requested = body.action === "uninstall-portals" && Array.isArray(body.portalIds) ? body.portalIds : [body.portalId];
       const portalIds = Array.from(new Set(requested.map((id) => safeString(id, 80)).filter((id) => VALID_PORTAL_IDS.has(id))));
       if (!portalIds.length) return sendJson(res, 404, { ok: false, error: "One or more portals were not found" });
+      if (portalIds.includes("admin")) return sendJson(res, 400, { ok: false, error: "The admin portal is required and cannot be uninstalled" });
       const remove = new Set(portalIds);
       const modulePermissions = { ...(settings.modulePermissions || {}) };
       portalIds.forEach((portalId) => delete modulePermissions[portalId]);

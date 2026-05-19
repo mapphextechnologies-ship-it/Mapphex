@@ -46,6 +46,7 @@
       "org.user.created": "User added",
       "org.user.updated": "User permissions updated",
       "org.user.status.changed": "User status changed",
+      "org.user.deleted": "User deleted",
       "org.settings.updated": "Settings updated",
       "org.announcement.sent": "Announcement sent",
       "org.live_activity.cleared": "Live activity cleared",
@@ -75,6 +76,8 @@
         return `Updated role and portal access for ${payload.email || "a user"}.`;
       case "org.user.status.changed":
         return `${payload.email || "User"} is now ${payload.status || "updated"}.`;
+      case "org.user.deleted":
+        return `${payload.email || "User"} was removed from the organization.`;
       case "org.settings.updated":
         return `Organization settings updated.`;
       case "org.announcement.sent":
@@ -127,10 +130,36 @@
             <button class="btn" type="button" data-user-invite="${escapeHtml(user.id)}">Invite</button>
             <button class="btn" type="button" data-user-reset="${escapeHtml(user.id)}">Reset</button>
             <button class="btn ${disabled ? "primary" : "danger"}" type="button" data-user-status="${escapeHtml(user.id)}" data-status="${disabled ? "active" : "disabled"}">${disabled ? "Activate" : "Disable"}</button>
+            <button class="btn danger" type="button" data-user-delete="${escapeHtml(user.id)}">Delete</button>
           </td>
         </tr>`;
       })
       .join("");
+    const branches = state.settings.branches || [];
+    $("#org-branches-table").innerHTML = branches.length
+      ? branches
+          .map(
+            (branch) => `<tr>
+              <td>${escapeHtml(branch)}</td>
+              <td><span class="pill status-active">Active</span></td>
+              <td class="table-actions"><button class="btn danger" type="button" data-branch-delete="${escapeHtml(branch)}">Delete</button></td>
+            </tr>`,
+          )
+          .join("")
+      : `<tr><td colspan="3" class="muted">No branches configured.</td></tr>`;
+    const modules = installedPortalIds();
+    $("#org-modules-table").innerHTML = modules.length
+      ? modules
+          .map(
+            (id) => `<tr>
+              <td>${escapeHtml(portalLabel(id))}</td>
+              <td>${escapeHtml(id)}</td>
+              <td><span class="pill status-active">Installed</span></td>
+              <td class="table-actions"><button class="btn danger" type="button" data-module-delete="${escapeHtml(id)}">Uninstall</button></td>
+            </tr>`,
+          )
+          .join("")
+      : `<tr><td colspan="4" class="muted">No modules installed.</td></tr>`;
     const events = state.events.filter(visibleEvent).slice(-40);
     $("#org-activity-table").innerHTML = events.length ? events
       .reverse()
@@ -181,7 +210,8 @@
       const status = event.target.closest("[data-user-status]");
       const invite = event.target.closest("[data-user-invite]");
       const reset = event.target.closest("[data-user-reset]");
-      const userId = save?.dataset.userSave || portals?.dataset.userPortals || status?.dataset.userStatus || invite?.dataset.userInvite || reset?.dataset.userReset;
+      const del = event.target.closest("[data-user-delete]");
+      const userId = save?.dataset.userSave || portals?.dataset.userPortals || status?.dataset.userStatus || invite?.dataset.userInvite || reset?.dataset.userReset || del?.dataset.userDelete;
       if (!userId) return;
       try {
         let body;
@@ -207,6 +237,10 @@
           body = { action: "set-user-status", userId, status: status.dataset.status };
         } else if (invite) {
           body = { action: "issue-user-invite", userId };
+        } else if (del) {
+          const user = state.users.find((row) => row.id === userId) || {};
+          if (!window.confirm(`Delete ${user.email || "this user"} from this organization?`)) return;
+          body = { action: "delete-user", userId };
         } else {
           body = { action: "issue-password-reset", userId };
         }
@@ -215,6 +249,34 @@
         await load();
       } catch (err) {
         window.EnterpriseCore?.notify?.("User update failed", err.message, "error");
+      }
+    });
+    $("#org-branches-table")?.addEventListener("click", async (event) => {
+      const btn = event.target.closest("[data-branch-delete]");
+      if (!btn) return;
+      const branch = btn.dataset.branchDelete;
+      if (!window.confirm(`Delete branch "${branch}"?`)) return;
+      try {
+        await fetchJson("/api/org-admin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "delete-branch", name: branch }) });
+        await load();
+      } catch (err) {
+        window.EnterpriseCore?.notify?.("Branch delete failed", err.message, "error");
+      }
+    });
+    $("#org-modules-table")?.addEventListener("click", async (event) => {
+      const btn = event.target.closest("[data-module-delete]");
+      if (!btn) return;
+      const portalId = btn.dataset.moduleDelete;
+      if (portalId === "admin") {
+        window.EnterpriseCore?.notify?.("Module required", "The admin module is required for organization control.", "error");
+        return;
+      }
+      if (!window.confirm(`Uninstall ${portalLabel(portalId)} from this organization?`)) return;
+      try {
+        await fetchJson("/api/org-admin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "uninstall-portal", portalId }) });
+        await load();
+      } catch (err) {
+        window.EnterpriseCore?.notify?.("Module uninstall failed", err.message, "error");
       }
     });
     $("#save-org-settings")?.addEventListener("click", async () => {
