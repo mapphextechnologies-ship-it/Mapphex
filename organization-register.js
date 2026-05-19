@@ -562,11 +562,38 @@
           data = await createLocalOrganization(body);
         }
         window.EnterpriseCore?.setTenant?.(data.tenantId);
-        window.EnterpriseCore?.clearSession?.();
+        let sessionData = null;
+        try {
+          const sessionResponse = await postJson("/api/auth/session", {
+            action: "organization-login",
+            role: "org_admin",
+            organizationName: body.name,
+            identifier: data.organizationId || data.tenantId || body.adminEmail || body.email,
+            tenantId: data.tenantId,
+            email: body.adminEmail || body.email,
+            password: body.adminPassword,
+          });
+          if (!sessionResponse.res.ok || !sessionResponse.data?.ok) throw new Error(sessionResponse.data?.error || "Login failed");
+          sessionData = sessionResponse.data;
+        } catch (sessionErr) {
+          if (!isLocalDevelopment()) throw new Error(`Organization created, but automatic login failed: ${sessionErr.message}`);
+        }
+        window.EnterpriseCore?.setSession?.(
+          {
+            role: "org_admin",
+            email: body.adminEmail || body.email,
+            tenantId: data.tenantId,
+            token: sessionData?.token || `local-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+            organizationId: data.organizationId,
+            localMode: data.localMode === true || !sessionData?.token,
+            expiresAt: sessionData?.session?.exp ? new Date(sessionData.session.exp).toISOString() : new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
+          },
+          true,
+        );
         result.style.color = "var(--ok)";
-        result.textContent = `Created ${data.organization.name}. ID: ${data.organizationId}. Please login to continue.`;
+        result.textContent = `Created ${data.organization.name}. ID: ${data.organizationId}. Opening agreement...`;
         setTimeout(() => {
-          location.href = `organization-login.html?tenant=${encodeURIComponent(data.tenantId)}`;
+          location.href = `organization-agreement.html?tenant=${encodeURIComponent(data.tenantId)}`;
         }, 900);
       } catch (err) {
         result.style.color = "var(--danger)";
