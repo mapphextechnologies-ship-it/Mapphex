@@ -156,6 +156,15 @@
     return "Use the browser menu and choose Install app or Add to Home screen.";
   };
 
+  const createPoweredFooter = () => {
+    if (document.getElementById("site-powered-footer")) return;
+    const footer = document.createElement("footer");
+    footer.id = "site-powered-footer";
+    footer.className = "site-powered-footer";
+    footer.textContent = "Powered by © Mapphex Technology";
+    document.body.appendChild(footer);
+  };
+
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
       registerServiceWorker().then(emitStatus).catch(() => null);
@@ -181,6 +190,7 @@
   });
 
   window.addEventListener("DOMContentLoaded", () => {
+    createPoweredFooter();
     document.querySelectorAll("[data-pwa-install]").forEach((button) => {
       installButtons.add(button);
       button.addEventListener("click", () => promptInstall());
