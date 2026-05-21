@@ -1707,8 +1707,8 @@ body {
 
 .pricing-card {
   min-height: 272px;
-  display: grid;
-  align-content: start;
+  display: flex;
+  flex-direction: column;
 }
 
 .pricing-card > span {
@@ -1747,8 +1747,9 @@ body {
 }
 
 .pricing-card .btn {
-  align-self: end;
-  margin-top: 18px;
+  align-self: flex-start;
+  margin-top: auto;
+  white-space: nowrap;
 }
 
 .pricing-card.highlight {
