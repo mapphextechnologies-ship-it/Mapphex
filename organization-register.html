@@ -39,19 +39,36 @@
           <input id="selected-service-name" name="serviceTitle" type="hidden" value="Company" />
           <input id="selected-service-estimate" name="serviceEstimate" type="hidden" value="0" />
           <input id="selected-service-components-input" name="selectedComponents" type="hidden" value="" />
-          <label class="field"><span>Organization name</span><input name="name" required placeholder="Majembe Clinic Ltd" /></label>
-          <label class="field"><span>Organization email</span><input name="email" type="email" required placeholder="info@majembeclinic.co.ke" /></label>
-          <label class="field"><span>Phone number</span><input name="phone" required placeholder="+254 700 000 000" /></label>
-          <label class="field"><span>Country / location</span><input name="location" required placeholder="Kenya, Nairobi" /></label>
+          <label class="field"><span>Organization name</span><input name="name" required placeholder="Name of your organization" /></label>
+          <label class="field"><span>Organization email</span><input name="email" type="email" required placeholder="Enter organization email" /></label>
+          <label class="field phone-field">
+            <span>Phone number</span>
+            <div class="phone-input-group">
+              <select name="phoneCode" aria-label="Country code">
+                <option value="+254">Kenya +254</option>
+                <option value="+1">United States / Canada +1</option>
+                <option value="+44">United Kingdom +44</option>
+                <option value="+255">Tanzania +255</option>
+                <option value="+256">Uganda +256</option>
+                <option value="+250">Rwanda +250</option>
+                <option value="+234">Nigeria +234</option>
+                <option value="+27">South Africa +27</option>
+                <option value="+971">United Arab Emirates +971</option>
+                <option value="+91">India +91</option>
+              </select>
+              <input name="phoneNumber" inputmode="tel" required placeholder="Enter phone number" />
+            </div>
+          </label>
+          <label class="field"><span>Country / location</span><input name="location" required placeholder="Enter location" /></label>
           <label class="field"><span>Company size</span><select name="companySize"><option>1-10</option><option>11-50</option><option>51-200</option><option>201-1000</option><option>1000+</option></select></label>
           <label class="field"><span>Branches / departments</span><input name="branchCount" type="number" min="0" placeholder="Number of branches or departments" /></label>
-          <label class="field"><span>Admin name</span><input name="adminName" required placeholder="Jane Mwangi" /></label>
-          <label class="field"><span>Admin email</span><input name="adminEmail" type="email" required placeholder="admin@majembeclinic.co.ke" /></label>
+          <label class="field"><span>Admin name</span><input name="adminName" required placeholder="Enter admin name" /></label>
+          <label class="field"><span>Admin email</span><input name="adminEmail" type="email" required placeholder="Enter admin email" /></label>
           <label class="field"><span>Admin password</span><input name="adminPassword" type="password" required minlength="6" placeholder="Create admin password" /></label>
           <button class="btn primary" type="submit">Create organization</button>
           <p id="org-register-result" class="form-error"></p>
         </form>
-        <div class="auth-footer"><a class="btn" href="organization-login.html">Organization Login</a><a class="btn" href="index.html">Public Site</a></div>
+        <div class="auth-footer"><a class="btn auth-link-btn" href="organization-login.html">Organization Login</a><a class="btn auth-link-btn" href="index.html">Back to Public Site</a></div>
       </section>
     </main>
     <script src="enterprise-core.js"></script>

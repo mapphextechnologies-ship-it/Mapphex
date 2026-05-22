@@ -1,6 +1,6 @@
 const { sendJson, readJsonBody } = require("../../api/_lib/http");
 const { getTenantId } = require("../../api/_lib/tenant");
-const { requireActiveTenantSession } = require("../../api/_lib/security");
+const { assertIdempotent, assertObject, assertSameOrigin, rateLimit, requireActiveOrgAdmin } = require("../../api/_lib/security");
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") return sendJson(res, 405, { ok: false, error: "Method not allowed" });
@@ -10,9 +10,11 @@ module.exports = async (req, res) => {
   if (!appId || !apiKey) return sendJson(res, 500, { ok: false, error: "Missing OneSignal env vars" });
 
   try {
-    const body = await readJsonBody(req);
-    if (!body || typeof body !== "object") return sendJson(res, 400, { ok: false, error: "Invalid body" });
-    await requireActiveTenantSession(req, getTenantId(req, body));
+    rateLimit(req, { scope: "onesignal-sms", limit: 40, windowMs: 60_000 });
+    assertSameOrigin(req);
+    const body = assertObject(await readJsonBody(req));
+    assertIdempotent(req, body);
+    await requireActiveOrgAdmin(req, getTenantId(req, body));
 
     const payload = {
       app_id: appId,
@@ -47,7 +49,7 @@ module.exports = async (req, res) => {
     return sendJson(res, 200, { ok: true, data });
   } catch (err) {
     const status = Number(err?.statusCode || 500) || 500;
-    return sendJson(res, status, { ok: false, error: "Server error" });
+    return sendJson(res, status, { ok: false, error: status >= 500 ? "Server error" : String(err.message || "Request failed") });
   }
 };
 

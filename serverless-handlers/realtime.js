@@ -2,7 +2,7 @@ const { sendJson, readJsonBody } = require("../api/_lib/http");
 const { getStore } = require("../api/_lib/kv-store");
 const { getTenantId } = require("../api/_lib/tenant");
 const { appendEvent, listEvents } = require("../api/_lib/events");
-const { assertObject, rateLimit, requireActiveTenantSession, safeString } = require("../api/_lib/security");
+const { assertIdempotent, assertObject, assertSameOrigin, rateLimit, requireActiveTenantSession, safeString } = require("../api/_lib/security");
 
 const visibleEvent = (event) => !String(event?.type || "").startsWith("kv.");
 
@@ -58,7 +58,9 @@ module.exports = async (req, res) => {
     }
 
     if (req.method === "POST") {
+      assertSameOrigin(req);
       const body = assertObject(await readJsonBody(req));
+      assertIdempotent(req, body);
       const tenantId = getTenantId(req, body);
       await requireActiveTenantSession(req, tenantId);
       const event = await appendEvent(store, tenantId, safeString(body.type || "notification", 80), body.payload || {});

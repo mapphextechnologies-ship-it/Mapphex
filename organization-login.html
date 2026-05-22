@@ -21,14 +21,14 @@
           <p>Access your centralized MAPPHEX Portal Hub with your organization credentials.</p>
         </div>
         <form id="organization-login-form" class="auth-form">
-          <label class="field"><span>Organization name</span><input name="organizationName" required autocomplete="organization" placeholder="ABC Pharmacy Ltd" /></label>
-          <label class="field"><span>Organization email / ID</span><input name="identifier" required autocomplete="username" placeholder="company@example.com or ORG-ABC123" /></label>
+          <label class="field"><span>Organization name</span><input name="organizationName" required autocomplete="organization" placeholder="Name of your organization" /></label>
+          <label class="field"><span>Organization email / ID</span><input name="identifier" required autocomplete="username" placeholder="Enter organization email or ID" /></label>
           <label class="field"><span>Password</span><input name="password" type="password" required minlength="6" /></label>
           <label class="remember-row"><input name="remember" type="checkbox" checked /> <span>Keep me signed in on this device</span></label>
           <button class="btn primary" type="submit">Access Portal Hub</button>
           <p id="organization-login-result" class="form-error"></p>
         </form>
-        <div class="auth-footer"><span class="muted">Not registered yet?</span><a class="btn primary" href="organization-register.html">Register Organization</a><a class="btn" href="index.html?logout=1">Public Site</a></div>
+        <div class="auth-footer"><span class="muted">Not registered yet?</span><a class="btn primary auth-link-btn" href="organization-register.html">Register Organization</a><a class="btn auth-link-btn" href="index.html?logout=1">Back to Public Site</a></div>
       </section>
     </main>
     <script src="enterprise-core.js"></script>

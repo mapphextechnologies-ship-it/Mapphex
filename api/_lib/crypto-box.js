@@ -1,7 +1,16 @@
 const crypto = require("crypto");
 
-const keyMaterial = () =>
-  crypto.createHash("sha256").update(process.env.DATA_ENCRYPTION_KEY || process.env.SESSION_SECRET || "development-data-key").digest();
+const isProduction = () => process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production";
+
+const keyMaterial = () => {
+  const key = process.env.DATA_ENCRYPTION_KEY || process.env.SESSION_SECRET;
+  if (!key && isProduction()) {
+    const err = new Error("DATA_ENCRYPTION_KEY or SESSION_SECRET is required in production");
+    err.statusCode = 500;
+    throw err;
+  }
+  return crypto.createHash("sha256").update(key || "development-data-key").digest();
+};
 
 const encryptJson = (value) => {
   const iv = crypto.randomBytes(12);

@@ -1,6 +1,28 @@
 const { sendJson, readJsonBody } = require("../../api/_lib/http");
 const { getStore } = require("../../api/_lib/kv-store");
 
+const isProduction = () => process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production";
+
+const callbackToken = (req) => {
+  const baseUrl = `http://${req.headers.host || "localhost"}`;
+  const url = new URL(req.url || "/", baseUrl);
+  return String(req.headers["x-mpesa-callback-token"] || url.searchParams.get("token") || "").trim();
+};
+
+const assertCallbackAuthorized = (req) => {
+  const expected = String(process.env.MPESA_CALLBACK_TOKEN || "").trim();
+  if (!expected && !isProduction()) return;
+  if (!expected) {
+    const err = new Error("MPESA_CALLBACK_TOKEN is required in production");
+    err.statusCode = 500;
+    throw err;
+  }
+  if (callbackToken(req) === expected) return;
+  const err = new Error("Invalid M-Pesa callback token");
+  err.statusCode = 403;
+  throw err;
+};
+
 const postOneSignal = async (path, payload) => {
   const appId = String(process.env.ONESIGNAL_APP_ID || "").trim();
   const apiKey = String(process.env.ONESIGNAL_API_KEY || "").trim();
@@ -25,6 +47,7 @@ module.exports = async (req, res) => {
   if (req.method !== "POST") return sendJson(res, 405, { ok: false, error: "Method not allowed" });
 
   try {
+    assertCallbackAuthorized(req);
     const body = await readJsonBody(req);
     const cb = body?.Body?.stkCallback || null;
     if (!cb || typeof cb !== "object") return sendJson(res, 400, { ok: false, error: "Invalid callback" });
@@ -78,6 +101,6 @@ module.exports = async (req, res) => {
     return sendJson(res, 200, { ResultCode: 0, ResultDesc: "Accepted" });
   } catch (err) {
     const status = Number(err?.statusCode || 500) || 500;
-    return sendJson(res, status, { ok: false, error: "Server error" });
+    return sendJson(res, status, { ok: false, error: status >= 500 ? "Server error" : String(err.message || "Server error") });
   }
 };

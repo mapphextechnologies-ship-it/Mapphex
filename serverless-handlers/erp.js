@@ -9,6 +9,7 @@ const {
   assertSameOrigin,
   rateLimit,
   requireActiveTenantSession,
+  requireActiveOrgAdmin,
   safeString,
 } = require("../api/_lib/security");
 const { recordFingerprint, uniqueBy } = require("../api/_lib/data-hygiene");
@@ -17,6 +18,10 @@ const nowIso = () => new Date().toISOString();
 const makeId = (prefix) => `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 const asArray = (value) => (Array.isArray(value) ? value : []);
 const asObject = (value) => (value && typeof value === "object" && !Array.isArray(value) ? value : {});
+const publicUser = (user = {}) => {
+  const { activationToken, passwordHash, passwordResetToken, passwordSetupToken, ...safe } = user;
+  return safe;
+};
 
 const readState = async (store, tenantId) => {
   const keys = scopedErpKeys(tenantId);
@@ -55,7 +60,7 @@ const publicState = (tenantId, state) => ({
   tenantId,
   settings: state.settings,
   enabledModules: state.enabledModules,
-  users: state.users,
+  users: asArray(state.users).map(publicUser),
   moduleRecords: state.moduleRecords,
   moduleActivity: state.moduleActivity,
   departmentWorkflows: state.departmentWorkflows,
@@ -358,7 +363,10 @@ module.exports = async (req, res) => {
     if (action === "approval") return sendJson(res, 200, { ok: true, ...(await decideApproval(store, tenantId, body, actor)) });
     if (action === "transaction") return sendJson(res, 200, { ok: true, ...(await postTransaction(store, tenantId, body, actor)) });
     if (action === "message") return sendJson(res, 200, { ok: true, ...(await sendMessage(store, tenantId, body, actor)) });
-    if (action === "permissions") return sendJson(res, 200, { ok: true, ...(await updatePermissions(store, tenantId, body, actor)) });
+    if (action === "permissions") {
+      await requireActiveOrgAdmin(req, tenantId);
+      return sendJson(res, 200, { ok: true, ...(await updatePermissions(store, tenantId, body, actor)) });
+    }
 
     return sendJson(res, 400, { ok: false, error: "Unsupported ERP action" });
   } catch (err) {

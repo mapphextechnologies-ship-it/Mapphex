@@ -4,7 +4,7 @@ const { getStore } = require("../api/_lib/kv-store");
 const { getTenantId, scopeTenantKey } = require("../api/_lib/tenant");
 const { encryptJson } = require("../api/_lib/crypto-box");
 const { appendEvent } = require("../api/_lib/events");
-const { assertIdempotent, assertObject, rateLimit, requireActiveTenantSession, safeString } = require("../api/_lib/security");
+const { assertIdempotent, assertObject, assertSameOrigin, rateLimit, requireActiveTenantSession, safeString } = require("../api/_lib/security");
 
 const FILES_KEY = "enterprise_files_v1";
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
@@ -32,10 +32,12 @@ module.exports = async (req, res) => {
       await requireActiveTenantSession(req, tenantId);
       const key = scopeTenantKey(tenantId, FILES_KEY);
       const files = (await store.get(key)) || [];
-      return sendJson(res, 200, { ok: true, tenantId, files: Array.isArray(files) ? files : [] });
+      const safeFiles = (Array.isArray(files) ? files : []).map(({ content, ...file }) => file);
+      return sendJson(res, 200, { ok: true, tenantId, files: safeFiles });
     }
 
     if (req.method !== "POST") return sendJson(res, 405, { ok: false, error: "Method not allowed" });
+    assertSameOrigin(req);
     const body = assertObject(await readJsonBody(req));
     assertIdempotent(req, body);
     const tenantId = getTenantId(req, body);

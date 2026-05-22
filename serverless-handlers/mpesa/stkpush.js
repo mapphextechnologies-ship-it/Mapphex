@@ -1,15 +1,17 @@
 const { sendJson, readJsonBody } = require("../../api/_lib/http");
 const { getStore } = require("../../api/_lib/kv-store");
 const { getTenantId } = require("../../api/_lib/tenant");
-const { requireActiveTenantSession } = require("../../api/_lib/security");
+const { assertIdempotent, assertObject, assertSameOrigin, rateLimit, requireActiveTenantSession } = require("../../api/_lib/security");
 const { baseUrl, mustEnv, nowTimestamp, normalizeMsisdn, getAccessToken, stkPassword } = require("../../api/_lib/mpesa");
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") return sendJson(res, 405, { ok: false, error: "Method not allowed" });
 
   try {
-    const body = await readJsonBody(req);
-    if (!body || typeof body !== "object") return sendJson(res, 400, { ok: false, error: "Invalid body" });
+    rateLimit(req, { scope: "mpesa-stkpush", limit: 60, windowMs: 60_000 });
+    assertSameOrigin(req);
+    const body = assertObject(await readJsonBody(req));
+    assertIdempotent(req, body);
     const tenantId = getTenantId(req, body);
     await requireActiveTenantSession(req, tenantId);
 
@@ -74,9 +76,10 @@ module.exports = async (req, res) => {
     });
     await store.set(logKey, arr.slice(-400));
 
-    return sendJson(res, 200, { ok: true, request: payload, response: data });
+    const { Password, ...safeRequest } = payload;
+    return sendJson(res, 200, { ok: true, request: safeRequest, response: data });
   } catch (err) {
     const status = Number(err?.statusCode || 500) || 500;
-    return sendJson(res, status, { ok: false, error: "Server error" });
+    return sendJson(res, status, { ok: false, error: status >= 500 ? "Server error" : String(err.message || "Request failed") });
   }
 };

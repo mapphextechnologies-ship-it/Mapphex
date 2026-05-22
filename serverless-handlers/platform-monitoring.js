@@ -2,7 +2,7 @@ const { sendJson, readJsonBody } = require("../api/_lib/http");
 const { getStore } = require("../api/_lib/kv-store");
 const { scopeTenantKey } = require("../api/_lib/tenant");
 const { appendEvent, listEvents } = require("../api/_lib/events");
-const { assertObject, rateLimit, safeString } = require("../api/_lib/security");
+const { assertIdempotent, assertObject, assertSameOrigin, rateLimit, safeString } = require("../api/_lib/security");
 const { requireSuperAdmin } = require("../api/_lib/super-admin-auth");
 
 const ORGS_KEY = "platform_organizations_v1";
@@ -42,7 +42,7 @@ const summarizeTenant = async (store, org) => {
     (org.status === "suspended" ? 1 : 0);
   return {
     organization: publicOrg(org),
-    users: users.map(({ password, passwordHash, ...user }) => user),
+    users: users.map(({ activationToken, password, passwordHash, passwordResetToken, passwordSetupToken, ...user }) => user),
     settings,
     metrics: {
       users: users.length,
@@ -72,7 +72,9 @@ module.exports = async (req, res) => {
     const organizations = Array.isArray(organizationsRaw) ? organizationsRaw : [];
 
     if (req.method === "POST") {
+      assertSameOrigin(req);
       const body = assertObject(await readJsonBody(req));
+      assertIdempotent(req, body);
       if (body.action === "broadcast") {
         const title = safeString(body.title || "Platform notification", 120);
         const message = safeString(body.message || body.body || "", 2000);

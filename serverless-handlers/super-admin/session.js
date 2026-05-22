@@ -9,7 +9,8 @@ const {
   verifySuperAdminCredentialsAny,
 } = require("../../api/_lib/super-admin-auth");
 
-const cookieAttrs = "HttpOnly; SameSite=Strict; Path=/_internal/mapphex-control; Max-Age=14400";
+const isProduction = () => process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production";
+const cookieAttrs = () => `HttpOnly; SameSite=Strict; Path=/_internal/mapphex-control; Max-Age=14400${isProduction() ? "; Secure" : ""}`;
 
 module.exports = async (req, res) => {
   try {
@@ -26,7 +27,7 @@ module.exports = async (req, res) => {
       }
       const session = createSuperAdminSession(username);
       await appendEvent(getStore(), "platform", "super_admin.login.succeeded", { username });
-      res.setHeader("Set-Cookie", `mapphex_super_admin=${session.token}; ${cookieAttrs}`);
+      res.setHeader("Set-Cookie", `mapphex_super_admin=${session.token}; ${cookieAttrs()}`);
       return sendJson(res, 200, { ok: true, ...session });
     }
 
@@ -36,6 +37,7 @@ module.exports = async (req, res) => {
     }
 
     if (req.method === "DELETE") {
+      assertSameOrigin(req);
       const session = requireSuperAdmin(req);
       await appendEvent(getStore(), "platform", "super_admin.logout", { username: session.sub });
       res.setHeader("Set-Cookie", "mapphex_super_admin=; HttpOnly; SameSite=Strict; Path=/_internal/mapphex-control; Max-Age=0");

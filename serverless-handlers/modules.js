@@ -1,7 +1,7 @@
 const { sendJson, readJsonBody } = require("../api/_lib/http");
 const { getStore } = require("../api/_lib/kv-store");
 const { getTenantId, scopeTenantKey } = require("../api/_lib/tenant");
-const { assertObject, rateLimit, requireActiveTenantSession, safeString } = require("../api/_lib/security");
+const { assertIdempotent, assertObject, assertSameOrigin, rateLimit, requireActiveOrgAdmin, requireActiveTenantSession, safeString } = require("../api/_lib/security");
 const { appendEvent } = require("../api/_lib/events");
 
 const MODULES_KEY = "enterprise_modules_v1";
@@ -44,6 +44,9 @@ module.exports = async (req, res) => {
 
     if (req.method === "GET") return sendJson(res, 200, { ok: true, tenantId, modules: existing, catalog });
     if (req.method !== "POST") return sendJson(res, 405, { ok: false, error: "Method not allowed" });
+    assertSameOrigin(req);
+    await requireActiveOrgAdmin(req, tenantId);
+    assertIdempotent(req, body);
 
     const enabled = Array.isArray(body.enabled)
       ? body.enabled.map((id) => safeString(id, 60)).filter((id) => catalog.some((m) => m.id === id))

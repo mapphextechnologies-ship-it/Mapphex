@@ -58,6 +58,31 @@
   width: min(980px, 100%);
 }
 
+.phone-input-group {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.44fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+.auth-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.auth-footer .auth-link-btn,
+.auth-footer .auth-link-btn:visited {
+  color: #5bd6ff;
+}
+
+.auth-footer .auth-link-btn:hover,
+.auth-footer .auth-link-btn:focus-visible,
+.auth-footer .auth-link-btn:active {
+  color: #0077ff;
+  border-color: rgba(0, 119, 255, 0.55);
+}
+
 .business-type-picker {
   grid-column: 1 / -1;
   border: 0;
