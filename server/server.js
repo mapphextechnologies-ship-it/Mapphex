@@ -245,7 +245,11 @@ const serveStatic = async (req, res, url) => {
   let pathname = decodeURIComponent(url.pathname || "/");
   if (pathname === "/") pathname = "/index.html";
   if (pathname === "/workspace") pathname = "/organization-workspace.html";
-  if (pathname === "/super-admin.html" || pathname === "/super-admin-login.html") return notFound(res);
+  if (!path.extname(pathname)) {
+    const htmlAlias = path.resolve(ROOT_DIR, `.${pathname}.html`);
+    if (isSafePath(htmlAlias) && fs.existsSync(htmlAlias)) pathname = `${pathname}.html`;
+  }
+  if (pathname === "/super-admin.html") return notFound(res);
   if (pathname === "/_internal/mapphex-control") {
     pathname = "/super-admin-login.html";
   }
