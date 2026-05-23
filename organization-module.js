@@ -80,11 +80,11 @@
       workflows: [["Forward payroll to Finance", "finance"], ["Request role access", "admin"], ["Start recruitment", "department"], ["Schedule training", "staff"]],
     },
     finance: {
-      entity: "Finance Record",
-      form: ["Transaction", "Source", "Amount", "Status"],
-      responsibilities: ["Accounting", "Expenses", "Revenue", "Payroll approvals", "Invoices", "Payments", "Taxes", "Financial reports", "Budgets", "Transactions", "Profit/loss tracking"],
-      reports: ["Profit and loss", "Cash flow", "Payroll approvals", "Payroll payments", "Invoices", "Payments", "Taxes", "Budgets", "Transactions", "Approval logs"],
-      workflows: [["Approve payroll", "hr"], ["Approve purchase", "procurement"], ["Issue invoice", "sales"], ["Post payment", "reporting"]],
+      entity: "Finance Entry",
+      form: ["Entry", "Category", "Amount", "Status"],
+      responsibilities: ["Record income", "Record expenses", "Review invoices", "Confirm payments", "Approve payroll", "Track budgets", "Prepare finance reports"],
+      reports: ["Income", "Expenses", "Invoices", "Payments", "Payroll", "Budgets", "Taxes", "Audit log"],
+      workflows: [["Approve payroll", "hr"], ["Approve purchase", "procurement"], ["Send invoice", "sales"], ["Confirm payment", "reporting"]],
     },
     sales: {
       entity: "Sales Order",
@@ -386,7 +386,78 @@
       .map((value, idx) => `<span style="height:${Math.max(18, Number(value) || 0)}%" title="Period ${idx + 1}: ${escapeHtml(value)}%"></span>`)
       .join("")}</div>`;
 
+  const renderFinanceSections = () => {
+    document.body.classList.add("finance-simple-page");
+    document.querySelector(".module-feature-strip")?.remove();
+    document.querySelector(".module-shared-grid")?.remove();
+    const recordCopy = document.querySelector(".module-record-head p");
+    if (recordCopy) recordCopy.textContent = "Add simple ledger entries for income, expenses, invoices, payments, payroll, budgets, and taxes.";
+    $("#module-record-form")?.classList.add("finance-entry-form");
+    const recordTitle = $("#portal-records .panel-header h2");
+    if (recordTitle) recordTitle.textContent = "Finance Ledger";
+    const recordActions = $("#portal-records .panel-header .panel-actions");
+    if (recordActions) {
+      recordActions.innerHTML = `<input id="module-search" type="search" placeholder="Search finance entries..." /><button class="btn" data-erp-export="csv" type="button">Export Excel</button><button class="btn" data-erp-export="pdf" type="button">Print / PDF</button>`;
+    }
+    const portalKpis = $("#portal-kpis");
+    if (portalKpis && !portalKpis.classList.contains("finance-kpis")) {
+      portalKpis.classList.add("finance-kpis");
+      portalKpis.innerHTML = `
+        <article class="kpi"><div class="kpi-label">Finance Entries</div><div id="module-kpi-a" class="kpi-value">0</div><div class="kpi-foot muted">Ledger rows</div></article>
+        <article class="kpi"><div class="kpi-label">Money In</div><div id="finance-money-in" class="kpi-value">KES 0</div><div class="kpi-foot muted">Income and received payments</div></article>
+        <article class="kpi"><div class="kpi-label">Money Out</div><div id="finance-money-out" class="kpi-value">KES 0</div><div class="kpi-foot muted">Expenses, purchases, payroll</div></article>
+        <article class="kpi"><div class="kpi-label">Open Items</div><div id="finance-open-items" class="kpi-value">0</div><div class="kpi-foot muted">Pending or unpaid entries</div></article>`;
+    }
+    if ($("#finance-workspace-sections")) return;
+    $("#portal-records")?.insertAdjacentHTML(
+      "beforebegin",
+      `<div id="finance-workspace-sections" class="finance-workspace-sections">
+      <section id="approvals" class="finance-workspace">
+        <article class="panel">
+          <div class="panel-header"><h2>Finance Actions</h2><span class="badge">Workflow</span></div>
+          <div id="erp-actions" class="erp-action-list"></div>
+        </article>
+        <article class="panel">
+          <div class="panel-header"><h2>Approvals</h2><span id="erp-approval-count" class="badge">0 pending</span></div>
+          <div id="erp-approvals" class="erp-approval-list"></div>
+        </article>
+      </section>
+      <section id="reports" class="finance-workspace">
+        <article class="panel">
+          <div class="panel-header"><h2>Finance Reports</h2><span class="badge">Export Ready</span></div>
+          <div id="erp-reports" class="erp-report-grid"></div>
+        </article>
+        <article class="panel">
+          <div class="panel-header"><h2>Audit Activity</h2><span class="badge">Live</span></div>
+          <div id="erp-activity" class="erp-activity-list"></div>
+        </article>
+      </section>
+      </div>`,
+    );
+  };
+
+  const financeTotals = () => {
+    const rows = Array.isArray(moduleData().finance) ? moduleData().finance : [];
+    return rows.reduce(
+      (totals, row) => {
+        const category = String(row.values?.[1] || "").toLowerCase();
+        const amount = Number(String(row.values?.[2] || "").replace(/[^\d.-]/g, "")) || 0;
+        const status = String(row.values?.[3] || "").toLowerCase();
+        if (/income|revenue|payment|paid|receipt|sale|invoice/.test(category)) totals.moneyIn += amount;
+        if (/expense|purchase|payroll|tax|budget|debt|cost|bill/.test(category)) totals.moneyOut += amount;
+        if (/pending|unpaid|draft|open|waiting/.test(status)) totals.openItems += 1;
+        return totals;
+      },
+      { entries: rows.length, moneyIn: 0, moneyOut: 0, openItems: 0 },
+    );
+  };
+
   const renderEnterpriseSections = (moduleId, moduleDef) => {
+    if (moduleId === "finance") {
+      renderFinanceSections();
+      return;
+    }
+    document.body.classList.remove("finance-simple-page");
     if ($("#erp-sections")) return;
     const blueprint = blueprintFor(moduleId);
     $(".portal-hub-widgets").insertAdjacentHTML(
@@ -443,9 +514,24 @@
     const approvals = (state.approvals || []).filter((item) => item.target === moduleId || item.moduleId === moduleId).slice(0, 8);
     const messages = (state.messages || []).filter((item) => item.moduleId === moduleId || item.to === moduleId || item.from === moduleId).slice(0, 8);
 
-    $("#erp-kpis").innerHTML = blueprint.kpis
-      .map(([label, value]) => `<article class="kpi"><div class="kpi-label">${escapeHtml(label)}</div><div class="kpi-value">${typeof value === "number" && label.toLowerCase().match(/revenue|sales|expenses|billing|amount/) ? money(value) : escapeHtml(value)}</div><div class="kpi-foot muted">Live workspace metric</div></article>`)
-      .join("");
+    const kpiGrid = $("#erp-kpis");
+    if (kpiGrid) {
+      kpiGrid.innerHTML = blueprint.kpis
+        .map(([label, value]) => `<article class="kpi"><div class="kpi-label">${escapeHtml(label)}</div><div class="kpi-value">${typeof value === "number" && label.toLowerCase().match(/revenue|sales|expenses|billing|amount/) ? money(value) : escapeHtml(value)}</div><div class="kpi-foot muted">Live workspace metric</div></article>`)
+        .join("");
+    }
+
+    if (moduleId === "finance") {
+      const totals = financeTotals();
+      const entries = $("#module-kpi-a");
+      const moneyIn = $("#finance-money-in");
+      const moneyOut = $("#finance-money-out");
+      const openItems = $("#finance-open-items");
+      if (entries) entries.textContent = totals.entries;
+      if (moneyIn) moneyIn.textContent = money(totals.moneyIn);
+      if (moneyOut) moneyOut.textContent = money(totals.moneyOut);
+      if (openItems) openItems.textContent = totals.openItems;
+    }
 
     $("#erp-actions").innerHTML = blueprint.actions
       .map(([label, target, detail]) => `<button class="erp-action" data-erp-action="${escapeHtml(label)}" data-erp-target="${escapeHtml(target)}" data-erp-detail="${escapeHtml(detail)}" type="button"><strong>${escapeHtml(label)}</strong><span>Routes to ${escapeHtml(target)}</span></button>`)
@@ -473,9 +559,12 @@
           .join("")
       : `<div class="empty-state">No approvals yet.</div>`;
 
-    $("#erp-messages").innerHTML = messages.length
-      ? messages.map((item) => `<article><strong>${escapeHtml(item.from)} to ${escapeHtml(item.to)}</strong><span>${escapeHtml(item.body)}</span><small>${escapeHtml(humanDate(item.createdAt))}</small></article>`).join("")
-      : `<div class="empty-state">No messages yet.</div>`;
+    const messageList = $("#erp-messages");
+    if (messageList) {
+      messageList.innerHTML = messages.length
+        ? messages.map((item) => `<article><strong>${escapeHtml(item.from)} to ${escapeHtml(item.to)}</strong><span>${escapeHtml(item.body)}</span><small>${escapeHtml(humanDate(item.createdAt))}</small></article>`).join("")
+        : `<div class="empty-state">No messages yet.</div>`;
+    }
 
     $("#erp-reports").innerHTML = blueprint.reports
       .map(
@@ -955,7 +1044,7 @@
         await store()?.flush?.().catch(() => null);
       });
 
-      $("#erp-sections")?.addEventListener("click", (event) => {
+      document.addEventListener("click", (event) => {
         const action = event.target.closest("[data-erp-action]");
         if (action) {
           addWorkflowEvent(moduleId, action.dataset.erpAction, action.dataset.erpTarget, action.dataset.erpDetail);
