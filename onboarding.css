@@ -598,6 +598,59 @@
   background: rgba(55, 35, 24, 0.86);
 }
 
+.finance-focus-panel {
+  border-color: rgba(211, 154, 103, 0.30);
+  background: rgba(17, 11, 8, 0.82);
+  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.32);
+}
+
+.finance-focus-body,
+.finance-focus-grid {
+  padding: 16px 18px 18px;
+}
+
+.finance-focus-body strong {
+  display: block;
+  color: rgba(255, 255, 255, 0.94);
+  font-size: clamp(26px, 4vw, 42px);
+}
+
+.finance-focus-body p {
+  max-width: 760px;
+  margin: 10px 0 0;
+  color: rgba(255, 255, 255, 0.68);
+  line-height: 1.6;
+}
+
+.finance-focus-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.finance-focus-grid article {
+  padding: 14px;
+  border: 1px solid rgba(173, 122, 82, 0.20);
+  border-radius: 8px;
+  background: rgba(23, 16, 12, 0.74);
+}
+
+.finance-focus-grid span,
+.finance-focus-grid strong {
+  display: block;
+}
+
+.finance-focus-grid span {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 12px;
+}
+
+.finance-focus-grid strong {
+  margin-top: 8px;
+  color: rgba(255, 255, 255, 0.94);
+  font-size: 24px;
+}
+
 .erp-action-list,
 .erp-approval-list,
 .erp-message-list,
@@ -932,6 +985,7 @@
   .module-shared-grid,
   .finance-guide-grid,
   .finance-workspace-sections,
+  .finance-focus-grid,
   .finance-simple-page .erp-action-list,
   .erp-kpi-grid,
   .erp-dashboard-grid,

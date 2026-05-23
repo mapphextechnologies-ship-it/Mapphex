@@ -246,6 +246,25 @@
   };
 
   const menuItemsFor = (moduleId, moduleDef) => {
+    if (moduleId === "finance") {
+      return [
+        ["Dashboard", "dashboard", "dashboard"],
+        ["Revenue", "finance-revenue", "revenue"],
+        ["Expenses", "finance-expenses", "expenses"],
+        ["Payroll Approvals", "approvals", "payroll-approvals"],
+        ["Transactions", "portal-records", "transactions"],
+        ["Budgets", "finance-budgets", "budgets"],
+        ["Reports", "reports", "reports"],
+        ["Taxes", "finance-taxes", "taxes"],
+        ["Analytics", "finance-analytics", "analytics"],
+        ["Settings", "finance-settings", "settings"],
+      ].map(([label, target, hash]) => ({
+        label,
+        target,
+        hash,
+        icon: label.slice(0, 1).toUpperCase(),
+      }));
+    }
     const blueprint = blueprintFor(moduleId);
     const base = PORTAL_MENUS[moduleId] || ["Dashboard", blueprint.title || "Records", "Approvals", "Messages", "Reports", "Activity", "Settings"];
     return base.map((label, idx) => ({
@@ -263,16 +282,36 @@
   };
 
   const PORTAL_VIEW_GROUPS = {
-    dashboard: ["portal-dashboard", "portal-kpis", "dashboard"],
+    dashboard: ["portal-dashboard", "portal-kpis", "dashboard", "finance-guide"],
     "portal-records": ["portal-records"],
     approvals: ["approvals"],
     reports: ["reports"],
+    "finance-revenue": ["finance-revenue"],
+    "finance-expenses": ["finance-expenses"],
+    "finance-budgets": ["finance-budgets"],
+    "finance-taxes": ["finance-taxes"],
+    "finance-analytics": ["finance-analytics"],
+    "finance-settings": ["finance-settings"],
   };
 
   const setPortalView = (target = "dashboard") => {
     const group = PORTAL_VIEW_GROUPS[target] || PORTAL_VIEW_GROUPS["portal-records"];
     const visible = new Set(group);
-    ["portal-dashboard", "portal-kpis", "portal-records", "dashboard", "approvals", "reports"].forEach((id) => {
+    [
+      "portal-dashboard",
+      "portal-kpis",
+      "portal-records",
+      "dashboard",
+      "approvals",
+      "reports",
+      "finance-guide",
+      "finance-revenue",
+      "finance-expenses",
+      "finance-budgets",
+      "finance-taxes",
+      "finance-analytics",
+      "finance-settings",
+    ].forEach((id) => {
       const section = document.getElementById(id);
       if (section) section.hidden = !visible.has(id);
     });
@@ -438,6 +477,37 @@
         </article>
       </div>`,
     );
+    $("#finance-workspace-sections")?.insertAdjacentHTML(
+      "afterend",
+      `<section id="finance-revenue" class="panel finance-focus-panel" hidden>
+        <div class="panel-header"><h2>Revenue</h2><span class="badge">Money In</span></div>
+        <div class="finance-focus-body"><strong id="finance-revenue-total">KES 0</strong><p>Track received payments, income, invoices, receipts, and sales money entering the organization.</p></div>
+      </section>
+      <section id="finance-expenses" class="panel finance-focus-panel" hidden>
+        <div class="panel-header"><h2>Expenses</h2><span class="badge">Money Out</span></div>
+        <div class="finance-focus-body"><strong id="finance-expense-total">KES 0</strong><p>Review purchases, payroll, taxes, supplier costs, debts, bills, and other outgoing finance entries.</p></div>
+      </section>
+      <section id="finance-budgets" class="panel finance-focus-panel" hidden>
+        <div class="panel-header"><h2>Budgets</h2><span class="badge">Planning</span></div>
+        <div class="finance-focus-body"><strong id="finance-budget-total">KES 0</strong><p>Use budget entries in the Finance Ledger to monitor planned spending and available allocations.</p></div>
+      </section>
+      <section id="finance-taxes" class="panel finance-focus-panel" hidden>
+        <div class="panel-header"><h2>Taxes</h2><span class="badge">Compliance</span></div>
+        <div class="finance-focus-body"><strong id="finance-tax-total">KES 0</strong><p>Keep tax-related entries visible for monthly review, payment preparation, and report exports.</p></div>
+      </section>
+      <section id="finance-analytics" class="panel finance-focus-panel" hidden>
+        <div class="panel-header"><h2>Analytics</h2><span class="badge">Summary</span></div>
+        <div class="finance-focus-grid">
+          <article><span>Net Position</span><strong id="finance-net-total">KES 0</strong></article>
+          <article><span>Open Items</span><strong id="finance-open-total">0</strong></article>
+          <article><span>Ledger Entries</span><strong id="finance-entry-total">0</strong></article>
+        </div>
+      </section>
+      <section id="finance-settings" class="panel finance-focus-panel" hidden>
+        <div class="panel-header"><h2>Settings</h2><span class="badge">Finance</span></div>
+        <div class="finance-focus-body"><strong>Finance workspace</strong><p>Finance settings use the same organization users, permissions, exports, and tenant data controls.</p></div>
+      </section>`,
+    );
   };
 
   const financeTotals = () => {
@@ -449,10 +519,12 @@
         const status = String(row.values?.[3] || "").toLowerCase();
         if (/income|revenue|payment|paid|receipt|sale|invoice/.test(category)) totals.moneyIn += amount;
         if (/expense|purchase|payroll|tax|budget|debt|cost|bill/.test(category)) totals.moneyOut += amount;
+        if (/budget/.test(category)) totals.budgets += amount;
+        if (/tax/.test(category)) totals.taxes += amount;
         if (/pending|unpaid|draft|open|waiting/.test(status)) totals.openItems += 1;
         return totals;
       },
-      { entries: rows.length, moneyIn: 0, moneyOut: 0, openItems: 0 },
+      { entries: rows.length, moneyIn: 0, moneyOut: 0, budgets: 0, taxes: 0, openItems: 0 },
     );
   };
 
@@ -535,6 +607,20 @@
       if (moneyIn) moneyIn.textContent = money(totals.moneyIn);
       if (moneyOut) moneyOut.textContent = money(totals.moneyOut);
       if (openItems) openItems.textContent = totals.openItems;
+      const revenueTotal = $("#finance-revenue-total");
+      const expenseTotal = $("#finance-expense-total");
+      const budgetTotal = $("#finance-budget-total");
+      const taxTotal = $("#finance-tax-total");
+      const netTotal = $("#finance-net-total");
+      const openTotal = $("#finance-open-total");
+      const entryTotal = $("#finance-entry-total");
+      if (revenueTotal) revenueTotal.textContent = money(totals.moneyIn);
+      if (expenseTotal) expenseTotal.textContent = money(totals.moneyOut);
+      if (budgetTotal) budgetTotal.textContent = money(totals.budgets);
+      if (taxTotal) taxTotal.textContent = money(totals.taxes);
+      if (netTotal) netTotal.textContent = money(totals.moneyIn - totals.moneyOut);
+      if (openTotal) openTotal.textContent = totals.openItems;
+      if (entryTotal) entryTotal.textContent = totals.entries;
     }
 
     $("#erp-actions").innerHTML = blueprint.actions
