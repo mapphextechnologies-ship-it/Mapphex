@@ -81,7 +81,7 @@
     },
     finance: {
       entity: "Transaction",
-      form: ["Name", "Type", "Amount", "Status"],
+      form: ["What happened", "Money type", "Amount", "Paid or waiting"],
       responsibilities: ["Money In", "Money Out", "Sales", "Expenses", "Payments", "Reports", "Activity"],
       reports: ["Daily report", "Weekly report", "Monthly report", "Sales", "Expenses", "Payments"],
       workflows: [["Add sale", "sales"], ["Add expense", "finance"], ["Add product", "inventory"], ["Generate report", "reporting"]],
@@ -248,23 +248,23 @@
   const menuItemsFor = (moduleId, moduleDef) => {
     if (moduleId === "finance") {
       return [
-        ["Dashboard", "dashboard", "dashboard"],
-        ["Money In", "finance-money-in-page", "money-in"],
-        ["Money Out", "finance-money-out-page", "money-out"],
-        ["Sales", "finance-sales-page", "sales"],
-        ["Stock", "finance-stock-page", "stock"],
-        ["Customers", "finance-customers-page", "customers"],
-        ["Employees", "finance-employees-page", "employees"],
-        ["Reports", "reports", "reports"],
-        ["Notifications", "finance-notifications-page", "notifications"],
-        ["Settings", "finance-settings", "settings"],
-        ["Help", "finance-help-page", "help"],
-        ["Logout", "logout", "logout"],
-      ].map(([label, target, hash]) => ({
+        ["Dashboard", "dashboard", "dashboard", "D"],
+        ["Money In", "finance-money-in-page", "money-in", "+"],
+        ["Money Out", "finance-money-out-page", "money-out", "-"],
+        ["Sales", "finance-sales-page", "sales", "S"],
+        ["Stock", "finance-stock-page", "stock", "P"],
+        ["Customers", "finance-customers-page", "customers", "C"],
+        ["Employees", "finance-employees-page", "employees", "E"],
+        ["Reports", "reports", "reports", "R"],
+        ["Notifications", "finance-notifications-page", "notifications", "!"],
+        ["Settings", "finance-settings", "settings", "*"],
+        ["Help", "finance-help-page", "help", "?"],
+        ["Logout", "logout", "logout", "X"],
+      ].map(([label, target, hash, icon]) => ({
         label,
         target,
         hash,
-        icon: label.slice(0, 1).toUpperCase(),
+        icon,
       }));
     }
     const blueprint = blueprintFor(moduleId);
@@ -284,7 +284,7 @@
   };
 
   const PORTAL_VIEW_GROUPS = {
-    dashboard: ["portal-kpis", "finance-dashboard"],
+    dashboard: ["finance-dashboard"],
     "portal-records": ["portal-records"],
     approvals: ["approvals"],
     reports: ["reports"],
@@ -470,10 +470,14 @@
     $("#portal-dashboard")?.classList.add("finance-hero-section");
     $("#portal-records")?.classList.add("finance-transactions-panel");
     const recordCopy = $("#module-workflow-subtitle");
-    if (recordCopy) recordCopy.textContent = "Add sales, payments, expenses, salaries, purchases, and bills in a simple list.";
+    if (recordCopy) recordCopy.textContent = "Add one money record at a time. Keep it simple.";
     $("#module-record-form")?.classList.add("finance-entry-form");
     const recordTitle = $("#portal-records .panel-header h2");
     if (recordTitle) recordTitle.textContent = "Transactions";
+    const financeInputs = Array.from(document.querySelectorAll("#module-record-form input"));
+    ["Sold tomatoes", "Money In, Sale, Expense, Salary, Bill", "500", "Paid or Waiting"].forEach((placeholder, idx) => {
+      if (financeInputs[idx]) financeInputs[idx].placeholder = placeholder;
+    });
     const recordActions = $("#portal-records .panel-header .panel-actions");
     if (recordActions) {
       recordActions.innerHTML = `<input id="module-search" type="search" placeholder="Search transactions..." /><select id="finance-filter" aria-label="Filter transactions"><option value="all">All</option><option value="money-in">Money In</option><option value="money-out">Money Out</option><option value="sale">Sales</option><option value="payment">Payments</option><option value="expense">Expenses</option></select><button class="btn" data-erp-export="csv" type="button">Export</button><button class="btn" data-erp-export="pdf" type="button">Print</button>`;
@@ -490,37 +494,39 @@
     if (!$("#finance-dashboard")) {
       $("#portal-kpis")?.insertAdjacentHTML(
         "afterend",
-        `<section id="finance-dashboard" class="finance-control-grid" aria-label="Financial dashboard">
-          <article class="panel finance-summary-card">
-            <div class="panel-header"><div><p class="eyebrow">Dashboard</p><h2>Today at a glance</h2></div></div>
-            <div class="finance-balance-card">
-              <span>Profit</span>
-              <strong id="finance-dashboard-net">KES 0</strong>
-              <p>Money In minus Money Out.</p>
-              <div class="finance-meter"><i id="finance-meter-in"></i></div>
+        `<section id="finance-dashboard" class="panel finance-home" aria-label="Financial dashboard">
+          <div class="finance-home-head">
+            <div>
+              <p class="eyebrow">Dashboard</p>
+              <h2>My Money Today</h2>
+              <p>See what came in, what went out, and what is left.</p>
             </div>
-            <div class="finance-flow-grid">
-              <article><span>Money In</span><strong id="finance-dashboard-in">KES 0</strong></article>
-              <article><span>Money Out</span><strong id="finance-dashboard-out">KES 0</strong></article>
-              <article><span>Pending Payments</span><strong id="finance-dashboard-approvals">0</strong></article>
-            </div>
-          </article>
-          <article class="panel finance-quick-panel">
-            <div class="panel-header"><h2>Quick Actions</h2></div>
+            <span class="finance-soft-badge">Simple</span>
+          </div>
+          <div class="finance-simple-cards">
+            <article><span>Money In</span><strong id="finance-dashboard-in">KES 0</strong><small>Received</small></article>
+            <article><span>Money Out</span><strong id="finance-dashboard-out">KES 0</strong><small>Spent</small></article>
+            <article><span>Profit</span><strong id="finance-dashboard-net">KES 0</strong><small>Money left</small></article>
+            <article><span>Pending Payments</span><strong id="finance-dashboard-approvals">0</strong><small>Waiting</small></article>
+          </div>
+          <div class="finance-home-grid">
+            <article class="finance-home-block">
+              <h3>Quick Actions</h3>
             <div class="finance-quick-actions">
               <button class="erp-action finance-primary-action" data-finance-jump="money-in" type="button"><strong>Add Sale</strong><span>Record money received from a sale.</span></button>
               <button class="erp-action" data-finance-jump="money-out" type="button"><strong>Add Expense</strong><span>Record money spent.</span></button>
               <button class="erp-action" data-finance-jump="stock" type="button"><strong>Add Product</strong><span>Add or update a stock item.</span></button>
               <button class="erp-action" data-finance-jump="reports" type="button"><strong>Generate Report</strong><span>View a simple business summary.</span></button>
             </div>
-          </article>
-          <article class="panel finance-alert-panel">
-            <div class="panel-header"><h2>Recent Activity</h2></div>
+            </article>
+            <article class="finance-home-block">
+              <h3>Recent Activity</h3>
             <div class="finance-alert-list">
               <article><strong id="finance-open-invoices">0</strong><span>Pending payments</span></article>
               <article><strong id="finance-dashboard-health">Ready</strong><span id="finance-dashboard-note">Start by recording your first sale.</span></article>
             </div>
-          </article>
+            </article>
+          </div>
         </section>`,
       );
     }
@@ -545,44 +551,44 @@
     $("#finance-workspace-sections")?.insertAdjacentHTML(
       "afterend",
       `<section id="finance-money-in-page" class="panel finance-focus-panel" hidden>
-        <div class="panel-header"><div><h2>Money In</h2><p class="portal-manager-subtitle">Record sales, customer payments, mobile money payments, and bank deposits.</p></div><button class="btn primary" data-focus-finance-form type="button">Add Sale</button></div>
+        <div class="panel-header"><div><h2>Money In</h2><p class="portal-manager-subtitle">Sales, customer payments, mobile money, and bank deposits.</p></div><button class="btn primary" data-focus-finance-form type="button">Add Money In</button></div>
         <div class="finance-page-summary"><article><span>Received</span><strong id="finance-revenue-total">KES 0</strong></article><article><span>Payments</span><strong id="finance-payment-count">0</strong></article></div>
       </section>
       <section id="finance-money-out-page" class="panel finance-focus-panel" hidden>
-        <div class="panel-header"><div><h2>Money Out</h2><p class="portal-manager-subtitle">Record expenses, salaries, purchases, and bills.</p></div><button class="btn primary" data-focus-finance-form type="button">Add Expense</button></div>
+        <div class="panel-header"><div><h2>Money Out</h2><p class="portal-manager-subtitle">Expenses, salaries, purchases, and bills.</p></div><button class="btn primary" data-focus-finance-form type="button">Add Money Out</button></div>
         <div class="finance-page-summary"><article><span>Spent</span><strong id="finance-expense-total">KES 0</strong></article><article><span>Expenses</span><strong id="finance-expense-count">0</strong></article></div>
       </section>
       <section id="finance-sales-page" class="panel finance-focus-panel" hidden>
-        <div class="panel-header"><div><h2>Sales</h2><p class="portal-manager-subtitle">See sales history, receipts, orders, and payments.</p></div><button class="btn primary" data-focus-finance-form type="button">Add Sale</button></div>
+        <div class="panel-header"><div><h2>Sales</h2><p class="portal-manager-subtitle">Sales, receipts, orders, and payments.</p></div><button class="btn primary" data-focus-finance-form type="button">Add Sale</button></div>
         <div class="finance-page-summary"><article><span>Sales Total</span><strong id="finance-daily-revenue">KES 0</strong></article><article><span>Sales</span><strong id="finance-sales-count">0</strong></article></div>
       </section>
       <section id="finance-stock-page" class="panel finance-focus-panel" hidden>
-        <div class="panel-header"><h2>Stock</h2><span class="badge">Inventory</span></div>
-        <div class="finance-focus-body"><strong>Products and alerts</strong><p>Track products, add stock, supplier purchases, barcode items, and low stock alerts connected to finance.</p></div>
+        <div class="panel-header"><div><h2>Stock</h2><p class="portal-manager-subtitle">Products, stock count, and low stock alerts.</p></div><button class="btn primary" data-focus-finance-form type="button">Add Product</button></div>
+        <div class="finance-focus-body"><strong>Products</strong><p>Add products and update stock when items arrive or sell out.</p></div>
       </section>
       <section id="finance-customers-page" class="panel finance-focus-panel" hidden>
-        <div class="panel-header"><h2>Customers</h2><span class="badge">CRM</span></div>
-        <div class="finance-focus-body"><strong>Customer money history</strong><p>Customer profiles, credit balances, payment history, loyalty records, and unpaid invoices appear here.</p></div>
+        <div class="panel-header"><h2>Customers</h2></div>
+        <div class="finance-focus-body"><strong>People who buy</strong><p>See customer names, money owed, and payments made.</p></div>
       </section>
       <section id="finance-employees-page" class="panel finance-focus-panel" hidden>
-        <div class="panel-header"><h2>Employees</h2><span class="badge">Payroll</span></div>
-        <div class="finance-focus-body"><strong>Staff salaries</strong><p>Employee records, salaries, attendance, deductions, payslips, and payroll approvals connect to this area.</p></div>
+        <div class="panel-header"><h2>Employees</h2></div>
+        <div class="finance-focus-body"><strong>Staff and salaries</strong><p>Keep staff names, attendance, and salary payments in one place.</p></div>
       </section>
       <section id="finance-notifications-page" class="panel finance-focus-panel" hidden>
-        <div class="panel-header"><h2>Notifications</h2><span class="badge">Alerts</span></div>
+        <div class="panel-header"><h2>Notifications</h2></div>
         <div class="finance-focus-grid">
-          <article><span>Payments to review</span><strong id="finance-hero-budgets">0</strong></article>
+          <article><span>Payments to check</span><strong id="finance-hero-budgets">0</strong></article>
           <article><span>Pending payments</span><strong id="finance-open-total">0</strong></article>
           <article><span>Activity</span><strong id="finance-entry-total">0</strong></article>
         </div>
       </section>
       <section id="finance-settings" class="panel finance-focus-panel" hidden>
-        <div class="panel-header"><h2>Settings</h2><span class="badge">Business</span></div>
-        <div class="finance-focus-body"><strong>Business profile and security</strong><p>Manage business profile, users, roles, permissions, two-factor authentication, session controls, and tenant-isolated data settings.</p></div>
+        <div class="panel-header"><h2>Settings</h2></div>
+        <div class="finance-focus-body"><strong>Business setup</strong><p>Update business name, users, password safety, and basic settings.</p></div>
       </section>
       <section id="finance-help-page" class="panel finance-focus-panel" hidden>
-        <div class="panel-header"><h2>Help</h2><span class="badge">Fast guide</span></div>
-        <div class="finance-focus-body"><strong>Use the system in minutes</strong><p>Start with Dashboard, record sales in Money In, record bills in Money Out, then review Reports. Keep the menu simple so users do not think too much.</p></div>
+        <div class="panel-header"><h2>Help</h2></div>
+        <div class="finance-focus-body"><strong>Start here</strong><p>Sale happened? Tap Money In. Spent money? Tap Money Out. Need totals? Tap Reports.</p></div>
       </section>`,
     );
   };
