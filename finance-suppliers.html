@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Suppliers | Finance Portal</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/images/bytewave-icon-192.png" type="image/png" />
+    <link rel="stylesheet" href="finance-suppliers.css?v=1" />
+  </head>
+  <body data-finance-page="suppliers">
+    <div class="finance-shell">
+      <aside class="finance-sidebar">
+        <div class="sidebar-head"><div class="brand-mark">FI</div><div><p>Finance Portal</p><strong data-org-name>Business Finance</strong></div></div>
+        <nav class="finance-nav" aria-label="Finance portal navigation">
+          <p class="nav-group">Main</p><a class="nav-link" href="finance-workflow.html">Dashboard</a>
+          <p class="nav-group">Finance</p><a class="nav-link" href="finance-invoices.html">Invoices <span>3</span></a><a class="nav-link" href="finance-approvals.html">Approvals <span>4</span></a><a class="nav-link active" href="finance-suppliers.html">Suppliers</a><a class="nav-link" href="finance-budgets.html">Budgets</a>
+          <p class="nav-group">People</p><a class="nav-link" href="finance-employees.html">Employees</a><a class="nav-link" href="finance-payroll.html">Payroll <span>!</span></a>
+          <p class="nav-group">Accounting</p><a class="nav-link" href="finance-ledger.html">Ledger</a><a class="nav-link" href="finance-reports.html">Reports</a>
+          <p class="nav-group">Tools</p><a class="nav-link" href="finance-export.html">Export</a><a class="nav-link" href="finance-settings.html">Settings</a>
+        </nav>
+      </aside>
+      <div class="sidebar-backdrop" data-close-sidebar></div>
+      <main class="finance-main">
+        <header class="finance-topbar"><button class="menu-button" type="button" aria-label="Open menu" data-menu-button><span></span><span></span><span></span></button><div><p>Workspace Portal</p><h1>Suppliers</h1></div><a class="topbar-link" href="organization-module.html?portal=finance">Back to portal</a></header>
+        <section class="hero-panel"><div><p class="eyebrow">Finance</p><h2>Suppliers & vendors</h2><p>All payments going to external companies and service providers.</p></div><button class="primary-action" type="button">Add supplier</button></section>
+        <section class="summary-grid"><article><span>Suppliers</span><strong>2</strong><small>Saved vendors</small></article><article><span>Pending payments</span><strong>KES 0</strong><small>Awaiting payment</small></article><article><span>Approved</span><strong>1</strong><small>Ready</small></article><article><span>Review</span><strong>1</strong><small>Needs check</small></article></section>
+        <section class="content-card"><div class="content-head"><div><p class="eyebrow">Suppliers</p><h2>Supplier list</h2><p>External companies and service providers paid by the business.</p></div><div class="toolbar"><input type="search" placeholder="Search suppliers" /><select><option>All</option><option>Pending</option><option>Approved</option></select></div></div><div class="table-wrap"><table><thead><tr><th>Supplier</th><th>Status</th><th>Amount</th><th>Date</th><th>Action</th></tr></thead><tbody data-records-body></tbody></table></div></section>
+      </main>
+    </div>
+    <script src="finance-suppliers.js?v=1"></script>
+  </body>
+</html>

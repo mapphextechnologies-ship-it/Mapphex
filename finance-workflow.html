@@ -6,9 +6,9 @@
     <title>Finance Portal | MAPPHEX</title>
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/images/bytewave-icon-192.png" type="image/png" />
-    <link rel="stylesheet" href="finance-workflow.css?v=1" />
+    <link rel="stylesheet" href="finance-workflow.css?v=3" />
   </head>
-  <body>
+  <body data-finance-page="dashboard">
     <div class="finance-shell">
       <aside class="finance-sidebar" data-sidebar>
         <div class="sidebar-head">
@@ -21,25 +21,25 @@
 
         <nav class="finance-nav" aria-label="Finance portal navigation">
           <p class="nav-group">Main</p>
-          <button class="nav-link active" type="button" data-view="dashboard">Dashboard</button>
+          <a class="nav-link active" href="finance-workflow.html">Dashboard</a>
 
           <p class="nav-group">Finance</p>
-          <button class="nav-link" type="button" data-view="invoices">Invoices <span>3</span></button>
-          <button class="nav-link" type="button" data-view="approvals">Approvals <span>4</span></button>
-          <button class="nav-link" type="button" data-view="suppliers">Suppliers</button>
-          <button class="nav-link" type="button" data-view="budgets">Budgets</button>
+          <a class="nav-link" href="finance-invoices.html">Invoices <span>3</span></a>
+          <a class="nav-link" href="finance-approvals.html">Approvals <span>4</span></a>
+          <a class="nav-link" href="finance-suppliers.html">Suppliers</a>
+          <a class="nav-link" href="finance-budgets.html">Budgets</a>
 
           <p class="nav-group">People</p>
-          <button class="nav-link" type="button" data-view="employees">Employees</button>
-          <button class="nav-link" type="button" data-view="payroll">Payroll <span>!</span></button>
+          <a class="nav-link" href="finance-employees.html">Employees</a>
+          <a class="nav-link" href="finance-payroll.html">Payroll <span>!</span></a>
 
           <p class="nav-group">Accounting</p>
-          <button class="nav-link" type="button" data-view="ledger">Ledger</button>
-          <button class="nav-link" type="button" data-view="reports">Reports</button>
+          <a class="nav-link" href="finance-ledger.html">Ledger</a>
+          <a class="nav-link" href="finance-reports.html">Reports</a>
 
           <p class="nav-group">Tools</p>
-          <button class="nav-link" type="button" data-view="export">Export</button>
-          <button class="nav-link" type="button" data-view="settings">Settings</button>
+          <a class="nav-link" href="finance-export.html">Export</a>
+          <a class="nav-link" href="finance-settings.html">Settings</a>
         </nav>
       </aside>
 
@@ -110,22 +110,22 @@
           </div>
 
           <div class="dashboard-cards" data-dashboard-cards>
-            <button type="button" data-view-shortcut="invoices">
+            <a href="finance-invoices.html">
               <strong>Invoices</strong>
               <span>All bills received and sent.</span>
-            </button>
-            <button type="button" data-view-shortcut="approvals">
+            </a>
+            <a href="finance-approvals.html">
               <strong>Approvals</strong>
               <span>Requests waiting for sign-off.</span>
-            </button>
-            <button type="button" data-view-shortcut="suppliers">
+            </a>
+            <a href="finance-suppliers.html">
               <strong>Suppliers</strong>
               <span>Payments going to vendors.</span>
-            </button>
-            <button type="button" data-view-shortcut="reports">
+            </a>
+            <a href="finance-reports.html">
               <strong>Reports</strong>
               <span>Summaries by period or department.</span>
-            </button>
+            </a>
           </div>
 
           <div class="table-wrap">
@@ -146,6 +146,6 @@
       </main>
     </div>
 
-    <script src="finance-workflow.js?v=1"></script>
+    <script src="finance-workflow.js?v=3"></script>
   </body>
 </html>

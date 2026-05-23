@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Approvals | Finance Portal</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/images/bytewave-icon-192.png" type="image/png" />
+    <link rel="stylesheet" href="finance-approvals.css?v=1" />
+  </head>
+  <body data-finance-page="approvals">
+    <div class="finance-shell">
+      <aside class="finance-sidebar">
+        <div class="sidebar-head"><div class="brand-mark">FI</div><div><p>Finance Portal</p><strong data-org-name>Business Finance</strong></div></div>
+        <nav class="finance-nav" aria-label="Finance portal navigation">
+          <p class="nav-group">Main</p><a class="nav-link" href="finance-workflow.html">Dashboard</a>
+          <p class="nav-group">Finance</p><a class="nav-link" href="finance-invoices.html">Invoices <span>3</span></a><a class="nav-link active" href="finance-approvals.html">Approvals <span>4</span></a><a class="nav-link" href="finance-suppliers.html">Suppliers</a><a class="nav-link" href="finance-budgets.html">Budgets</a>
+          <p class="nav-group">People</p><a class="nav-link" href="finance-employees.html">Employees</a><a class="nav-link" href="finance-payroll.html">Payroll <span>!</span></a>
+          <p class="nav-group">Accounting</p><a class="nav-link" href="finance-ledger.html">Ledger</a><a class="nav-link" href="finance-reports.html">Reports</a>
+          <p class="nav-group">Tools</p><a class="nav-link" href="finance-export.html">Export</a><a class="nav-link" href="finance-settings.html">Settings</a>
+        </nav>
+      </aside>
+      <div class="sidebar-backdrop" data-close-sidebar></div>
+      <main class="finance-main">
+        <header class="finance-topbar"><button class="menu-button" type="button" aria-label="Open menu" data-menu-button><span></span><span></span><span></span></button><div><p>Workspace Portal</p><h1>Approvals</h1></div><a class="topbar-link" href="organization-module.html?portal=finance">Back to portal</a></header>
+        <section class="hero-panel"><div><p class="eyebrow">Finance</p><h2>Requests waiting for sign-off</h2><p>Review expenses, contracts, and purchases before money is committed.</p></div><button class="primary-action" type="button">Review approvals</button></section>
+        <section class="summary-grid"><article><span>Waiting</span><strong>4</strong><small>Need review</small></article><article><span>Expenses</span><strong>1</strong><small>Pending</small></article><article><span>Contracts</span><strong>1</strong><small>Pending</small></article><article><span>Purchases</span><strong>2</strong><small>Pending</small></article></section>
+        <section class="content-card"><div class="content-head"><div><p class="eyebrow">Approvals</p><h2>Approval list</h2><p>Finance requests that need a decision.</p></div><div class="toolbar"><input type="search" placeholder="Search approvals" /><select><option>All</option><option>Pending</option><option>Approved</option><option>Rejected</option></select></div></div><div class="table-wrap"><table><thead><tr><th>Request</th><th>Status</th><th>Amount</th><th>Date</th><th>Action</th></tr></thead><tbody data-records-body></tbody></table></div></section>
+      </main>
+    </div>
+    <script src="finance-approvals.js?v=1"></script>
+  </body>
+</html>
