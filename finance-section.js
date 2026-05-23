@@ -74,12 +74,54 @@
     );
 
   const renderNav = (tenantId) => {
-    $("#section-nav").innerHTML = Object.entries(SECTIONS)
+    const links = Object.entries(SECTIONS)
       .map(([key, item]) => {
         const href = `${item.page}?tenant=${encodeURIComponent(tenantId)}`;
-        return `<a class="${key === sectionKey ? "active" : ""}" href="${href}">${escapeHtml(item.label)}</a>`;
+        return `<a class="${key === sectionKey ? "active" : ""}" href="${href}"><span><b aria-hidden="true">${escapeHtml(item.label.slice(0, 1))}</b>${escapeHtml(item.label)}</span><small>${key === sectionKey ? "Open" : "View"}</small></a>`;
       })
       .join("");
+    const sectionNav = $("#section-nav");
+    if (sectionNav) sectionNav.innerHTML = links;
+    const sidebarNav = $("#finance-sidebar-nav");
+    if (sidebarNav) sidebarNav.innerHTML = links;
+  };
+
+  const installFinanceMenu = () => {
+    if ($("#finance-menu-toggle")) return;
+    document.body.insertAdjacentHTML(
+      "afterbegin",
+      `<button id="finance-menu-toggle" class="finance-menu-toggle" type="button" aria-label="Open Finance menu" aria-expanded="false"><span class="hamburger-lines" aria-hidden="true"></span></button>
+      <aside id="finance-sidebar" class="finance-sidebar" aria-label="Finance navigation" aria-hidden="true">
+        <div class="finance-sidebar-head">
+          <strong>Finance Menu</strong>
+          <button id="finance-menu-close" class="finance-close" type="button" aria-label="Close Finance menu">&times;</button>
+        </div>
+        <nav id="finance-sidebar-nav" class="finance-sidebar-nav"></nav>
+      </aside>
+      <div id="finance-menu-backdrop" class="finance-menu-backdrop" aria-hidden="true"></div>`,
+    );
+  };
+
+  const setMenuOpen = (open) => {
+    const shouldOpen = !!open;
+    $("#finance-sidebar")?.classList.toggle("is-open", shouldOpen);
+    $("#finance-menu-backdrop")?.classList.toggle("is-open", shouldOpen);
+    $("#finance-sidebar")?.setAttribute("aria-hidden", shouldOpen ? "false" : "true");
+    $("#finance-menu-backdrop")?.setAttribute("aria-hidden", shouldOpen ? "false" : "true");
+    $("#finance-menu-toggle")?.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
+    document.body.classList.toggle("finance-menu-open", shouldOpen);
+  };
+
+  const bindFinanceMenu = () => {
+    $("#finance-menu-toggle")?.addEventListener("click", () => setMenuOpen(!$("#finance-sidebar")?.classList.contains("is-open")));
+    $("#finance-menu-close")?.addEventListener("click", () => setMenuOpen(false));
+    $("#finance-menu-backdrop")?.addEventListener("click", () => setMenuOpen(false));
+    $("#finance-sidebar-nav")?.addEventListener("click", (event) => {
+      if (event.target.closest("a")) setMenuOpen(false);
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    });
   };
 
   const renderRows = (rows) => {
@@ -141,6 +183,8 @@
   };
 
   document.addEventListener("DOMContentLoaded", () => {
+    installFinanceMenu();
+    bindFinanceMenu();
     if (tenant) window.EnterpriseCore?.setTenant?.(tenant);
     const session = window.EnterpriseCore?.requireOrganizationSession?.(tenant);
     if (!session?.tenantId) {
