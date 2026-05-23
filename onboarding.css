@@ -643,6 +643,144 @@
   line-height: 1.55;
 }
 
+.finance-jixels-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+  gap: 18px;
+  margin-top: 18px;
+  border-color: rgba(91, 214, 255, 0.18);
+  background: linear-gradient(145deg, rgba(6, 16, 31, 0.9), rgba(0, 119, 255, 0.11));
+  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.32);
+}
+
+.finance-jixels-copy h2 {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.96);
+  font-size: clamp(30px, 4vw, 50px);
+  line-height: 1.03;
+}
+
+.finance-jixels-copy p:not(.eyebrow) {
+  max-width: 720px;
+  margin: 12px 0 0;
+  color: rgba(255, 255, 255, 0.68);
+  line-height: 1.65;
+}
+
+.finance-jixels-insights,
+.finance-review-list {
+  display: grid;
+  gap: 12px;
+}
+
+.finance-jixels-insights article,
+.finance-jixels-stats article,
+.finance-department-cards article,
+.finance-review-list article,
+.finance-action-grid a {
+  padding: 16px;
+  border: 1px solid rgba(91, 214, 255, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.finance-jixels-insights span,
+.finance-jixels-stats span,
+.finance-jixels-insights small,
+.finance-jixels-stats small,
+.finance-department-cards p,
+.finance-review-list p,
+.finance-action-grid p {
+  color: rgba(255, 255, 255, 0.64);
+  line-height: 1.55;
+}
+
+.finance-jixels-insights span,
+.finance-jixels-stats span {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.finance-jixels-insights strong,
+.finance-jixels-stats strong {
+  display: block;
+  margin-top: 8px;
+  color: rgba(255, 255, 255, 0.96);
+  font-size: clamp(24px, 3vw, 34px);
+}
+
+.finance-jixels-insights small,
+.finance-jixels-stats small {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+.finance-jixels-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.finance-jixels-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.finance-jixels-content > .panel,
+.finance-subpages {
+  border-color: rgba(91, 214, 255, 0.18);
+  background: rgba(6, 16, 31, 0.82);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
+}
+
+.finance-section-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.finance-section-heading h2 {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.94);
+  font-size: 22px;
+}
+
+.finance-department-cards,
+.finance-action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.finance-action-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.finance-department-cards h3,
+.finance-review-list h3,
+.finance-action-grid h3 {
+  margin: 0 0 8px;
+  color: rgba(255, 255, 255, 0.94);
+  font-size: 17px;
+}
+
+.finance-department-cards p,
+.finance-review-list p,
+.finance-action-grid p {
+  margin: 0;
+}
+
+.finance-subpages {
+  margin-top: 18px;
+}
+
 .finance-workspace-sections {
   display: grid;
   grid-template-columns: minmax(260px, 0.9fr) minmax(260px, 1fr) minmax(0, 1.25fr);
@@ -1122,6 +1260,11 @@
   .module-shared-grid,
   .finance-dashboard-panel,
   .finance-guide-grid,
+  .finance-jixels-hero,
+  .finance-jixels-stats,
+  .finance-jixels-content,
+  .finance-department-cards,
+  .finance-action-grid,
   .finance-flow-grid,
   .finance-workspace-sections,
   .finance-focus-grid,

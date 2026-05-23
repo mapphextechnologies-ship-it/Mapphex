@@ -282,7 +282,7 @@
   };
 
   const PORTAL_VIEW_GROUPS = {
-    dashboard: ["portal-dashboard", "portal-kpis", "dashboard", "finance-guide"],
+    dashboard: ["portal-dashboard", "portal-kpis", "dashboard", "finance-overview", "finance-stats", "finance-workareas", "finance-subpages"],
     "portal-records": ["portal-records"],
     approvals: ["approvals"],
     reports: ["reports"],
@@ -306,6 +306,10 @@
       "approvals",
       "reports",
       "finance-guide",
+      "finance-overview",
+      "finance-stats",
+      "finance-workareas",
+      "finance-subpages",
       "finance-revenue",
       "finance-expenses",
       "finance-budgets",
@@ -464,13 +468,52 @@
         <article class="kpi"><div class="kpi-label">Money Out</div><div id="finance-money-out" class="kpi-value">KES 0</div><div class="kpi-foot muted">Expenses, purchases, payroll</div></article>
         <article class="kpi"><div class="kpi-label">Open Items</div><div id="finance-open-items" class="kpi-value">0</div><div class="kpi-foot muted">Pending or unpaid entries</div></article>`;
     }
-    if (!$("#finance-guide")) {
+    if (!$("#finance-overview")) {
       $("#portal-kpis")?.insertAdjacentHTML(
         "afterend",
-        `<section id="finance-guide" class="finance-guide-grid" aria-label="Finance workflow">
-          <article><span>01</span><strong>Record</strong><p>Add income, expenses, invoices, payments, payroll, budgets, and taxes into the ledger.</p></article>
-          <article><span>02</span><strong>Approve</strong><p>Review payroll and purchase approvals before they affect finance records.</p></article>
-          <article><span>03</span><strong>Report</strong><p>Export clean finance reports for income, expenses, invoices, payments, payroll, and audit review.</p></article>
+        `<section id="finance-overview" class="panel finance-jixels-hero" aria-label="Finance operations">
+          <div class="finance-jixels-copy">
+            <p class="eyebrow">Finance Module</p>
+            <h2>Finance Management Portal</h2>
+            <p>Control branch revenue, expense approvals, budget performance, and executive financial reporting.</p>
+          </div>
+          <div class="finance-jixels-insights">
+            <article><span>Monthly Revenue</span><strong id="finance-hero-revenue">KES 0</strong><small>Consolidated sales revenue</small></article>
+            <article><span>Budget Requests</span><strong id="finance-hero-budgets">0</strong><small>Awaiting review</small></article>
+          </div>
+        </section>
+        <section id="finance-stats" class="finance-jixels-stats" aria-label="Finance stats">
+          <article><span>Daily Revenue</span><strong id="finance-daily-revenue">KES 0</strong><small>Live branch inflow</small></article>
+          <article><span>Expense Requests</span><strong id="finance-expense-requests">0</strong><small>Submitted for approval</small></article>
+          <article><span>Budget Utilization</span><strong id="finance-budget-usage">0%</strong><small>Current cycle usage</small></article>
+          <article><span>Outstanding Invoices</span><strong id="finance-open-invoices">0</strong><small>Supplier and service invoices</small></article>
+        </section>
+        <section id="finance-workareas" class="finance-jixels-content">
+          <article class="panel">
+            <div class="finance-section-heading"><div><p class="eyebrow">Finance Work Areas</p><h2>Finance Functions</h2></div><span class="badge">Controlled</span></div>
+            <div class="finance-department-cards">
+              <article><h3>Transactions</h3><p>Monitor branch revenue entries and cash flow movement.</p></article>
+              <article><h3>Budgeting</h3><p>Allocate and review departmental and branch spending plans.</p></article>
+              <article><h3>Expense Control</h3><p>Approve requests and verify spending accountability.</p></article>
+              <article><h3>Finance Reports</h3><p>Generate monthly and executive summaries for management review.</p></article>
+            </div>
+          </article>
+          <article class="panel">
+            <div class="finance-section-heading"><div><p class="eyebrow">Verification Queue</p><h2>Finance Review Queue</h2></div><span class="badge">Action</span></div>
+            <div class="finance-review-list">
+              <article><h3>Budget Revision</h3><p><span id="finance-budget-review-count">0</span> branch budget revisions are awaiting approval.</p></article>
+              <article><h3>Treasury Follow-up</h3><p>Supplier payment and payroll items are tracked before money is committed.</p></article>
+              <article><h3>Executive Report</h3><p>Current finance summary is ready for management review once ledger records are added.</p></article>
+            </div>
+          </article>
+        </section>
+        <section id="finance-subpages" class="panel finance-subpages">
+          <div class="finance-section-heading"><div><p class="eyebrow">Finance Subpages</p><h2>Operational Screens</h2></div><span class="badge">Workflow</span></div>
+          <div class="finance-action-grid">
+            <a href="#transactions" data-finance-jump="transactions"><h3>Transactions</h3><p>Sales entries, branch remittances, and revenue verification records.</p></a>
+            <a href="#budgets" data-finance-jump="budgets"><h3>Budgets</h3><p>Department allocations, branch requests, and approval workflow.</p></a>
+            <a href="#expenses" data-finance-jump="expenses"><h3>Expenses</h3><p>Expense submissions, vendor payments, and approval tracking.</p></a>
+          </div>
         </section>`,
       );
     }
@@ -647,6 +690,7 @@
       const meterIn = $("#finance-meter-in");
       const meterOut = $("#finance-meter-out");
       const scale = Math.max(totals.moneyIn, totals.moneyOut, 1);
+      const pendingApprovals = approvals.filter((item) => item.status === "pending").length;
       if (revenueTotal) revenueTotal.textContent = money(totals.moneyIn);
       if (expenseTotal) expenseTotal.textContent = money(totals.moneyOut);
       if (budgetTotal) budgetTotal.textContent = money(totals.budgets);
@@ -657,11 +701,25 @@
       if (dashNet) dashNet.textContent = money(totals.moneyIn - totals.moneyOut);
       if (dashIn) dashIn.textContent = money(totals.moneyIn);
       if (dashOut) dashOut.textContent = money(totals.moneyOut);
-      if (dashApprovals) dashApprovals.textContent = approvals.filter((item) => item.status === "pending").length;
+      if (dashApprovals) dashApprovals.textContent = pendingApprovals;
       if (dashHealth) dashHealth.textContent = totals.entries ? "Active" : "Ready";
       if (dashNote) dashNote.textContent = totals.entries ? `${totals.entries} finance entr${totals.entries === 1 ? "y" : "ies"} recorded in the ledger.` : "Add the first finance entry to activate reporting.";
       if (meterIn) meterIn.style.width = `${Math.max(4, Math.round((totals.moneyIn / scale) * 100))}%`;
       if (meterOut) meterOut.style.width = `${Math.max(4, Math.round((totals.moneyOut / scale) * 100))}%`;
+      const heroRevenue = $("#finance-hero-revenue");
+      const heroBudgets = $("#finance-hero-budgets");
+      const dailyRevenue = $("#finance-daily-revenue");
+      const expenseRequests = $("#finance-expense-requests");
+      const budgetUsage = $("#finance-budget-usage");
+      const openInvoices = $("#finance-open-invoices");
+      const budgetReviewCount = $("#finance-budget-review-count");
+      if (heroRevenue) heroRevenue.textContent = money(totals.moneyIn);
+      if (heroBudgets) heroBudgets.textContent = pendingApprovals;
+      if (dailyRevenue) dailyRevenue.textContent = money(totals.moneyIn);
+      if (expenseRequests) expenseRequests.textContent = pendingApprovals || totals.openItems;
+      if (budgetUsage) budgetUsage.textContent = totals.budgets ? `${Math.min(100, Math.round((totals.moneyOut / Math.max(totals.budgets, 1)) * 100))}%` : "0%";
+      if (openInvoices) openInvoices.textContent = totals.openItems;
+      if (budgetReviewCount) budgetReviewCount.textContent = pendingApprovals;
     }
 
     $("#erp-actions").innerHTML = blueprint.actions
@@ -1180,6 +1238,14 @@
       });
 
       document.addEventListener("click", (event) => {
+        const financeJump = event.target.closest("[data-finance-jump]");
+        if (financeJump) {
+          event.preventDefault();
+          const target = financeJump.dataset.financeJump || "transactions";
+          const link = Array.from(document.querySelectorAll("[data-module-nav]")).find((item) => item.dataset.moduleNav === target);
+          if (link) activatePortalMenuItem(link);
+          return;
+        }
         const action = event.target.closest("[data-erp-action]");
         if (action) {
           if (moduleId === "finance") {
