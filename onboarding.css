@@ -487,13 +487,12 @@
 
 .finance-workspace-sections {
   display: grid;
-  gap: 18px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
 }
 
 .finance-workspace {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  display: contents;
 }
 
 .finance-workspace > .panel {
@@ -504,6 +503,10 @@
 
 .finance-entry-form {
   grid-template-columns: minmax(180px, 1.2fr) minmax(150px, 0.9fr) minmax(130px, 0.8fr) minmax(130px, 0.8fr) auto;
+}
+
+.finance-simple-page .erp-report-grid {
+  grid-template-columns: 1fr;
 }
 
 .erp-action-list,
@@ -838,7 +841,7 @@
   .portal-hub-grid,
   .module-app-shell,
   .module-shared-grid,
-  .finance-workspace,
+  .finance-workspace-sections,
   .erp-kpi-grid,
   .erp-dashboard-grid,
   .erp-work-grid,
@@ -909,6 +912,12 @@
 
   .finance-entry-form {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 981px) and (max-width: 1200px) {
+  .finance-workspace-sections {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
