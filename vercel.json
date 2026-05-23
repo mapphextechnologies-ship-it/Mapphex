@@ -7,6 +7,26 @@
   },
   "rewrites": [
     {
+      "source": "/workspace",
+      "destination": "/organization-workspace.html"
+    },
+    {
+      "source": "/login",
+      "destination": "/organization-login.html"
+    },
+    {
+      "source": "/register",
+      "destination": "/organization-register.html"
+    },
+    {
+      "source": "/finance",
+      "destination": "/organization-module.html?portal=finance"
+    },
+    {
+      "source": "/portal/finance",
+      "destination": "/organization-module.html?portal=finance"
+    },
+    {
       "source": "/_internal/mapphex-control",
       "destination": "/super-admin-login.html"
     },
