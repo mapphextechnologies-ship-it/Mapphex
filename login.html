@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="refresh" content="0; url=organization-login.html" />
+    <title>Opening Login</title>
+  </head>
+  <body>
+    <script>
+      const target = new URL("organization-login.html", window.location.href);
+      target.search = window.location.search;
+      window.location.replace(target.toString());
+    </script>
+    <a href="organization-login.html">Open login</a>
+  </body>
+</html>
