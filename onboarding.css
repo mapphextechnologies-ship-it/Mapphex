@@ -606,7 +606,7 @@
 
 .finance-workspace-sections {
   display: grid;
-  grid-template-columns: minmax(260px, 0.9fr) minmax(0, 1.25fr);
+  grid-template-columns: minmax(220px, 0.7fr) minmax(0, 1.6fr);
   gap: 14px;
   margin-top: 18px;
   align-items: start;
