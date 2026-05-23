@@ -401,6 +401,20 @@
     setPortalView(target);
   };
 
+  const activatePortalMenuItem = (link) => {
+    if (!link) return;
+    const nav = link.dataset.moduleNav || "dashboard";
+    const target = link.dataset.moduleTarget || "dashboard";
+    document.querySelectorAll("[data-module-nav]").forEach((item) => {
+      const active = item === link;
+      item.classList.toggle("active", active);
+      if (active) item.setAttribute("aria-current", "page");
+      else item.removeAttribute("aria-current");
+    });
+    history.replaceState(null, "", `#${nav}`);
+    setPortalView(target);
+  };
+
   const renderForm = (workflow) => {
     $("#module-record-form").innerHTML =
       workflow.labels
@@ -1120,8 +1134,7 @@
         const link = event.target.closest("[data-module-nav]");
         if (link) {
           event.preventDefault();
-          history.replaceState(null, "", `#${link.dataset.moduleNav}`);
-          setActivePortalNav();
+          activatePortalMenuItem(link);
           closeMobileMenu();
         }
       });
