@@ -598,18 +598,23 @@
   box-shadow: 0 22px 54px rgba(0, 0, 0, 0.32);
 }
 
-.finance-actions-panel {
+.finance-actions-panel,
+.finance-department-grid > .panel {
   border-color: rgba(91, 214, 255, 0.18);
   background: rgba(6, 16, 31, 0.82);
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
 }
 
-.finance-workspace-sections {
+.finance-department-grid {
   display: grid;
-  grid-template-columns: minmax(220px, 0.7fr) minmax(0, 1.6fr);
+  grid-template-columns: minmax(260px, 1fr) minmax(260px, 1fr) minmax(320px, 1.25fr);
   gap: 14px;
   margin-top: 18px;
   align-items: start;
+}
+
+.finance-workspace-sections {
+  display: none;
 }
 
 .finance-workspace-sections > .panel {
@@ -618,30 +623,26 @@
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
 }
 
-.finance-simple-page #reports {
-  grid-column: 1 / -1;
-  width: 100%;
-}
-
 .finance-entry-form {
   grid-template-columns: minmax(180px, 1.2fr) minmax(150px, 0.9fr) minmax(130px, 0.8fr) minmax(130px, 0.8fr) auto;
 }
 
 .finance-simple-page #reports .erp-report-grid {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
-  overflow-x: auto;
-  padding-bottom: 18px;
+  overflow: visible;
+  padding-bottom: 16px;
 }
 
 .finance-simple-page #reports .erp-report-grid .finance-report-button {
-  flex: 0 0 190px;
+  width: 100%;
   min-height: 46px;
   white-space: nowrap;
 }
 
 .finance-simple-page .erp-action-list {
-  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  grid-template-columns: 1fr;
 }
 
 .finance-simple-page .erp-action {
@@ -1086,6 +1087,7 @@
   .module-app-shell,
   .module-shared-grid,
   .finance-dashboard-panel,
+  .finance-department-grid,
   .finance-flow-grid,
   .finance-workspace-sections,
   .finance-focus-grid,
@@ -1164,12 +1166,12 @@
 }
 
 @media (min-width: 981px) and (max-width: 1200px) {
-  .finance-workspace-sections {
+  .finance-department-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .finance-simple-page #reports .erp-report-grid .finance-report-button {
-    flex-basis: 140px;
+  .finance-simple-page #reports {
+    grid-column: 1 / -1;
   }
 }
 

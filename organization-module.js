@@ -282,7 +282,7 @@
   };
 
   const PORTAL_VIEW_GROUPS = {
-    dashboard: ["portal-dashboard", "portal-kpis", "dashboard", "finance-guide", "finance-actions-panel"],
+    dashboard: ["portal-dashboard", "portal-kpis", "dashboard", "finance-guide", "finance-actions-panel", "approvals", "reports"],
     "portal-records": ["portal-records"],
     approvals: ["approvals"],
     reports: ["reports"],
@@ -491,27 +491,25 @@
     if (!$("#finance-actions-panel")) {
       $("#finance-guide")?.insertAdjacentHTML(
         "afterend",
-        `<section id="finance-actions-panel" class="panel finance-actions-panel">
-          <div class="panel-header"><h2>Workflow Actions</h2><span class="badge">Finance</span></div>
-          <div id="erp-actions" class="erp-action-list"></div>
-        </section>`,
+        `<div id="finance-department-grid" class="finance-department-grid">
+          <section id="finance-actions-panel" class="panel finance-actions-panel">
+            <div class="panel-header"><h2>Department Actions</h2><span class="badge">Workflow</span></div>
+            <div id="erp-actions" class="erp-action-list"></div>
+          </section>
+          <article id="approvals" class="panel">
+            <div class="panel-header"><h2>Approvals Inbox</h2><span id="erp-approval-count" class="badge">0 pending</span></div>
+            <div id="erp-approvals" class="erp-approval-list"></div>
+          </article>
+          <article id="reports" class="panel">
+            <div class="panel-header"><h2>Reports & Audit</h2><span class="badge">PDF / Excel</span></div>
+            <div id="erp-reports" class="erp-report-grid"></div>
+          </article>
+        </div>`,
       );
     }
     if ($("#finance-workspace-sections")) return;
+    $("#portal-records")?.insertAdjacentHTML("afterend", `<div id="finance-workspace-sections" class="finance-workspace-sections" hidden></div>`);
     $("#portal-records")?.insertAdjacentHTML(
-      "afterend",
-      `<div id="finance-workspace-sections" class="finance-workspace-sections">
-        <article id="approvals" class="panel">
-          <div class="panel-header"><h2>Approvals</h2><span id="erp-approval-count" class="badge">0 pending</span></div>
-          <div id="erp-approvals" class="erp-approval-list"></div>
-        </article>
-        <article id="reports" class="panel">
-          <div class="panel-header"><h2>Finance Reports</h2><span class="badge">Export Ready</span></div>
-          <div id="erp-reports" class="erp-report-grid"></div>
-        </article>
-      </div>`,
-    );
-    $("#finance-workspace-sections")?.insertAdjacentHTML(
       "afterend",
       `<section id="finance-revenue" class="panel finance-focus-panel" hidden>
         <div class="panel-header"><h2>Revenue</h2><span class="badge">Money In</span></div>
