@@ -502,42 +502,92 @@
   background: rgba(255, 255, 255, 0.07);
 }
 
-.finance-guide-grid {
+.finance-dashboard-panel {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.45fr) minmax(260px, 0.8fr);
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid rgba(211, 154, 103, 0.28);
+  border-radius: 8px;
+  background: rgba(17, 11, 8, 0.82);
+  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.32);
+}
+
+.finance-dashboard-main {
+  display: grid;
   gap: 14px;
 }
 
-.finance-guide-grid article {
-  min-height: 142px;
-  padding: 16px;
+.finance-balance-card,
+.finance-flow-grid article,
+.finance-dashboard-side article {
+  padding: 14px;
   border: 1px solid rgba(173, 122, 82, 0.20);
   border-radius: 8px;
   background: rgba(23, 16, 12, 0.74);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
 }
 
-.finance-guide-grid span,
-.finance-guide-grid strong {
+.finance-balance-card span,
+.finance-flow-grid span,
+.finance-dashboard-side span {
   display: block;
-}
-
-.finance-guide-grid span {
-  color: #d39a67;
+  color: rgba(255, 255, 255, 0.62);
   font-size: 12px;
-  font-weight: 900;
 }
 
-.finance-guide-grid strong {
+.finance-balance-card strong {
+  display: block;
   margin-top: 8px;
   color: rgba(255, 255, 255, 0.94);
-  font-size: 20px;
+  font-size: clamp(34px, 5vw, 56px);
 }
 
-.finance-guide-grid p {
+.finance-balance-card p,
+.finance-dashboard-side p {
   margin: 8px 0 0;
   color: rgba(255, 255, 255, 0.68);
   line-height: 1.55;
+}
+
+.finance-flow-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.finance-flow-grid strong,
+.finance-dashboard-side strong {
+  display: block;
+  margin-top: 8px;
+  color: rgba(255, 255, 255, 0.94);
+  font-size: 24px;
+}
+
+.finance-meter {
+  height: 8px;
+  margin-top: 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.10);
+  overflow: hidden;
+}
+
+.finance-meter i {
+  display: block;
+  width: 4%;
+  height: 100%;
+  border-radius: inherit;
+  background: #d39a67;
+}
+
+.finance-dashboard-side {
+  display: grid;
+  gap: 12px;
+}
+
+.finance-dashboard-side ul {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  color: rgba(255, 255, 255, 0.70);
 }
 
 .finance-ledger-panel {
@@ -989,7 +1039,8 @@
   .portal-hub-grid,
   .module-app-shell,
   .module-shared-grid,
-  .finance-guide-grid,
+  .finance-dashboard-panel,
+  .finance-flow-grid,
   .finance-workspace-sections,
   .finance-focus-grid,
   .finance-simple-page .erp-action-list,

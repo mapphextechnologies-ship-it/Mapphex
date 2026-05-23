@@ -453,10 +453,24 @@
     if (!$("#finance-guide")) {
       $("#portal-kpis")?.insertAdjacentHTML(
         "afterend",
-        `<section id="finance-guide" class="finance-guide-grid" aria-label="Finance workflow">
-          <article><span>01</span><strong>Record</strong><p>Add income, expenses, invoices, payments, payroll, budgets, and taxes into the ledger.</p></article>
-          <article><span>02</span><strong>Approve</strong><p>Review payroll and purchase approvals before they affect finance records.</p></article>
-          <article><span>03</span><strong>Report</strong><p>Export clean finance reports for income, expenses, invoices, payments, payroll, and audit review.</p></article>
+        `<section id="finance-guide" class="finance-dashboard-panel" aria-label="Finance dashboard">
+          <div class="finance-dashboard-main">
+            <div class="panel-header"><h2>Financial Dashboard</h2><span class="badge">Live summary</span></div>
+            <div class="finance-balance-card">
+              <span>Net Position</span>
+              <strong id="finance-dashboard-net">KES 0</strong>
+              <p>Money in minus money out from Finance Ledger entries.</p>
+            </div>
+            <div class="finance-flow-grid">
+              <article><span>Money In</span><strong id="finance-dashboard-in">KES 0</strong><div class="finance-meter"><i id="finance-meter-in"></i></div></article>
+              <article><span>Money Out</span><strong id="finance-dashboard-out">KES 0</strong><div class="finance-meter"><i id="finance-meter-out"></i></div></article>
+            </div>
+          </div>
+          <aside class="finance-dashboard-side">
+            <article><span>Open Approvals</span><strong id="finance-dashboard-approvals">0</strong><p>Payroll and purchase items waiting for review.</p></article>
+            <article><span>Ledger Health</span><strong id="finance-dashboard-health">Ready</strong><p id="finance-dashboard-note">Add the first finance entry to activate reporting.</p></article>
+            <article><span>Next Steps</span><ul><li>Record entries</li><li>Approve pending items</li><li>Export reports</li></ul></article>
+          </aside>
         </section>`,
       );
     }
@@ -620,6 +634,15 @@
       const netTotal = $("#finance-net-total");
       const openTotal = $("#finance-open-total");
       const entryTotal = $("#finance-entry-total");
+      const dashNet = $("#finance-dashboard-net");
+      const dashIn = $("#finance-dashboard-in");
+      const dashOut = $("#finance-dashboard-out");
+      const dashApprovals = $("#finance-dashboard-approvals");
+      const dashHealth = $("#finance-dashboard-health");
+      const dashNote = $("#finance-dashboard-note");
+      const meterIn = $("#finance-meter-in");
+      const meterOut = $("#finance-meter-out");
+      const scale = Math.max(totals.moneyIn, totals.moneyOut, 1);
       if (revenueTotal) revenueTotal.textContent = money(totals.moneyIn);
       if (expenseTotal) expenseTotal.textContent = money(totals.moneyOut);
       if (budgetTotal) budgetTotal.textContent = money(totals.budgets);
@@ -627,6 +650,14 @@
       if (netTotal) netTotal.textContent = money(totals.moneyIn - totals.moneyOut);
       if (openTotal) openTotal.textContent = totals.openItems;
       if (entryTotal) entryTotal.textContent = totals.entries;
+      if (dashNet) dashNet.textContent = money(totals.moneyIn - totals.moneyOut);
+      if (dashIn) dashIn.textContent = money(totals.moneyIn);
+      if (dashOut) dashOut.textContent = money(totals.moneyOut);
+      if (dashApprovals) dashApprovals.textContent = approvals.filter((item) => item.status === "pending").length;
+      if (dashHealth) dashHealth.textContent = totals.entries ? "Active" : "Ready";
+      if (dashNote) dashNote.textContent = totals.entries ? `${totals.entries} finance entr${totals.entries === 1 ? "y" : "ies"} recorded in the ledger.` : "Add the first finance entry to activate reporting.";
+      if (meterIn) meterIn.style.width = `${Math.max(4, Math.round((totals.moneyIn / scale) * 100))}%`;
+      if (meterOut) meterOut.style.width = `${Math.max(4, Math.round((totals.moneyOut / scale) * 100))}%`;
     }
 
     $("#erp-actions").innerHTML = blueprint.actions
