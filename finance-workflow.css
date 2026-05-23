@@ -1,11 +1,11 @@
 :root {
   --bg: #080604;
-  --panel: rgba(23, 16, 12, 0.82);
-  --panel-strong: rgba(17, 11, 8, 0.92);
-  --line: rgba(173, 122, 82, 0.24);
+  --panel: rgba(6, 16, 31, 0.82);
+  --panel-strong: rgba(3, 10, 22, 0.92);
+  --line: rgba(91, 214, 255, 0.18);
   --text: rgba(255, 255, 255, 0.94);
   --muted: rgba(255, 255, 255, 0.66);
-  --accent: #d39a67;
+  --accent: #66dcff;
   --danger: #f87171;
   --radius: 8px;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
@@ -19,8 +19,9 @@ body {
   margin: 0;
   min-width: 320px;
   background:
-    radial-gradient(900px 520px at 12% -10%, rgba(211, 154, 103, 0.18), transparent 60%),
-    linear-gradient(180deg, #080604, #120c08 68%, #080604);
+    radial-gradient(900px 520px at 12% -10%, rgba(0, 119, 255, 0.22), transparent 60%),
+    radial-gradient(760px 480px at 92% 0%, rgba(91, 214, 255, 0.16), transparent 58%),
+    linear-gradient(180deg, #050914, #07111f 68%, #05070d);
   color: var(--text);
 }
 
@@ -159,7 +160,7 @@ h2 {
 .record-list article,
 .empty-state {
   padding: 12px;
-  border: 1px solid rgba(173, 122, 82, 0.18);
+  border: 1px solid rgba(91, 214, 255, 0.16);
   border-radius: var(--radius);
   background: var(--panel-strong);
 }
