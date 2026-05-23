@@ -1547,6 +1547,39 @@
   transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
 }
 
+.finance-simple-page .module-nav-group {
+  display: grid;
+  gap: 7px;
+  padding-top: 8px;
+}
+
+.finance-simple-page .module-nav-group + .module-nav-group {
+  margin-top: 10px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.finance-simple-page .module-nav-group > strong {
+  padding: 0 4px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.finance-simple-page .module-nav .nav-badge {
+  min-width: 24px;
+  min-height: 24px;
+  padding: 4px 7px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 950;
+}
+
 .finance-simple-page .module-nav a b {
   color: #064e3b;
   background: rgba(16, 185, 129, 0.14);
@@ -1663,6 +1696,70 @@
   margin: 0 0 14px;
   color: #0f172a;
   font-size: 22px;
+}
+
+.finance-structure-dashboard .finance-home-head {
+  padding-bottom: 2px;
+}
+
+.finance-structure-groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.finance-structure-list {
+  display: grid;
+  gap: 10px;
+}
+
+.finance-structure-card {
+  width: 100%;
+  min-height: 88px;
+  padding: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 12px;
+  background: #ffffff;
+  color: #0f172a;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+
+.finance-structure-card:hover,
+.finance-structure-card:focus-visible {
+  border-color: rgba(5, 150, 105, 0.28);
+  background: #ecfdf5;
+  box-shadow: 0 12px 28px rgba(5, 150, 105, 0.12);
+  transform: translateY(-2px);
+}
+
+.finance-structure-card strong,
+.finance-structure-card span {
+  display: block;
+}
+
+.finance-structure-card strong {
+  color: #0f172a;
+  font-size: 17px;
+}
+
+.finance-structure-card span {
+  margin-top: 7px;
+  color: #475569;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.finance-structure-card em {
+  margin-left: 6px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-style: normal;
+  font-size: 12px;
 }
 
 .finance-summary-card {
@@ -1814,7 +1911,8 @@
   .finance-control-grid,
   .finance-simple-page .finance-workspace-sections,
   .finance-simple-cards,
-  .finance-home-grid {
+  .finance-home-grid,
+  .finance-structure-groups {
     grid-template-columns: 1fr;
   }
 
@@ -1830,6 +1928,7 @@
   .finance-quick-actions,
   .finance-simple-cards,
   .finance-home-grid,
+  .finance-structure-groups,
   .finance-simple-page .finance-focus-grid {
     grid-template-columns: 1fr;
   }

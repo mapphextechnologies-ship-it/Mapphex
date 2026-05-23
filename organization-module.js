@@ -227,7 +227,7 @@
   };
 
   const PORTAL_MENUS = {
-    finance: ["Dashboard", "Money In", "Money Out", "Sales", "Stock", "Customers", "Employees", "Reports", "Notifications", "Settings", "Help", "Logout"],
+    finance: ["Dashboard", "Invoices", "Approvals", "Suppliers", "Budgets", "Employees", "Payroll", "Ledger", "Reports", "Export", "Settings"],
     hr: ["Dashboard", "Employees", "Attendance", "Leave Requests", "Payroll", "Recruitment", "Performance", "Schedules", "Reports"],
     pharmacy: ["Dashboard", "Medicines", "Inventory", "Prescriptions", "Customers", "Suppliers", "Sales", "Expiry Alerts", "Reports"],
     technology: ["Dashboard", "Projects", "Tasks", "Clients", "Developers", "Support Tickets", "Documentation", "Billing", "Analytics"],
@@ -248,23 +248,24 @@
   const menuItemsFor = (moduleId, moduleDef) => {
     if (moduleId === "finance") {
       return [
-        ["Dashboard", "dashboard", "dashboard", "D"],
-        ["Money In", "finance-money-in-page", "money-in", "+"],
-        ["Money Out", "finance-money-out-page", "money-out", "-"],
-        ["Sales", "finance-sales-page", "sales", "S"],
-        ["Stock", "finance-stock-page", "stock", "P"],
-        ["Customers", "finance-customers-page", "customers", "C"],
-        ["Employees", "finance-employees-page", "employees", "E"],
-        ["Reports", "reports", "reports", "R"],
-        ["Notifications", "finance-notifications-page", "notifications", "!"],
-        ["Settings", "finance-settings", "settings", "*"],
-        ["Help", "finance-help-page", "help", "?"],
-        ["Logout", "logout", "logout", "X"],
-      ].map(([label, target, hash, icon]) => ({
+        ["Main", "Dashboard", "dashboard", "dashboard", "D", ""],
+        ["Finance", "Invoices", "finance-invoices-page", "invoices", "I", "3"],
+        ["Finance", "Approvals", "approvals", "approvals", "A", "4"],
+        ["Finance", "Suppliers", "finance-suppliers-page", "suppliers", "S", ""],
+        ["Finance", "Budgets", "finance-budgets-page", "budgets", "B", ""],
+        ["People", "Employees", "finance-employees-page", "employees", "E", ""],
+        ["People", "Payroll", "finance-payroll-page", "payroll", "P", "!"],
+        ["Accounting", "Ledger", "portal-records", "ledger", "L", ""],
+        ["Accounting", "Reports", "reports", "reports", "R", ""],
+        ["Tools", "Export", "finance-export-page", "export", "X", ""],
+        ["Tools", "Settings", "finance-settings", "settings", "*", ""],
+      ].map(([group, label, target, hash, icon, badge]) => ({
+        group,
         label,
         target,
         hash,
         icon,
+        badge,
       }));
     }
     const blueprint = blueprintFor(moduleId);
@@ -288,15 +289,13 @@
     "portal-records": ["portal-records"],
     approvals: ["approvals"],
     reports: ["reports"],
-    "finance-money-in-page": ["finance-money-in-page", "portal-records"],
-    "finance-money-out-page": ["finance-money-out-page", "portal-records"],
-    "finance-sales-page": ["finance-sales-page", "portal-records"],
-    "finance-stock-page": ["finance-stock-page"],
-    "finance-customers-page": ["finance-customers-page"],
+    "finance-invoices-page": ["finance-invoices-page"],
+    "finance-suppliers-page": ["finance-suppliers-page"],
+    "finance-budgets-page": ["finance-budgets-page"],
     "finance-employees-page": ["finance-employees-page"],
-    "finance-notifications-page": ["finance-notifications-page"],
+    "finance-payroll-page": ["finance-payroll-page"],
+    "finance-export-page": ["finance-export-page"],
     "finance-settings": ["finance-settings"],
-    "finance-help-page": ["finance-help-page"],
     logout: [],
   };
 
@@ -313,15 +312,13 @@
       "reports",
       "finance-guide",
       "finance-dashboard",
-      "finance-money-in-page",
-      "finance-money-out-page",
-      "finance-sales-page",
-      "finance-stock-page",
-      "finance-customers-page",
+      "finance-invoices-page",
+      "finance-suppliers-page",
+      "finance-budgets-page",
       "finance-employees-page",
-      "finance-notifications-page",
+      "finance-payroll-page",
+      "finance-export-page",
       "finance-settings",
-      "finance-help-page",
     ].forEach((id) => {
       const section = document.getElementById(id);
       if (section) section.hidden = !visible.has(id);
@@ -367,6 +364,22 @@
   const renderNav = (moduleId, moduleDef) => {
     const items = menuItemsFor(moduleId, moduleDef);
     $("#module-sidebar-title").textContent = `${moduleDef.title} Menu`;
+    if (moduleId === "finance") {
+      const groups = items.reduce((list, item) => {
+        const last = list[list.length - 1];
+        if (!last || last.label !== item.group) list.push({ label: item.group, items: [] });
+        list[list.length - 1].items.push(item);
+        return list;
+      }, []);
+      $("#module-nav").innerHTML = groups
+        .map(
+          (group) => `<div class="module-nav-group"><strong>${escapeHtml(group.label)}</strong>${group.items
+            .map((item, idx) => `<a class="${item.hash === "dashboard" ? "active" : ""}" href="#${escapeHtml(item.hash)}" data-module-nav="${escapeHtml(item.hash)}" data-module-target="${escapeHtml(item.target)}"><span><b aria-hidden="true">${escapeHtml(item.icon)}</b>${escapeHtml(item.label)}</span>${item.badge ? `<small class="nav-badge">${escapeHtml(item.badge)}</small>` : ""}</a>`)
+            .join("")}</div>`,
+        )
+        .join("");
+      return;
+    }
     $("#module-nav").innerHTML = items
       .map((item, idx) => `<a class="${idx === 0 ? "active" : ""}" href="#${escapeHtml(item.hash)}" data-module-nav="${escapeHtml(item.hash)}" data-module-target="${escapeHtml(item.target)}"><span><b aria-hidden="true">${escapeHtml(item.icon)}</b>${escapeHtml(item.label)}</span><small>${idx === 0 ? "Open" : "View"}</small></a>`)
       .join("");
@@ -470,10 +483,10 @@
     $("#portal-dashboard")?.classList.add("finance-hero-section");
     $("#portal-records")?.classList.add("finance-transactions-panel");
     const recordCopy = $("#module-workflow-subtitle");
-    if (recordCopy) recordCopy.textContent = "Add one money record at a time. Keep it simple.";
+    if (recordCopy) recordCopy.textContent = "Full accounting record of all debit and credit entries.";
     $("#module-record-form")?.classList.add("finance-entry-form");
     const recordTitle = $("#portal-records .panel-header h2");
-    if (recordTitle) recordTitle.textContent = "Transactions";
+    if (recordTitle) recordTitle.textContent = "Ledger";
     const financeInputs = Array.from(document.querySelectorAll("#module-record-form input"));
     ["Sold tomatoes", "Money In, Sale, Expense, Salary, Bill", "500", "Paid or Waiting"].forEach((placeholder, idx) => {
       if (financeInputs[idx]) financeInputs[idx].placeholder = placeholder;
@@ -494,39 +507,64 @@
     if (!$("#finance-dashboard")) {
       $("#portal-kpis")?.insertAdjacentHTML(
         "afterend",
-        `<section id="finance-dashboard" class="panel finance-home" aria-label="Financial dashboard">
+        `<section id="finance-dashboard" class="panel finance-home finance-structure-dashboard" aria-label="Financial dashboard">
           <div class="finance-home-head">
             <div>
               <p class="eyebrow">Dashboard</p>
-              <h2>My Money Today</h2>
-              <p>See what came in, what went out, and what is left.</p>
+              <h2>Finance Portal</h2>
+              <p>Overview of all money — totals, pending items, recent activity at a glance.</p>
             </div>
-            <span class="finance-soft-badge">Simple</span>
+            <span class="finance-soft-badge">Main</span>
           </div>
           <div class="finance-simple-cards">
-            <article><span>Money In</span><strong id="finance-dashboard-in">KES 0</strong><small>Received</small></article>
-            <article><span>Money Out</span><strong id="finance-dashboard-out">KES 0</strong><small>Spent</small></article>
-            <article><span>Profit</span><strong id="finance-dashboard-net">KES 0</strong><small>Money left</small></article>
-            <article><span>Pending Payments</span><strong id="finance-dashboard-approvals">0</strong><small>Waiting</small></article>
+            <article><span>Total In</span><strong id="finance-dashboard-in">KES 0</strong><small>Money received</small></article>
+            <article><span>Total Out</span><strong id="finance-dashboard-out">KES 0</strong><small>Money spent</small></article>
+            <article><span>Balance</span><strong id="finance-dashboard-net">KES 0</strong><small>In minus out</small></article>
+            <article><span>Pending</span><strong id="finance-dashboard-approvals">0</strong><small>Needs review</small></article>
           </div>
-          <div class="finance-home-grid">
+          <div class="finance-structure-groups">
             <article class="finance-home-block">
-              <h3>Quick Actions</h3>
-            <div class="finance-quick-actions">
-              <button class="erp-action finance-primary-action" data-finance-jump="money-in" type="button"><strong>Add Sale</strong><span>Record money received from a sale.</span></button>
-              <button class="erp-action" data-finance-jump="money-out" type="button"><strong>Add Expense</strong><span>Record money spent.</span></button>
-              <button class="erp-action" data-finance-jump="stock" type="button"><strong>Add Product</strong><span>Add or update a stock item.</span></button>
-              <button class="erp-action" data-finance-jump="reports" type="button"><strong>Generate Report</strong><span>View a simple business summary.</span></button>
-            </div>
+              <h3>Main</h3>
+              <button class="finance-structure-card" data-finance-jump="dashboard" type="button"><strong>Dashboard</strong><span>Overview of all money — totals, pending items, recent activity at a glance.</span></button>
             </article>
             <article class="finance-home-block">
-              <h3>Recent Activity</h3>
-            <div class="finance-alert-list">
-              <article><strong id="finance-open-invoices">0</strong><span>Pending payments</span></article>
-              <article><strong id="finance-dashboard-health">Ready</strong><span id="finance-dashboard-note">Start by recording your first sale.</span></article>
-            </div>
+              <h3>Finance</h3>
+              <div class="finance-structure-list">
+                <button class="finance-structure-card" data-finance-jump="invoices" type="button"><strong>Invoices <em>3</em></strong><span>All bills received and sent — with approved / pending / rejected status.</span></button>
+                <button class="finance-structure-card" data-finance-jump="approvals" type="button"><strong>Approvals <em>4</em></strong><span>Requests waiting for sign-off — expenses, contracts, purchases.</span></button>
+                <button class="finance-structure-card" data-finance-jump="suppliers" type="button"><strong>Suppliers & vendors</strong><span>All payments going to external companies and service providers.</span></button>
+                <button class="finance-structure-card" data-finance-jump="budgets" type="button"><strong>Budgets</strong><span>Department budget allocations — how much is assigned and how much is used.</span></button>
+              </div>
             </article>
-          </div>
+            <article class="finance-home-block">
+              <h3>People</h3>
+              <div class="finance-structure-list">
+                <button class="finance-structure-card" data-finance-jump="employees" type="button"><strong>Employees</strong><span>Staff list with department, role, and contract type.</span></button>
+                <button class="finance-structure-card" data-finance-jump="payroll" type="button"><strong>Payroll <em>!</em></strong><span>Monthly salary runs — who gets paid, how much, and when.</span></button>
+              </div>
+            </article>
+            <article class="finance-home-block">
+              <h3>Accounting</h3>
+              <div class="finance-structure-list">
+                <button class="finance-structure-card" data-finance-jump="ledger" type="button"><strong>Ledger</strong><span>Full accounting record of all debit and credit entries.</span></button>
+                <button class="finance-structure-card" data-finance-jump="reports" type="button"><strong>Reports</strong><span>Financial summaries by period, department, or record type — exportable.</span></button>
+              </div>
+            </article>
+            <article class="finance-home-block">
+              <h3>Tools</h3>
+              <div class="finance-structure-list">
+                <button class="finance-structure-card" data-finance-jump="export" type="button"><strong>Export</strong><span>Download finance records for sharing or filing.</span></button>
+                <button class="finance-structure-card" data-finance-jump="settings" type="button"><strong>Settings</strong><span>Finance preferences, users, and business controls.</span></button>
+              </div>
+            </article>
+            <article class="finance-home-block">
+              <h3>Recent activity</h3>
+              <div class="finance-alert-list">
+                <article><strong id="finance-open-invoices">0</strong><span>Pending items</span></article>
+                <article><strong id="finance-dashboard-health">Ready</strong><span id="finance-dashboard-note">Finance activity will appear here.</span></article>
+              </div>
+            </article>
+            </div>
         </section>`,
       );
     }
@@ -535,7 +573,7 @@
       "afterend",
       `<div id="finance-workspace-sections" class="finance-workspace-sections">
         <article id="approvals" class="panel">
-          <div class="panel-header"><h2>Payments to Review</h2><span id="erp-approval-count" class="badge">0 pending</span></div>
+          <div class="panel-header"><div><h2>Approvals</h2><p class="portal-manager-subtitle">Requests waiting for sign-off — expenses, contracts, purchases.</p></div><span id="erp-approval-count" class="badge">0 pending</span></div>
           <div id="erp-approvals" class="erp-approval-list"></div>
         </article>
         <article id="finance-actions-panel" class="panel finance-actions-panel">
@@ -543,52 +581,40 @@
           <div id="erp-actions" class="erp-action-list"></div>
         </article>
         <article id="reports" class="panel">
-          <div class="panel-header"><h2>Reports</h2><span class="badge">Ready</span></div>
+          <div class="panel-header"><div><h2>Reports</h2><p class="portal-manager-subtitle">Financial summaries by period, department, or record type — exportable.</p></div><span class="badge">Ready</span></div>
           <div id="erp-reports" class="erp-report-grid"></div>
         </article>
       </div>`,
     );
     $("#finance-workspace-sections")?.insertAdjacentHTML(
       "afterend",
-      `<section id="finance-money-in-page" class="panel finance-focus-panel" hidden>
-        <div class="panel-header"><div><h2>Money In</h2><p class="portal-manager-subtitle">Sales, customer payments, mobile money, and bank deposits.</p></div><button class="btn primary" data-focus-finance-form type="button">Add Money In</button></div>
-        <div class="finance-page-summary"><article><span>Received</span><strong id="finance-revenue-total">KES 0</strong></article><article><span>Payments</span><strong id="finance-payment-count">0</strong></article></div>
+      `<section id="finance-invoices-page" class="panel finance-focus-panel" hidden>
+        <div class="panel-header"><div><h2>Invoices</h2><p class="portal-manager-subtitle">All bills received and sent — with approved / pending / rejected status.</p></div><button class="btn primary" data-focus-finance-form type="button">Add Invoice</button></div>
+        <div class="finance-page-summary"><article><span>Total invoices</span><strong>3</strong></article><article><span>Status</span><strong>Mixed</strong></article></div>
       </section>
-      <section id="finance-money-out-page" class="panel finance-focus-panel" hidden>
-        <div class="panel-header"><div><h2>Money Out</h2><p class="portal-manager-subtitle">Expenses, salaries, purchases, and bills.</p></div><button class="btn primary" data-focus-finance-form type="button">Add Money Out</button></div>
-        <div class="finance-page-summary"><article><span>Spent</span><strong id="finance-expense-total">KES 0</strong></article><article><span>Expenses</span><strong id="finance-expense-count">0</strong></article></div>
+      <section id="finance-suppliers-page" class="panel finance-focus-panel" hidden>
+        <div class="panel-header"><div><h2>Suppliers & vendors</h2><p class="portal-manager-subtitle">All payments going to external companies and service providers.</p></div><button class="btn primary" data-focus-finance-form type="button">Add Supplier</button></div>
+        <div class="finance-page-summary"><article><span>Suppliers</span><strong>0</strong></article><article><span>Payments</span><strong id="finance-expense-total">KES 0</strong></article></div>
       </section>
-      <section id="finance-sales-page" class="panel finance-focus-panel" hidden>
-        <div class="panel-header"><div><h2>Sales</h2><p class="portal-manager-subtitle">Sales, receipts, orders, and payments.</p></div><button class="btn primary" data-focus-finance-form type="button">Add Sale</button></div>
-        <div class="finance-page-summary"><article><span>Sales Total</span><strong id="finance-daily-revenue">KES 0</strong></article><article><span>Sales</span><strong id="finance-sales-count">0</strong></article></div>
-      </section>
-      <section id="finance-stock-page" class="panel finance-focus-panel" hidden>
-        <div class="panel-header"><div><h2>Stock</h2><p class="portal-manager-subtitle">Products, stock count, and low stock alerts.</p></div><button class="btn primary" data-focus-finance-form type="button">Add Product</button></div>
-        <div class="finance-focus-body"><strong>Products</strong><p>Add products and update stock when items arrive or sell out.</p></div>
-      </section>
-      <section id="finance-customers-page" class="panel finance-focus-panel" hidden>
-        <div class="panel-header"><h2>Customers</h2></div>
-        <div class="finance-focus-body"><strong>People who buy</strong><p>See customer names, money owed, and payments made.</p></div>
+      <section id="finance-budgets-page" class="panel finance-focus-panel" hidden>
+        <div class="panel-header"><div><h2>Budgets</h2><p class="portal-manager-subtitle">Department budget allocations — how much is assigned and how much is used.</p></div><button class="btn primary" data-focus-finance-form type="button">Add Budget</button></div>
+        <div class="finance-page-summary"><article><span>Assigned</span><strong id="finance-budget-total">KES 0</strong></article><article><span>Used</span><strong id="finance-expense-count">0</strong></article></div>
       </section>
       <section id="finance-employees-page" class="panel finance-focus-panel" hidden>
-        <div class="panel-header"><h2>Employees</h2></div>
-        <div class="finance-focus-body"><strong>Staff and salaries</strong><p>Keep staff names, attendance, and salary payments in one place.</p></div>
+        <div class="panel-header"><div><h2>Employees</h2><p class="portal-manager-subtitle">Staff list with department, role, and contract type.</p></div><button class="btn primary" data-focus-finance-form type="button">Add Employee</button></div>
+        <div class="finance-focus-body"><strong>Staff list</strong><p>Department, role, and contract type for each employee.</p></div>
       </section>
-      <section id="finance-notifications-page" class="panel finance-focus-panel" hidden>
-        <div class="panel-header"><h2>Notifications</h2></div>
-        <div class="finance-focus-grid">
-          <article><span>Payments to check</span><strong id="finance-hero-budgets">0</strong></article>
-          <article><span>Pending payments</span><strong id="finance-open-total">0</strong></article>
-          <article><span>Activity</span><strong id="finance-entry-total">0</strong></article>
-        </div>
+      <section id="finance-payroll-page" class="panel finance-focus-panel" hidden>
+        <div class="panel-header"><div><h2>Payroll</h2><p class="portal-manager-subtitle">Monthly salary runs — who gets paid, how much, and when.</p></div><button class="btn primary" data-focus-finance-form type="button">Add Payroll</button></div>
+        <div class="finance-page-summary"><article><span>Salary runs</span><strong>0</strong></article><article><span>Alert</span><strong>!</strong></article></div>
+      </section>
+      <section id="finance-export-page" class="panel finance-focus-panel" hidden>
+        <div class="panel-header"><div><h2>Export</h2><p class="portal-manager-subtitle">Download finance records for sharing or filing.</p></div><button class="btn primary" data-erp-export="csv" type="button">Export Excel</button></div>
+        <div class="finance-focus-body"><strong>Export tools</strong><p>Use Export Excel or Print from the records table when you need a copy.</p></div>
       </section>
       <section id="finance-settings" class="panel finance-focus-panel" hidden>
         <div class="panel-header"><h2>Settings</h2></div>
-        <div class="finance-focus-body"><strong>Business setup</strong><p>Update business name, users, password safety, and basic settings.</p></div>
-      </section>
-      <section id="finance-help-page" class="panel finance-focus-panel" hidden>
-        <div class="panel-header"><h2>Help</h2></div>
-        <div class="finance-focus-body"><strong>Start here</strong><p>Sale happened? Tap Money In. Spent money? Tap Money Out. Need totals? Tap Reports.</p></div>
+        <div class="finance-focus-body"><strong>Finance settings</strong><p>Finance preferences, users, and business controls.</p></div>
       </section>`,
     );
   };
