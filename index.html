@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MAPPHEX | Enterprise SaaS Ecosystem</title>
+    <title>MAPPHEX | Financial Management Portal</title>
     <meta
       name="description"
-      content="MAPPHEX is a premium enterprise SaaS ecosystem for multi-organization onboarding, secure business environments, modular tools, analytics, and operations."
+      content="MAPPHEX is a modern multi-business financial management portal for sales, expenses, stock, customers, employees, reports, roles, and secure tenant-isolated business data."
     />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/images/enterprise-icon-192.png" type="image/png" />
@@ -14,9 +14,9 @@
     <meta name="theme-color" content="#06101f" />
     <meta name="google-site-verification" content="wzAD8CVJpo9e42n621EItLUaeg7T0YNcEWqvh58MSMA" />
     <link rel="stylesheet" href="director.css" />
-    <link rel="stylesheet" href="home.css" />
+    <link rel="stylesheet" href="home.css?v=7" />
   </head>
-  <body data-page="home" class="mapphex-home">
+  <body data-page="home" class="mapphex-home financial-portal-home">
     <header class="site-nav home-drawer-nav" data-nav>
       <a class="site-brand" href="index.html" aria-label="MAPPHEX home">
         <img class="logo-img" src="/images/enterprise-logo.png" alt="MAPPHEX logo" />
@@ -31,12 +31,11 @@
 
       <nav class="site-links" aria-label="Main navigation" data-nav-menu>
         <a href="index.html">Home</a>
-        <a href="about.html">About</a>
-        <a href="services.html#services">Services</a>
-        <a href="pricing.html">Pricing</a>
-        <a href="features.html">Features</a>
-        <a href="security.html">Security</a>
-        <a href="contact.html">Contact</a>
+        <a href="#features">Features</a>
+        <a href="#modules">Modules</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#testimonials">Testimonials</a>
+        <a href="#contact">Contact</a>
       </nav>
 
       <div class="site-actions">
@@ -52,33 +51,33 @@
         <div class="hero-aura hero-aura-right" aria-hidden="true"></div>
 
         <div class="site-hero-copy reveal">
-          <div class="eyebrow">Business software built for organized growth</div>
-          <h1>Register your business, choose services, and manage daily operations.</h1>
+          <div class="eyebrow">Simple financial control for every business</div>
+          <h1>Financial Management Portal for shops, schools, pharmacies, restaurants, hotels, and growing companies.</h1>
           <p>
-            MAPPHEX creates an organization workspace where teams manage users, branches, departments, stock,
-            sales, finance, tasks, reports, permissions, and subscriptions from one controlled system.
+            One secure portal where each business manages income, expenses, stock, sales, customers, employees,
+            reports, notifications, and permissions without confusing users.
           </p>
           <div class="hero-actions">
             <a class="btn primary large" href="organization-register.html">Register Organization</a>
-            <a class="btn large" href="services.html#services">Explore Services</a>
-            <a class="btn ghost large" href="pricing.html">Get Started</a>
+            <a class="btn large" href="organization-login.html">Login</a>
+            <a class="btn ghost large" href="#pricing">View Pricing</a>
           </div>
           <div class="hero-metrics" aria-label="MAPPHEX platform metrics">
             <div>
               <strong class="count-up" data-count="1200">0</strong>
-              <span>Organizations ready</span>
+              <span>Businesses supported</span>
             </div>
             <div>
               <strong class="count-up" data-count="45000">0</strong>
-              <span>Active users supported</span>
+              <span>Users and staff</span>
             </div>
             <div>
               <strong class="count-up" data-count="15">0</strong>
-              <span>Business modules</span>
+              <span>Simple core modules</span>
             </div>
             <div>
               <strong>Live</strong>
-              <span>Realtime analytics</span>
+              <span>Secure tenant data</span>
             </div>
           </div>
         </div>
@@ -91,7 +90,7 @@
                 <span class="window-dot"></span>
                 <span class="window-dot"></span>
               </div>
-              <span>Enterprise Onboarding Preview</span>
+              <span>Financial Portal Preview</span>
             </div>
             <div class="dashboard-body">
               <aside class="preview-sidebar">
@@ -103,16 +102,16 @@
               </aside>
               <div class="preview-main">
                 <div class="preview-kpis">
-                  <article><span>Registration</span><strong>Register</strong></article>
-                  <article><span>Agreement</span><strong>Accept</strong></article>
-                  <article><span>Workspace</span><strong>Open</strong></article>
+                  <article><span>Income</span><strong>KES 0</strong></article>
+                  <article><span>Expenses</span><strong>KES 0</strong></article>
+                  <article><span>Profit</span><strong>KES 0</strong></article>
                 </div>
                 <div class="preview-grid">
                   <div class="preview-activity">
-                    <div><strong>Create account</strong><span>Organization profile and secure credentials</span></div>
-                    <div><strong>Accept terms</strong><span>Licensing, subscription, and security policies</span></div>
-                    <div><strong>Select tools</strong><span>Enable only the business modules required</span></div>
-                    <div><strong>Open environment</strong><span>Access the organization environment securely</span></div>
+                    <div><strong>Record sale</strong><span>Cash, bank, invoice, or mobile money</span></div>
+                    <div><strong>Add expense</strong><span>Bills, salaries, purchases, and taxes</span></div>
+                    <div><strong>Check stock</strong><span>Products, low stock, and supplier purchases</span></div>
+                    <div><strong>Export report</strong><span>Daily, weekly, monthly, and annual summaries</span></div>
                   </div>
                 </div>
               </div>
@@ -124,11 +123,11 @@
       <section class="site-section company-ad-section reveal">
         <div class="section-head">
           <div>
-            <div class="eyebrow">What MAPPHEX Does</div>
-            <h2>It turns business registration into an active operations workspace.</h2>
+            <div class="eyebrow">Built for real businesses</div>
+            <h2>A simple financial system that works for many business types.</h2>
             <p>
-              A business registers, selects the service it needs, accepts the subscription terms, and opens the
-              workspace tools required for staff, records, sales, stock, finance, reporting, and support.
+              Supermarkets, pharmacies, schools, restaurants, hotels, hardware shops, startups, and small companies
+              can use the same portal while keeping each business account private and separated.
             </p>
           </div>
         </div>
@@ -138,10 +137,9 @@
               src="https://images.pexels.com/photos/29267517/pexels-photo-29267517.jpeg?auto=compress&cs=tinysrgb&w=1200"
               alt="Company team collaborating in a modern office"
             />
-            <h3>Creates organization workspaces</h3>
+            <h3>Separate business dashboards</h3>
             <p>
-              Each business gets its own workspace with administrator access, staff accounts, service modules,
-              branch records, and subscription controls.
+              Each registered business gets its own dashboard, employees, customers, inventory, reports, and settings.
             </p>
           </article>
           <article class="ad-card featured-ad">
@@ -149,10 +147,9 @@
               src="https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=1200"
               alt="Professional team planning company operations"
             />
-            <h3>Connects services to daily work</h3>
+            <h3>Fast daily finance work</h3>
             <p>
-              Selected services open the tools needed for sales, inventory, finance, HR, departments, hospitality,
-              health, retail, products, services, reports, and support.
+              Staff can record sales, expenses, payments, invoices, salaries, stock purchases, and receipts in seconds.
             </p>
           </article>
           <article class="ad-card">
@@ -160,10 +157,9 @@
               src="https://images.pexels.com/photos/7652054/pexels-photo-7652054.jpeg?auto=compress&cs=tinysrgb&w=1200"
               alt="People discussing business software at a laptop"
             />
-            <h3>Controls users, branches, and reports</h3>
+            <h3>Secure users and reports</h3>
             <p>
-              Managers can add staff, assign permissions, separate branches, review activity, track records, and
-              upgrade the subscription as the business grows.
+              Owners control users, roles, permissions, audit logs, reports, exports, and secure session access.
             </p>
           </article>
         </div>
@@ -171,48 +167,19 @@
 
       <section id="about" class="site-section split-section reveal">
         <div>
-          <div class="eyebrow">About MAPPHEX</div>
-          <h2>Designed for serious organizations that need calm, powerful operations.</h2>
+          <div class="eyebrow">About The Portal</div>
+          <h2>Scalable behind the scenes, simple on the screen.</h2>
         </div>
         <div>
           <p>
-            MAPPHEX brings registration, licensing, branch structures, staff access, analytics, documents, and business
-            workflows into one polished SaaS ecosystem. Every organization gets its own secure operating environment
-            while keeping the experience simple enough for small teams and strong enough for enterprise scale.
+            MAPPHEX uses one centralized architecture with tenant-aware data separation. Businesses share the platform,
+            but each organization only sees its own financial records, staff, stock, customers, reports, and settings.
           </p>
           <div class="trust-row">
             <span>Tenant isolation</span>
-            <span>Realtime workflows</span>
-            <span>Modular tools</span>
+            <span>Role permissions</span>
+            <span>Audit logs</span>
           </div>
-        </div>
-      </section>
-
-      <section id="services" class="site-section reveal">
-        <div class="section-head">
-          <div>
-            <div class="eyebrow">Services</div>
-            <h2>Professional onboarding, licensing, hosting, and operations setup.</h2>
-            <p>MAPPHEX gives organizations a clean path into secure, scalable operations.</p>
-          </div>
-        </div>
-        <div class="premium-grid four">
-          <article class="premium-card">
-            <h3>Fast onboarding</h3>
-            <p>Create organization profiles, secure accounts, environment IDs, and business access without complicated setup.</p>
-          </article>
-          <article class="premium-card">
-            <h3>Modular operations</h3>
-            <p>Enable only the business tools each organization needs, from finance and HR to pharmacy and logistics.</p>
-          </article>
-          <article class="premium-card">
-            <h3>Secure environments</h3>
-            <p>Protect organization data with tenant-aware access, role permissions, audit trails, and guarded workflows.</p>
-          </article>
-          <article class="premium-card">
-            <h3>Realtime visibility</h3>
-            <p>Keep live views, notifications, activities, inventory changes, and operational status synchronized.</p>
-          </article>
         </div>
       </section>
 
@@ -220,16 +187,44 @@
         <div class="section-head">
           <div>
             <div class="eyebrow">Features</div>
-            <h2>Flexible enough for many industries. Structured enough for scale.</h2>
+            <h2>Everything important, without a crowded menu.</h2>
+            <p>The system focuses on the tools businesses use every day.</p>
+          </div>
+        </div>
+        <div class="premium-grid four">
+          <article class="premium-card">
+            <h3>Dashboard</h3>
+            <p>Income, expenses, profit, cash flow, recent activity, notifications, low stock, and pending invoices.</p>
+          </article>
+          <article class="premium-card">
+            <h3>Money In and Sales</h3>
+            <p>Record sales, generate invoices, print receipts, and track cash, bank, and mobile money payments.</p>
+          </article>
+          <article class="premium-card">
+            <h3>Money Out</h3>
+            <p>Record expenses, salaries, bills, receipt uploads, approvals, and categorized spending reports.</p>
+          </article>
+          <article class="premium-card">
+            <h3>Security</h3>
+            <p>Encrypted passwords, two-factor authentication, sessions, activity tracking, audit logs, and secure API access.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="modules" class="site-section reveal">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Simple Hamburger Menu</div>
+            <h2>Large buttons, clear names, and no clutter.</h2>
           </div>
         </div>
         <div class="solution-strip">
-          <article><strong>Companies</strong><span>Departments, staff, reports, operations</span></article>
-          <article><strong>Pharmacies</strong><span>Inventory, sales, suppliers, branches</span></article>
-          <article><strong>Schools</strong><span>Admissions, finance, staff, reporting</span></article>
-          <article><strong>Logistics</strong><span>Orders, tracking, dispatch, analytics</span></article>
-          <article><strong>Retail Shops</strong><span>Sales, stock, customers, documents</span></article>
-          <article><strong>Warehouses</strong><span>Storage, movement, audits, alerts</span></article>
+          <article><strong>Dashboard</strong><span>Income, expenses, profit, activity</span></article>
+          <article><strong>Money In</strong><span>Sales, payments, invoices</span></article>
+          <article><strong>Money Out</strong><span>Expenses, salaries, bills</span></article>
+          <article><strong>Stock</strong><span>Products, add stock, low alerts</span></article>
+          <article><strong>Customers</strong><span>Credit balances and history</span></article>
+          <article><strong>Reports</strong><span>Daily, weekly, monthly exports</span></article>
         </div>
       </section>
 
@@ -242,67 +237,90 @@
           <span style="--x: 72%; --y: 68%">Logistics</span>
         </div>
         <div>
-          <div class="eyebrow">Multi-Organization Support</div>
-          <h2>Each business gets a dedicated environment without losing platform consistency.</h2>
+          <div class="eyebrow">Multi-Business Database</div>
+          <h2>One connected ecosystem, separated business data.</h2>
           <p>
-            Organization managers handle branches, departments, staff, enabled tools, and workflows independently. The
-            environment model keeps business data separated, permissions focused, and operational modules easy to expand.
+            The portal supports many businesses on a centralized database architecture. Tenant IDs, roles, permissions,
+            secure sessions, and audit logs keep every organization isolated while modules communicate cleanly.
           </p>
           <div class="feature-list">
-            <span>Organization IDs</span>
-            <span>Workspace routing</span>
-            <span>Branch structures</span>
-            <span>Role permissions</span>
-            <span>Subscription controls</span>
+            <span>Super Admin</span>
+            <span>Business Owner</span>
+            <span>Accountant</span>
+            <span>Cashier</span>
+            <span>Employee</span>
           </div>
         </div>
       </section>
 
       <section id="security" class="site-section analytics-section reveal">
         <div>
-          <div class="eyebrow">Analytics & Security</div>
-          <h2>Clear insight, protected workflows, and operational resilience.</h2>
+          <div class="eyebrow">Reports, AI, And Security</div>
+          <h2>Clear reports, helpful answers, and protected business records.</h2>
           <p>
-            MAPPHEX is shaped around secure registration, licensing acceptance, tenant-aware operations, audit-ready
-            events, and a clean path from public onboarding to private organization environments.
+            Owners and accountants can review financial summaries, unpaid invoices, highest selling products,
+            expense analysis, tax reports, and audit activity from one secure workspace.
           </p>
         </div>
         <div class="security-grid">
-          <article><strong>Realtime visibility</strong><span>Live activity, operations status, and notifications.</span></article>
-          <article><strong>Data protection</strong><span>Role-aware access, isolated scopes, secure files, and validation.</span></article>
-          <article><strong>Audit trails</strong><span>Track important actions, account changes, and environment events.</span></article>
-          <article><strong>Recovery ready</strong><span>Backup-aware structure, graceful errors, and offline-safe assets.</span></article>
+          <article><strong>Accounting</strong><span>Ledger, journal entries, trial balance, profit and loss, balance sheet, and cash flow.</span></article>
+          <article><strong>Inventory</strong><span>Products, categories, barcode support, suppliers, purchase orders, and low stock alerts.</span></article>
+          <article><strong>Payroll</strong><span>Employees, salaries, payslips, attendance, deductions, and payroll reports.</span></article>
+          <article><strong>AI Assistant</strong><span>Ask about profit, unpaid invoices, top products, expenses, and financial summaries.</span></article>
         </div>
       </section>
 
       <section id="pricing" class="site-section reveal">
         <div class="section-head">
           <div>
-            <div class="eyebrow">Subscription Plans</div>
-            <h2>Start lean, then scale modules and support as operations grow.</h2>
+            <div class="eyebrow">Pricing</div>
+            <h2>Simple plans for small teams and growing businesses.</h2>
           </div>
         </div>
         <div class="pricing-grid">
           <article class="pricing-card">
             <span>Starter</span>
-            <h3>Small Teams</h3>
+            <h3>Small Business</h3>
             <p class="plan-price">KSh 2,500 <small>/ month</small></p>
-            <p>Lightweight setup for shops, startups, agencies, and service providers.</p>
+            <p>Dashboard, money in, money out, customers, stock, and basic reports.</p>
             <a class="btn ghost" href="organization-register.html">Choose Starter</a>
           </article>
           <article class="pricing-card highlight">
             <span>Business</span>
-            <h3>Growing Operations</h3>
+            <h3>Growing Business</h3>
             <p class="plan-price">KSh 7,500 <small>/ month</small></p>
-            <p>Multi-branch modules, staff access, reporting, support packages, and business workflows.</p>
+            <p>Sales, invoices, inventory, employees, approvals, notifications, and export reports.</p>
             <a class="btn primary" href="organization-register.html">Choose Business</a>
           </article>
           <article class="pricing-card">
             <span>Enterprise</span>
-            <h3>Large Organizations</h3>
+            <h3>Multi-Branch</h3>
             <p class="plan-price">Custom <small>/ quote</small></p>
-            <p>Advanced modules, custom onboarding, enhanced security, integrations, and dedicated support.</p>
+            <p>Advanced roles, branches, audit logs, integrations, API access, and dedicated support.</p>
             <a class="btn ghost" href="contact.html">Talk to Support</a>
+          </article>
+        </div>
+      </section>
+
+      <section id="testimonials" class="site-section reveal">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Testimonials</div>
+            <h2>Designed for people who need to work fast.</h2>
+          </div>
+        </div>
+        <div class="premium-grid three">
+          <article class="premium-card">
+            <h3>Retail Owner</h3>
+            <p>"The menu is easy. Staff record sales and expenses without asking for help every day."</p>
+          </article>
+          <article class="premium-card">
+            <h3>School Accountant</h3>
+            <p>"Fees, salaries, reports, and approvals stay in one place, with clear user permissions."</p>
+          </article>
+          <article class="premium-card">
+            <h3>Pharmacy Manager</h3>
+            <p>"Stock alerts and daily finance summaries make it easier to know what is happening."</p>
           </article>
         </div>
       </section>
@@ -310,9 +328,9 @@
       <section id="contact" class="site-section contact-section reveal">
         <div>
           <div class="eyebrow">Contact</div>
-          <h2>Bring your organization into the MAPPHEX ecosystem.</h2>
+          <h2>Start with a simple financial portal your team can understand quickly.</h2>
           <p>
-            Contact the MAPPHEX team for platform support, organization setup, billing questions, and general inquiries.
+            Contact the MAPPHEX team for financial portal setup, organization registration, billing questions, and support.
           </p>
         </div>
         <div class="contact-panel">
@@ -372,7 +390,7 @@
 
     <script src="enterprise-core.js"></script>
     <script src="auth-guard.js"></script>
-    <script src="home.js?v=6"></script>
+    <script src="home.js?v=7"></script>
     <script src="pwa.js"></script>
   </body>
 </html>

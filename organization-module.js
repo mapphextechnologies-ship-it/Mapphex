@@ -227,7 +227,7 @@
   };
 
   const PORTAL_MENUS = {
-    finance: ["Dashboard", "Revenue", "Expenses", "Payroll Approvals", "Transactions", "Budgets", "Reports", "Taxes", "Analytics", "Settings"],
+    finance: ["Dashboard", "Money In", "Money Out", "Sales", "Stock", "Customers", "Employees", "Reports", "Notifications", "Settings", "Help", "Logout"],
     hr: ["Dashboard", "Employees", "Attendance", "Leave Requests", "Payroll", "Recruitment", "Performance", "Schedules", "Reports"],
     pharmacy: ["Dashboard", "Medicines", "Inventory", "Prescriptions", "Customers", "Suppliers", "Sales", "Expiry Alerts", "Reports"],
     technology: ["Dashboard", "Projects", "Tasks", "Clients", "Developers", "Support Tickets", "Documentation", "Billing", "Analytics"],
@@ -249,15 +249,17 @@
     if (moduleId === "finance") {
       return [
         ["Dashboard", "dashboard", "dashboard"],
-        ["Revenue", "finance-revenue", "revenue"],
-        ["Expenses", "finance-expenses", "expenses"],
-        ["Payroll Approvals", "approvals", "payroll-approvals"],
-        ["Transactions", "portal-records", "transactions"],
-        ["Budgets", "finance-budgets", "budgets"],
+        ["Money In", "finance-money-in-page", "money-in"],
+        ["Money Out", "finance-money-out-page", "money-out"],
+        ["Sales", "finance-sales-page", "sales"],
+        ["Stock", "finance-stock-page", "stock"],
+        ["Customers", "finance-customers-page", "customers"],
+        ["Employees", "finance-employees-page", "employees"],
         ["Reports", "reports", "reports"],
-        ["Taxes", "finance-taxes", "taxes"],
-        ["Analytics", "finance-analytics", "analytics"],
+        ["Notifications", "finance-notifications-page", "notifications"],
         ["Settings", "finance-settings", "settings"],
+        ["Help", "finance-help-page", "help"],
+        ["Logout", "logout", "logout"],
       ].map(([label, target, hash]) => ({
         label,
         target,
@@ -282,16 +284,20 @@
   };
 
   const PORTAL_VIEW_GROUPS = {
-    dashboard: ["portal-dashboard", "portal-kpis", "dashboard", "finance-overview", "finance-stats", "finance-workareas", "finance-subpages"],
+    dashboard: ["portal-dashboard", "portal-kpis", "finance-dashboard", "portal-records"],
     "portal-records": ["portal-records"],
     approvals: ["approvals"],
     reports: ["reports"],
-    "finance-revenue": ["finance-revenue"],
-    "finance-expenses": ["finance-expenses"],
-    "finance-budgets": ["finance-budgets"],
-    "finance-taxes": ["finance-taxes"],
-    "finance-analytics": ["finance-analytics"],
+    "finance-money-in-page": ["finance-money-in-page", "portal-records"],
+    "finance-money-out-page": ["finance-money-out-page", "portal-records"],
+    "finance-sales-page": ["finance-sales-page", "portal-records"],
+    "finance-stock-page": ["finance-stock-page"],
+    "finance-customers-page": ["finance-customers-page"],
+    "finance-employees-page": ["finance-employees-page"],
+    "finance-notifications-page": ["finance-notifications-page"],
     "finance-settings": ["finance-settings"],
+    "finance-help-page": ["finance-help-page"],
+    logout: [],
   };
 
   const setPortalView = (target = "dashboard") => {
@@ -306,16 +312,16 @@
       "approvals",
       "reports",
       "finance-guide",
-      "finance-overview",
-      "finance-stats",
-      "finance-workareas",
-      "finance-subpages",
-      "finance-revenue",
-      "finance-expenses",
-      "finance-budgets",
-      "finance-taxes",
-      "finance-analytics",
+      "finance-dashboard",
+      "finance-money-in-page",
+      "finance-money-out-page",
+      "finance-sales-page",
+      "finance-stock-page",
+      "finance-customers-page",
+      "finance-employees-page",
+      "finance-notifications-page",
       "finance-settings",
+      "finance-help-page",
     ].forEach((id) => {
       const section = document.getElementById(id);
       if (section) section.hidden = !visible.has(id);
@@ -409,6 +415,10 @@
     if (!link) return;
     const nav = link.dataset.moduleNav || "dashboard";
     const target = link.dataset.moduleTarget || "dashboard";
+    if (target === "logout") {
+      location.href = "index.html?logout=1";
+      return;
+    }
     document.querySelectorAll("[data-module-nav]").forEach((item) => {
       const active = item === link;
       item.classList.toggle("active", active);
@@ -451,10 +461,10 @@
     $("#portal-dashboard")?.classList.add("finance-hero-section");
     $("#portal-records")?.classList.add("finance-ledger-panel");
     const recordCopy = $("#module-workflow-subtitle");
-    if (recordCopy) recordCopy.textContent = "Record and review income, expenses, invoices, payments, payroll, budgets, taxes, and approvals.";
+    if (recordCopy) recordCopy.textContent = "Record money in, money out, invoices, payments, payroll, taxes, and approvals in one simple ledger.";
     $("#module-record-form")?.classList.add("finance-entry-form");
     const recordTitle = $("#portal-records .panel-header h2");
-    if (recordTitle) recordTitle.textContent = "Finance Ledger";
+    if (recordTitle) recordTitle.textContent = "Quick Finance Entry";
     const recordActions = $("#portal-records .panel-header .panel-actions");
     if (recordActions) {
       recordActions.innerHTML = `<input id="module-search" type="search" placeholder="Search finance entries..." /><button class="btn" data-erp-export="csv" type="button">Export Excel</button><button class="btn" data-erp-export="pdf" type="button">Print / PDF</button>`;
@@ -468,52 +478,39 @@
         <article class="kpi"><div class="kpi-label">Money Out</div><div id="finance-money-out" class="kpi-value">KES 0</div><div class="kpi-foot muted">Expenses, purchases, payroll</div></article>
         <article class="kpi"><div class="kpi-label">Open Items</div><div id="finance-open-items" class="kpi-value">0</div><div class="kpi-foot muted">Pending or unpaid entries</div></article>`;
     }
-    if (!$("#finance-overview")) {
+    if (!$("#finance-dashboard")) {
       $("#portal-kpis")?.insertAdjacentHTML(
         "afterend",
-        `<section id="finance-overview" class="panel finance-jixels-hero" aria-label="Finance operations">
-          <div class="finance-jixels-copy">
-            <p class="eyebrow">Finance Module</p>
-            <h2>Finance Management Portal</h2>
-            <p>Control branch revenue, expense approvals, budget performance, and executive financial reporting.</p>
-          </div>
-          <div class="finance-jixels-insights">
-            <article><span>Monthly Revenue</span><strong id="finance-hero-revenue">KES 0</strong><small>Consolidated sales revenue</small></article>
-            <article><span>Budget Requests</span><strong id="finance-hero-budgets">0</strong><small>Awaiting review</small></article>
-          </div>
-        </section>
-        <section id="finance-stats" class="finance-jixels-stats" aria-label="Finance stats">
-          <article><span>Daily Revenue</span><strong id="finance-daily-revenue">KES 0</strong><small>Live branch inflow</small></article>
-          <article><span>Expense Requests</span><strong id="finance-expense-requests">0</strong><small>Submitted for approval</small></article>
-          <article><span>Budget Utilization</span><strong id="finance-budget-usage">0%</strong><small>Current cycle usage</small></article>
-          <article><span>Outstanding Invoices</span><strong id="finance-open-invoices">0</strong><small>Supplier and service invoices</small></article>
-        </section>
-        <section id="finance-workareas" class="finance-jixels-content">
-          <article class="panel">
-            <div class="finance-section-heading"><div><p class="eyebrow">Finance Work Areas</p><h2>Finance Functions</h2></div><span class="badge">Controlled</span></div>
-            <div class="finance-department-cards">
-              <article><h3>Transactions</h3><p>Monitor branch revenue entries and cash flow movement.</p></article>
-              <article><h3>Budgeting</h3><p>Allocate and review departmental and branch spending plans.</p></article>
-              <article><h3>Expense Control</h3><p>Approve requests and verify spending accountability.</p></article>
-              <article><h3>Finance Reports</h3><p>Generate monthly and executive summaries for management review.</p></article>
+        `<section id="finance-dashboard" class="finance-control-grid" aria-label="Financial dashboard">
+          <article class="panel finance-summary-card">
+            <div class="panel-header"><div><p class="eyebrow">Dashboard</p><h2>Today at a glance</h2></div><span class="badge">Live</span></div>
+            <div class="finance-balance-card">
+              <span>Net Profit</span>
+              <strong id="finance-dashboard-net">KES 0</strong>
+              <p>Income minus expenses from this business ledger.</p>
+              <div class="finance-meter"><i id="finance-meter-in"></i></div>
+            </div>
+            <div class="finance-flow-grid">
+              <article><span>Total Income</span><strong id="finance-dashboard-in">KES 0</strong></article>
+              <article><span>Total Expenses</span><strong id="finance-dashboard-out">KES 0</strong></article>
             </div>
           </article>
-          <article class="panel">
-            <div class="finance-section-heading"><div><p class="eyebrow">Verification Queue</p><h2>Finance Review Queue</h2></div><span class="badge">Action</span></div>
-            <div class="finance-review-list">
-              <article><h3>Budget Revision</h3><p><span id="finance-budget-review-count">0</span> branch budget revisions are awaiting approval.</p></article>
-              <article><h3>Treasury Follow-up</h3><p>Supplier payment and payroll items are tracked before money is committed.</p></article>
-              <article><h3>Executive Report</h3><p>Current finance summary is ready for management review once ledger records are added.</p></article>
+          <article class="panel finance-quick-panel">
+            <div class="panel-header"><h2>Quick Actions</h2><span class="badge">Simple</span></div>
+            <div class="finance-quick-actions">
+              <button class="erp-action" data-finance-jump="money-in" type="button"><strong>Record Sale</strong><span>Add income or payment received.</span></button>
+              <button class="erp-action" data-finance-jump="money-out" type="button"><strong>Record Expense</strong><span>Add salaries, bills, stock purchase, or tax.</span></button>
+              <button class="erp-action" data-finance-jump="reports" type="button"><strong>Open Reports</strong><span>Daily, weekly, monthly summaries.</span></button>
             </div>
           </article>
-        </section>
-        <section id="finance-subpages" class="panel finance-subpages">
-          <div class="finance-section-heading"><div><p class="eyebrow">Finance Subpages</p><h2>Operational Screens</h2></div><span class="badge">Workflow</span></div>
-          <div class="finance-action-grid">
-            <a href="#transactions" data-finance-jump="transactions"><h3>Transactions</h3><p>Sales entries, branch remittances, and revenue verification records.</p></a>
-            <a href="#budgets" data-finance-jump="budgets"><h3>Budgets</h3><p>Department allocations, branch requests, and approval workflow.</p></a>
-            <a href="#expenses" data-finance-jump="expenses"><h3>Expenses</h3><p>Expense submissions, vendor payments, and approval tracking.</p></a>
-          </div>
+          <article class="panel finance-alert-panel">
+            <div class="panel-header"><h2>Alerts</h2><span class="badge">Needs attention</span></div>
+            <div class="finance-alert-list">
+              <article><strong id="finance-dashboard-approvals">0</strong><span>Pending approvals</span></article>
+              <article><strong id="finance-open-invoices">0</strong><span>Pending invoices or open items</span></article>
+              <article><strong id="finance-dashboard-health">Ready</strong><span id="finance-dashboard-note">Add the first finance entry to activate reporting.</span></article>
+            </div>
+          </article>
         </section>`,
       );
     }
@@ -522,7 +519,7 @@
       "afterend",
       `<div id="finance-workspace-sections" class="finance-workspace-sections">
         <article id="approvals" class="panel">
-          <div class="panel-header"><h2>Approvals</h2><span id="erp-approval-count" class="badge">0 pending</span></div>
+          <div class="panel-header"><h2>Approved list</h2><span id="erp-approval-count" class="badge">0 pending</span></div>
           <div id="erp-approvals" class="erp-approval-list"></div>
         </article>
         <article id="finance-actions-panel" class="panel finance-actions-panel">
@@ -537,33 +534,45 @@
     );
     $("#finance-workspace-sections")?.insertAdjacentHTML(
       "afterend",
-      `<section id="finance-revenue" class="panel finance-focus-panel" hidden>
-        <div class="panel-header"><h2>Revenue</h2><span class="badge">Money In</span></div>
-        <div class="finance-focus-body"><strong id="finance-revenue-total">KES 0</strong><p>Track received payments, income, invoices, receipts, and sales money entering the organization.</p></div>
+      `<section id="finance-money-in-page" class="panel finance-focus-panel" hidden>
+        <div class="panel-header"><h2>Money In</h2><span class="badge">Sales / Payments</span></div>
+        <div class="finance-focus-body"><strong id="finance-revenue-total">KES 0</strong><p>Record sales, customer payments, invoices, receipts, mobile money, bank payments, and cash received.</p></div>
       </section>
-      <section id="finance-expenses" class="panel finance-focus-panel" hidden>
-        <div class="panel-header"><h2>Expenses</h2><span class="badge">Money Out</span></div>
+      <section id="finance-money-out-page" class="panel finance-focus-panel" hidden>
+        <div class="panel-header"><h2>Money Out</h2><span class="badge">Expenses / Bills</span></div>
         <div class="finance-focus-body"><strong id="finance-expense-total">KES 0</strong><p>Review purchases, payroll, taxes, supplier costs, debts, bills, and other outgoing finance entries.</p></div>
       </section>
-      <section id="finance-budgets" class="panel finance-focus-panel" hidden>
-        <div class="panel-header"><h2>Budgets</h2><span class="badge">Planning</span></div>
-        <div class="finance-focus-body"><strong id="finance-budget-total">KES 0</strong><p>Use budget entries in the Finance Ledger to monitor planned spending and available allocations.</p></div>
+      <section id="finance-sales-page" class="panel finance-focus-panel" hidden>
+        <div class="panel-header"><h2>Sales</h2><span class="badge">Receipts</span></div>
+        <div class="finance-focus-body"><strong id="finance-daily-revenue">KES 0</strong><p>Open sales history, receipts, orders, invoice status, and payment records.</p></div>
       </section>
-      <section id="finance-taxes" class="panel finance-focus-panel" hidden>
-        <div class="panel-header"><h2>Taxes</h2><span class="badge">Compliance</span></div>
-        <div class="finance-focus-body"><strong id="finance-tax-total">KES 0</strong><p>Keep tax-related entries visible for monthly review, payment preparation, and report exports.</p></div>
+      <section id="finance-stock-page" class="panel finance-focus-panel" hidden>
+        <div class="panel-header"><h2>Stock</h2><span class="badge">Inventory</span></div>
+        <div class="finance-focus-body"><strong>Products and alerts</strong><p>Track products, add stock, supplier purchases, barcode items, and low stock alerts connected to finance.</p></div>
       </section>
-      <section id="finance-analytics" class="panel finance-focus-panel" hidden>
-        <div class="panel-header"><h2>Analytics</h2><span class="badge">Summary</span></div>
+      <section id="finance-customers-page" class="panel finance-focus-panel" hidden>
+        <div class="panel-header"><h2>Customers</h2><span class="badge">CRM</span></div>
+        <div class="finance-focus-body"><strong>Customer money history</strong><p>Customer profiles, credit balances, payment history, loyalty records, and unpaid invoices appear here.</p></div>
+      </section>
+      <section id="finance-employees-page" class="panel finance-focus-panel" hidden>
+        <div class="panel-header"><h2>Employees</h2><span class="badge">Payroll</span></div>
+        <div class="finance-focus-body"><strong>Staff salaries</strong><p>Employee records, salaries, attendance, deductions, payslips, and payroll approvals connect to this area.</p></div>
+      </section>
+      <section id="finance-notifications-page" class="panel finance-focus-panel" hidden>
+        <div class="panel-header"><h2>Notifications</h2><span class="badge">Alerts</span></div>
         <div class="finance-focus-grid">
-          <article><span>Net Position</span><strong id="finance-net-total">KES 0</strong></article>
+          <article><span>Approvals</span><strong id="finance-hero-budgets">0</strong></article>
           <article><span>Open Items</span><strong id="finance-open-total">0</strong></article>
           <article><span>Ledger Entries</span><strong id="finance-entry-total">0</strong></article>
         </div>
       </section>
       <section id="finance-settings" class="panel finance-focus-panel" hidden>
-        <div class="panel-header"><h2>Settings</h2><span class="badge">Finance</span></div>
-        <div class="finance-focus-body"><strong>Finance workspace</strong><p>Finance settings use the same organization users, permissions, exports, and tenant data controls.</p></div>
+        <div class="panel-header"><h2>Settings</h2><span class="badge">Business</span></div>
+        <div class="finance-focus-body"><strong>Business profile and security</strong><p>Manage business profile, users, roles, permissions, two-factor authentication, session controls, and tenant-isolated data settings.</p></div>
+      </section>
+      <section id="finance-help-page" class="panel finance-focus-panel" hidden>
+        <div class="panel-header"><h2>Help</h2><span class="badge">Fast guide</span></div>
+        <div class="finance-focus-body"><strong>Use the system in minutes</strong><p>Start with Dashboard, record sales in Money In, record bills in Money Out, then review Reports. Keep the menu simple so users do not think too much.</p></div>
       </section>`,
     );
   };
@@ -1248,10 +1257,6 @@
         }
         const action = event.target.closest("[data-erp-action]");
         if (action) {
-          if (moduleId === "finance") {
-            openFinanceWorkflowPage(action.dataset.erpAction, action.dataset.erpTarget, action.dataset.erpDetail);
-            return;
-          }
           addWorkflowEvent(moduleId, action.dataset.erpAction, action.dataset.erpTarget, action.dataset.erpDetail);
           return;
         }

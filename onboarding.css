@@ -1434,3 +1434,164 @@
     padding: 12px;
   }
 }
+
+.finance-simple-page.portal-hub-page {
+  color: #0f172a;
+  background: #f8fafc;
+}
+
+.finance-simple-page .portal-hub-topbar,
+.finance-simple-page .module-sidebar,
+.finance-simple-page .panel,
+.finance-simple-page .kpi {
+  border-color: rgba(15, 23, 42, 0.08);
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
+}
+
+.finance-simple-page .finance-hero-section {
+  border-color: rgba(15, 23, 42, 0.08);
+  background:
+    radial-gradient(620px 360px at 92% 0%, rgba(16, 185, 129, 0.14), transparent 62%),
+    linear-gradient(135deg, #ffffff, #eefdf6);
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.08);
+}
+
+.finance-simple-page .finance-hero-section h1,
+.finance-simple-page .finance-section-heading h2,
+.finance-simple-page .panel-header h2,
+.finance-simple-page .kpi-value,
+.finance-simple-page .finance-balance-card strong,
+.finance-simple-page .finance-flow-grid strong,
+.finance-simple-page .finance-alert-list strong,
+.finance-simple-page .finance-focus-body strong,
+.finance-simple-page .finance-focus-grid strong,
+.finance-simple-page .module-nav a.active,
+.finance-simple-page .erp-action strong,
+.finance-simple-page .erp-approval strong {
+  color: #0f172a;
+}
+
+.finance-simple-page .muted,
+.finance-simple-page .kpi-foot,
+.finance-simple-page .finance-balance-card p,
+.finance-simple-page .finance-focus-body p,
+.finance-simple-page .finance-focus-grid span,
+.finance-simple-page .finance-alert-list span,
+.finance-simple-page .erp-action span,
+.finance-simple-page .erp-approval span,
+.finance-simple-page .erp-approval p,
+.finance-simple-page .table td,
+.finance-simple-page .table th {
+  color: #475569;
+}
+
+.finance-simple-page .eyebrow,
+.finance-simple-page .finance-hero-section .eyebrow {
+  color: #059669;
+}
+
+.finance-simple-page .module-nav a {
+  min-height: 50px;
+  border-color: rgba(15, 23, 42, 0.08);
+  background: #f8fafc;
+  color: #334155;
+  border-radius: 8px;
+}
+
+.finance-simple-page .module-nav a b {
+  color: #064e3b;
+  background: rgba(16, 185, 129, 0.14);
+}
+
+.finance-simple-page .module-nav a.active,
+.finance-simple-page .module-nav a:hover {
+  border-color: rgba(5, 150, 105, 0.26);
+  background: #ecfdf5;
+}
+
+.finance-control-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(260px, 0.85fr);
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.finance-summary-card {
+  grid-row: span 2;
+}
+
+.finance-quick-actions,
+.finance-alert-list {
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px 18px;
+}
+
+.finance-alert-list article,
+.finance-simple-page .finance-balance-card,
+.finance-simple-page .finance-flow-grid article,
+.finance-simple-page .erp-action,
+.finance-simple-page .erp-approval,
+.finance-simple-page .finance-focus-grid article,
+.finance-simple-page .finance-report-button {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: #f8fafc;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.finance-simple-page .erp-action:hover,
+.finance-simple-page .finance-report-button:hover {
+  border-color: rgba(5, 150, 105, 0.28);
+  background: #ecfdf5;
+}
+
+.finance-simple-page .finance-meter {
+  background: #e2e8f0;
+}
+
+.finance-simple-page .finance-meter i {
+  background: linear-gradient(90deg, #059669, #0f766e);
+}
+
+.finance-simple-page .finance-workspace-sections {
+  grid-template-columns: minmax(320px, 1fr) minmax(320px, 1fr) minmax(360px, 1.2fr);
+}
+
+.finance-simple-page #reports .erp-report-grid {
+  grid-template-columns: repeat(3, minmax(150px, 1fr));
+}
+
+.finance-simple-page .module-content .field input,
+.finance-simple-page .module-content .field select,
+.finance-simple-page .module-content .field textarea,
+.finance-simple-page #module-search {
+  border-color: rgba(15, 23, 42, 0.14);
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.finance-simple-page .table-wrap {
+  background: #ffffff;
+}
+
+@media (max-width: 1100px) {
+  .finance-control-grid,
+  .finance-simple-page .finance-workspace-sections {
+    grid-template-columns: 1fr;
+  }
+
+  .finance-simple-page #reports .erp-report-grid {
+    grid-template-columns: repeat(2, minmax(150px, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .finance-simple-page #reports .erp-report-grid,
+  .finance-simple-page .finance-flow-grid,
+  .finance-simple-page .finance-focus-grid {
+    grid-template-columns: 1fr;
+  }
+}
