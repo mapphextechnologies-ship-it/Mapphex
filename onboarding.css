@@ -487,21 +487,18 @@
 
 .finance-workspace-sections {
   display: grid;
-  grid-template-columns: minmax(260px, 1fr) minmax(0, 1.35fr) minmax(260px, 0.9fr);
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.35fr) minmax(240px, 0.85fr) minmax(240px, 0.85fr);
   gap: 14px;
   align-items: start;
 }
 
-.finance-action-stack,
-.finance-report-stack,
-.finance-audit-stack {
-  display: grid;
-  gap: 14px;
+.finance-primary-workspace,
+.finance-side-workspace {
+  display: contents;
 }
 
-.finance-action-stack > .panel,
-.finance-report-stack > .panel,
-.finance-audit-stack > .panel {
+.finance-primary-workspace > .panel,
+.finance-side-workspace > .panel {
   background: rgba(17, 11, 8, 0.72);
   border-color: rgba(173, 122, 82, 0.22);
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
@@ -519,13 +516,13 @@
   grid-template-columns: 1fr;
 }
 
-.finance-action-stack .erp-approval-list,
-.finance-audit-stack .erp-activity-list {
+.finance-side-workspace .erp-approval-list,
+.finance-side-workspace .erp-activity-list {
   max-height: 320px;
   overflow: auto;
 }
 
-.finance-action-stack .empty-state {
+.finance-side-workspace .empty-state {
   margin: 16px 18px 18px;
   border-radius: 8px;
 }
