@@ -391,7 +391,7 @@
     document.querySelector(".module-feature-strip")?.remove();
     document.querySelector(".module-shared-grid")?.remove();
     const recordCopy = $("#module-workflow-subtitle");
-    if (recordCopy) recordCopy.textContent = "Approves payrolls and purchases, monitors transactions, tracks revenue, invoices, receipts, taxes, debt, payments, budgets, and profit.";
+    if (recordCopy) recordCopy.textContent = "Record and review income, expenses, invoices, payments, payroll, budgets, taxes, and approvals.";
     $("#module-record-form")?.classList.add("finance-entry-form");
     const recordTitle = $("#portal-records .panel-header h2");
     if (recordTitle) recordTitle.textContent = "Finance Ledger";
@@ -410,24 +410,20 @@
     }
     if ($("#finance-workspace-sections")) return;
     $("#portal-records")?.insertAdjacentHTML(
-      "beforebegin",
+      "afterend",
       `<div id="finance-workspace-sections" class="finance-workspace-sections">
-      <section class="finance-primary-workspace">
+        <article id="approvals" class="panel">
+          <div class="panel-header"><h2>Approvals</h2><span id="erp-approval-count" class="badge">0 pending</span></div>
+          <div id="erp-approvals" class="erp-approval-list"></div>
+        </article>
         <article class="panel">
-          <div class="panel-header"><h2>Finance Actions</h2><span class="badge">Workflow</span></div>
+          <div class="panel-header"><h2>Workflow Actions</h2><span class="badge">Finance</span></div>
           <div id="erp-actions" class="erp-action-list"></div>
         </article>
         <article id="reports" class="panel">
           <div class="panel-header"><h2>Finance Reports</h2><span class="badge">Export Ready</span></div>
           <div id="erp-reports" class="erp-report-grid"></div>
         </article>
-      </section>
-      <aside id="approvals" class="finance-side-workspace">
-        <article class="panel">
-          <div class="panel-header"><h2>Approvals</h2><span id="erp-approval-count" class="badge">0 pending</span></div>
-          <div id="erp-approvals" class="erp-approval-list"></div>
-        </article>
-      </aside>
       </div>`,
     );
   };
@@ -562,16 +558,19 @@
         : `<div class="empty-state">No messages yet.</div>`;
     }
 
-    $("#erp-reports").innerHTML = blueprint.reports
-      .map(
-        (item) => `<article class="erp-report-card">
+    $("#erp-reports").innerHTML =
+      moduleId === "finance"
+        ? blueprint.reports.map((item) => `<button class="finance-report-button" data-report-name="${escapeHtml(item)}" data-report-period="monthly" type="button">${escapeHtml(item)}</button>`).join("")
+        : blueprint.reports
+            .map(
+              (item) => `<article class="erp-report-card">
           <strong>${escapeHtml(item)}</strong>
           <div class="erp-report-periods">
             ${REPORT_PERIODS.map((period) => `<button class="btn" data-report-name="${escapeHtml(item)}" data-report-period="${period}" type="button">${period[0].toUpperCase()}${period.slice(1)}</button>`).join("")}
           </div>
         </article>`,
-      )
-      .join("");
+            )
+            .join("");
     const activityList = $("#erp-activity");
     if (activityList) {
       activityList.innerHTML = activities.length
