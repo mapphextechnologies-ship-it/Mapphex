@@ -485,6 +485,67 @@
   margin-bottom: 14px;
 }
 
+.finance-simple-page .finance-hero-section {
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.42fr);
+  border-color: rgba(173, 122, 82, 0.24);
+  background: linear-gradient(135deg, rgba(28, 18, 13, 0.92), rgba(58, 38, 25, 0.70));
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
+}
+
+.finance-simple-page .finance-hero-section .eyebrow {
+  color: #d39a67;
+}
+
+.finance-simple-page .portal-hub-profile {
+  border-radius: 8px;
+  border-color: rgba(211, 154, 103, 0.28);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.finance-guide-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.finance-guide-grid article {
+  min-height: 142px;
+  padding: 16px;
+  border: 1px solid rgba(173, 122, 82, 0.20);
+  border-radius: 8px;
+  background: rgba(23, 16, 12, 0.74);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+}
+
+.finance-guide-grid span,
+.finance-guide-grid strong {
+  display: block;
+}
+
+.finance-guide-grid span {
+  color: #d39a67;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.finance-guide-grid strong {
+  margin-top: 8px;
+  color: rgba(255, 255, 255, 0.94);
+  font-size: 20px;
+}
+
+.finance-guide-grid p {
+  margin: 8px 0 0;
+  color: rgba(255, 255, 255, 0.68);
+  line-height: 1.55;
+}
+
+.finance-ledger-panel {
+  border-color: rgba(211, 154, 103, 0.30);
+  background: rgba(17, 11, 8, 0.82);
+  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.32);
+}
+
 .finance-workspace-sections {
   display: grid;
   grid-template-columns: minmax(260px, 0.9fr) minmax(260px, 1fr) minmax(0, 1.25fr);
@@ -869,6 +930,7 @@
   .portal-hub-grid,
   .module-app-shell,
   .module-shared-grid,
+  .finance-guide-grid,
   .finance-workspace-sections,
   .finance-simple-page .erp-action-list,
   .erp-kpi-grid,

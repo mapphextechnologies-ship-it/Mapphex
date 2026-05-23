@@ -390,6 +390,8 @@
     document.body.classList.add("finance-simple-page");
     document.querySelector(".module-feature-strip")?.remove();
     document.querySelector(".module-shared-grid")?.remove();
+    $("#portal-dashboard")?.classList.add("finance-hero-section");
+    $("#portal-records")?.classList.add("finance-ledger-panel");
     const recordCopy = $("#module-workflow-subtitle");
     if (recordCopy) recordCopy.textContent = "Record and review income, expenses, invoices, payments, payroll, budgets, taxes, and approvals.";
     $("#module-record-form")?.classList.add("finance-entry-form");
@@ -407,6 +409,16 @@
         <article class="kpi"><div class="kpi-label">Money In</div><div id="finance-money-in" class="kpi-value">KES 0</div><div class="kpi-foot muted">Income and received payments</div></article>
         <article class="kpi"><div class="kpi-label">Money Out</div><div id="finance-money-out" class="kpi-value">KES 0</div><div class="kpi-foot muted">Expenses, purchases, payroll</div></article>
         <article class="kpi"><div class="kpi-label">Open Items</div><div id="finance-open-items" class="kpi-value">0</div><div class="kpi-foot muted">Pending or unpaid entries</div></article>`;
+    }
+    if (!$("#finance-guide")) {
+      $("#portal-kpis")?.insertAdjacentHTML(
+        "afterend",
+        `<section id="finance-guide" class="finance-guide-grid" aria-label="Finance workflow">
+          <article><span>01</span><strong>Record</strong><p>Add income, expenses, invoices, payments, payroll, budgets, and taxes into the ledger.</p></article>
+          <article><span>02</span><strong>Approve</strong><p>Review payroll and purchase approvals before they affect finance records.</p></article>
+          <article><span>03</span><strong>Report</strong><p>Export clean finance reports for income, expenses, invoices, payments, payroll, and audit review.</p></article>
+        </section>`,
+      );
     }
     if ($("#finance-workspace-sections")) return;
     $("#portal-records")?.insertAdjacentHTML(
