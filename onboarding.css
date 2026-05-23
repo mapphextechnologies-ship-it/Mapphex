@@ -647,6 +647,43 @@
   justify-content: flex-end;
 }
 
+.finance-approved-block {
+  margin: 0 18px 18px;
+  border: 1px solid rgba(173, 122, 82, 0.20);
+  border-radius: 8px;
+  background: rgba(23, 16, 12, 0.62);
+}
+
+.finance-approved-list {
+  display: grid;
+  gap: 10px;
+  padding: 16px 18px 18px;
+}
+
+.finance-approved-list article {
+  padding: 12px;
+  border: 1px solid rgba(173, 122, 82, 0.18);
+  border-radius: 8px;
+  background: rgba(17, 11, 8, 0.74);
+}
+
+.finance-approved-list strong,
+.finance-approved-list span,
+.finance-approved-list small {
+  display: block;
+}
+
+.finance-approved-list strong {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.finance-approved-list span,
+.finance-approved-list small {
+  margin-top: 5px;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 12px;
+}
+
 .finance-workspace-sections {
   display: grid;
   grid-template-columns: minmax(260px, 0.9fr) minmax(0, 1.25fr);

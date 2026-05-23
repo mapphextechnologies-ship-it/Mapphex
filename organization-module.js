@@ -498,6 +498,10 @@
             <article><span>What happens next</span><ul id="finance-action-steps"></ul></article>
             <article><span>Route</span><p id="finance-action-route"></p></article>
           </div>
+          <div class="finance-approved-block">
+            <div class="panel-header"><h3>Approved records</h3><span id="finance-approved-count" class="badge">0 approved</span></div>
+            <div id="finance-approved-list" class="finance-approved-list"></div>
+          </div>
           <div class="finance-action-footer">
             <button id="finance-action-submit" class="btn primary" type="button">Send workflow</button>
           </div>
@@ -597,11 +601,35 @@
     const info = financeActionInfo(label, target, detail);
     const panel = $("#finance-action-detail");
     if (!panel) return;
+    const key = String(label || "").toLowerCase();
+    const approved = (ensurePortalState("finance").approvals || [])
+      .filter((item) => ["approved", "paid"].includes(String(item.status || "").toLowerCase()))
+      .filter((item) => {
+        const haystack = `${item.title || ""} ${item.note || ""} ${item.source || ""}`.toLowerCase();
+        if (/payroll/.test(key)) return /payroll|salary|employee/.test(haystack);
+        if (/purchase/.test(key)) return /purchase|procurement|supplier/.test(haystack);
+        if (/invoice/.test(key)) return /invoice|sales|customer/.test(haystack);
+        if (/payment/.test(key)) return /payment|paid|receipt/.test(haystack);
+        return true;
+      })
+      .slice(0, 8);
     $("#finance-action-title").textContent = info.title;
     $("#finance-action-subtitle").textContent = label || "Finance workflow";
     $("#finance-action-purpose").textContent = info.purpose;
     $("#finance-action-route").textContent = info.route;
     $("#finance-action-steps").innerHTML = info.steps.map((step) => `<li>${escapeHtml(step)}</li>`).join("");
+    $("#finance-approved-count").textContent = `${approved.length} approved`;
+    $("#finance-approved-list").innerHTML = approved.length
+      ? approved
+          .map(
+            (item) => `<article>
+              <strong>${escapeHtml(item.title || "Approved record")}</strong>
+              <span>${escapeHtml(item.source || "Finance")} • ${typeof item.amount === "number" && item.amount > 99 ? money(item.amount) : escapeHtml(item.amount || 0)} • ${escapeHtml(item.status || "approved")}</span>
+              <small>${escapeHtml(humanDate(item.updatedAt || item.createdAt || item.at))}</small>
+            </article>`,
+          )
+          .join("")
+      : `<div class="empty-state">No approved records yet for this workflow.</div>`;
     $("#finance-action-submit").dataset.erpAction = label || "";
     $("#finance-action-submit").dataset.erpTarget = target || "";
     $("#finance-action-submit").dataset.erpDetail = detail || "";
