@@ -602,6 +602,51 @@
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
 }
 
+.finance-action-detail {
+  border-color: rgba(211, 154, 103, 0.30);
+  background: rgba(17, 11, 8, 0.82);
+  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.32);
+}
+
+.finance-action-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(220px, 0.75fr);
+  gap: 14px;
+  padding: 16px 18px 18px;
+}
+
+.finance-action-body article {
+  min-height: 132px;
+  padding: 14px;
+  border: 1px solid rgba(173, 122, 82, 0.20);
+  border-radius: 8px;
+  background: rgba(23, 16, 12, 0.74);
+}
+
+.finance-action-body span {
+  display: block;
+  color: #d39a67;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.finance-action-body p,
+.finance-action-body ul {
+  margin: 10px 0 0;
+  color: rgba(255, 255, 255, 0.70);
+  line-height: 1.6;
+}
+
+.finance-action-body ul {
+  padding-left: 18px;
+}
+
+.finance-action-footer {
+  padding: 0 18px 18px;
+  display: flex;
+  justify-content: flex-end;
+}
+
 .finance-workspace-sections {
   display: grid;
   grid-template-columns: minmax(260px, 0.9fr) minmax(0, 1.25fr);
@@ -1041,6 +1086,7 @@
   .module-shared-grid,
   .finance-dashboard-panel,
   .finance-flow-grid,
+  .finance-action-body,
   .finance-workspace-sections,
   .finance-focus-grid,
   .finance-simple-page .erp-action-list,

@@ -292,6 +292,7 @@
     "finance-taxes": ["finance-taxes"],
     "finance-analytics": ["finance-analytics"],
     "finance-settings": ["finance-settings"],
+    "finance-action-detail": ["finance-action-detail"],
   };
 
   const setPortalView = (target = "dashboard") => {
@@ -312,6 +313,7 @@
       "finance-taxes",
       "finance-analytics",
       "finance-settings",
+      "finance-action-detail",
     ].forEach((id) => {
       const section = document.getElementById(id);
       if (section) section.hidden = !visible.has(id);
@@ -483,6 +485,25 @@
         </section>`,
       );
     }
+    if (!$("#finance-action-detail")) {
+      $("#finance-actions-panel")?.insertAdjacentHTML(
+        "afterend",
+        `<section id="finance-action-detail" class="panel finance-action-detail" hidden>
+          <div class="panel-header">
+            <div><h2 id="finance-action-title">Finance Action</h2><p id="finance-action-subtitle" class="portal-manager-subtitle">Review this finance workflow before sending it.</p></div>
+            <div class="panel-actions"><button class="btn" data-finance-action-back type="button">Back to dashboard</button></div>
+          </div>
+          <div class="finance-action-body">
+            <article><span>Purpose</span><p id="finance-action-purpose"></p></article>
+            <article><span>What happens next</span><ul id="finance-action-steps"></ul></article>
+            <article><span>Route</span><p id="finance-action-route"></p></article>
+          </div>
+          <div class="finance-action-footer">
+            <button id="finance-action-submit" class="btn primary" type="button">Send workflow</button>
+          </div>
+        </section>`,
+      );
+    }
     if ($("#finance-workspace-sections")) return;
     $("#portal-records")?.insertAdjacentHTML(
       "afterend",
@@ -528,6 +549,64 @@
         <div class="finance-focus-body"><strong>Finance workspace</strong><p>Finance settings use the same organization users, permissions, exports, and tenant data controls.</p></div>
       </section>`,
     );
+  };
+
+  const financeActionInfo = (label, target, detail) => {
+    const key = String(label || "").toLowerCase();
+    if (/payroll/.test(key)) {
+      return {
+        title: "Approve Payroll",
+        purpose: "Review salary totals from HR before Finance marks payroll as approved or paid.",
+        steps: ["Check employee salary records", "Confirm totals match HR payroll", "Send approval back to HR"],
+        route: "Routes to HR payroll approvals.",
+      };
+    }
+    if (/purchase/.test(key)) {
+      return {
+        title: "Approve Purchase",
+        purpose: "Review procurement purchase requests before money is committed.",
+        steps: ["Check supplier or purchase request", "Confirm budget availability", "Send approval to Procurement"],
+        route: "Routes to Procurement approvals.",
+      };
+    }
+    if (/invoice/.test(key)) {
+      return {
+        title: "Send Invoice",
+        purpose: "Prepare an invoice workflow for sales or customer billing follow-up.",
+        steps: ["Confirm customer or sales source", "Record invoice amount in the ledger", "Send invoice workflow to Sales"],
+        route: "Routes to Sales invoice handling.",
+      };
+    }
+    if (/payment/.test(key)) {
+      return {
+        title: "Confirm Payment",
+        purpose: "Confirm payment activity and send it into reporting for finance records.",
+        steps: ["Check payment amount", "Match it to invoice or receipt records", "Send confirmation to Reporting"],
+        route: "Routes to Reporting and finance summaries.",
+      };
+    }
+    return {
+      title: label || "Finance Action",
+      purpose: detail || "Review and send this finance workflow.",
+      steps: ["Review the workflow", "Confirm the finance details", "Send to the target department"],
+      route: `Routes to ${target || "the selected department"}.`,
+    };
+  };
+
+  const openFinanceActionDetail = (label, target, detail) => {
+    const info = financeActionInfo(label, target, detail);
+    const panel = $("#finance-action-detail");
+    if (!panel) return;
+    $("#finance-action-title").textContent = info.title;
+    $("#finance-action-subtitle").textContent = label || "Finance workflow";
+    $("#finance-action-purpose").textContent = info.purpose;
+    $("#finance-action-route").textContent = info.route;
+    $("#finance-action-steps").innerHTML = info.steps.map((step) => `<li>${escapeHtml(step)}</li>`).join("");
+    $("#finance-action-submit").dataset.erpAction = label || "";
+    $("#finance-action-submit").dataset.erpTarget = target || "";
+    $("#finance-action-submit").dataset.erpDetail = detail || "";
+    setPortalView("finance-action-detail");
+    history.replaceState(null, "", `#${String(label || "finance-action").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`);
   };
 
   const financeTotals = () => {
@@ -1178,8 +1257,24 @@
       });
 
       document.addEventListener("click", (event) => {
+        const financeBack = event.target.closest("[data-finance-action-back]");
+        if (financeBack && moduleId === "finance") {
+          event.preventDefault();
+          history.replaceState(null, "", "#dashboard");
+          setActivePortalNav("#dashboard");
+          return;
+        }
+        const financeSubmit = event.target.closest("#finance-action-submit");
+        if (financeSubmit && moduleId === "finance") {
+          addWorkflowEvent(moduleId, financeSubmit.dataset.erpAction, financeSubmit.dataset.erpTarget, financeSubmit.dataset.erpDetail);
+          return;
+        }
         const action = event.target.closest("[data-erp-action]");
         if (action) {
+          if (moduleId === "finance") {
+            openFinanceActionDetail(action.dataset.erpAction, action.dataset.erpTarget, action.dataset.erpDetail);
+            return;
+          }
           addWorkflowEvent(moduleId, action.dataset.erpAction, action.dataset.erpTarget, action.dataset.erpDetail);
           return;
         }
