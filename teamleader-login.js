@@ -115,6 +115,10 @@
     const error = $("#teamleader-login-error");
     const loginBtn = $("#teamleader-login-btn");
     if (!form || !identifier || !password || !error) return;
+    window.EnterpriseCore?.rememberLogin?.restore?.("teamleader", {
+      checkbox: rememberMe,
+      fields: { identifier },
+    });
 
     if (loadAccounts().length === 0) {
       if (loginBtn) loginBtn.textContent = "Login";
@@ -160,6 +164,10 @@
         },
         !!rememberMe?.checked,
       );
+      window.EnterpriseCore?.rememberLogin?.save?.("teamleader", {
+        checkbox: rememberMe,
+        fields: { identifier },
+      });
       window.location.href = "TeamLeader.html";
     });
   };

@@ -138,6 +138,15 @@
     const form = $("#portal-login-form");
     if (form?.email) form.email.value = "";
     if (form?.portalPassword) form.portalPassword.value = "";
+    window.EnterpriseCore?.rememberLogin?.restore?.(`portal-${portalId}`, {
+      checkbox: form?.remember,
+      fields: {
+        organizationName: form?.organizationName,
+        identifier: form?.identifier,
+        name: form?.name,
+        email: form?.email,
+      },
+    });
     loadOrganizationContext().then(applyOrganizationContext).catch(() => null);
     $("#portal-login-form")?.addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -175,6 +184,15 @@
           },
           body.remember === "on",
         );
+        window.EnterpriseCore?.rememberLogin?.save?.(`portal-${portalId}`, {
+          checkbox: event.currentTarget.remember,
+          fields: {
+            organizationName: event.currentTarget.organizationName,
+            identifier: event.currentTarget.identifier,
+            name: event.currentTarget.name,
+            email: event.currentTarget.email,
+          },
+        });
         await ensureAllowed(session);
         result.style.color = "var(--ok)";
         result.textContent = "Access approved. Opening portal...";

@@ -118,6 +118,10 @@
     const loginBtn = $("#agent-login-btn");
 
     if (!form || !identifier || !password || !error) return;
+    window.EnterpriseCore?.rememberLogin?.restore?.("agent", {
+      checkbox: rememberMe,
+      fields: { identifier },
+    });
 
     if (loadAgentAccounts().length === 0) {
       if (loginBtn) loginBtn.textContent = "Login";
@@ -174,6 +178,10 @@
         },
         !!rememberMe?.checked,
       );
+      window.EnterpriseCore?.rememberLogin?.save?.("agent", {
+        checkbox: rememberMe,
+        fields: { identifier },
+      });
 
       window.location.href = "Agent.html";
     });

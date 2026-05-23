@@ -235,6 +235,60 @@
     return item;
   };
 
+  const rememberLogin = (() => {
+    const prefix = "mapphex_remember_login_";
+    const read = (key) => {
+      try {
+        return JSON.parse(rawLocalGet.call(localStorage, `${prefix}${key}`) || "null") || null;
+      } catch {
+        return null;
+      }
+    };
+    const write = (key, payload) => {
+      try {
+        rawLocalSet.call(localStorage, `${prefix}${key}`, JSON.stringify(payload || {}));
+      } catch {
+        // storage may be unavailable
+      }
+    };
+    const clear = (key) => {
+      try {
+        rawLocalRemove.call(localStorage, `${prefix}${key}`);
+      } catch {
+        // storage may be unavailable
+      }
+    };
+    const fieldEntries = (fields = {}) =>
+      Object.entries(fields).filter(([, input]) => input && typeof input.value !== "undefined");
+    return {
+      restore(key, options = {}) {
+        const saved = read(key);
+        const checkbox = options.checkbox || null;
+        if (checkbox && saved?.remember === true) checkbox.checked = true;
+        fieldEntries(options.fields).forEach(([name, input]) => {
+          if (!input.value && typeof saved?.fields?.[name] === "string") input.value = saved.fields[name];
+        });
+        checkbox?.addEventListener?.("change", () => {
+          if (!checkbox.checked) clear(key);
+        });
+        return saved;
+      },
+      save(key, options = {}) {
+        const checkbox = options.checkbox || null;
+        if (!checkbox?.checked) {
+          clear(key);
+          return;
+        }
+        const fields = {};
+        fieldEntries(options.fields).forEach(([name, input]) => {
+          fields[name] = String(input.value || "").trim();
+        });
+        write(key, { remember: true, fields, savedAt: new Date().toISOString() });
+      },
+      clear,
+    };
+  })();
+
   const rewriteKvUrl = (input) => {
     try {
       const url = new URL(typeof input === "string" ? input : input?.url, location.origin);
@@ -308,6 +362,7 @@
     audit,
     enqueue,
     notify,
+    rememberLogin,
     recentAudit: () => memoryAudit.slice(),
     recentNotifications: () => memoryNotifications.slice(),
     rolePermissions,

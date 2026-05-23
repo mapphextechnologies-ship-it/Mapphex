@@ -118,7 +118,16 @@
       nextUrlFor(existing.tenantId).then((url) => location.replace(url)).catch(() => null);
     }
 
-    $("#organization-login-form")?.addEventListener("submit", async (event) => {
+    const loginForm = $("#organization-login-form");
+    window.EnterpriseCore?.rememberLogin?.restore?.("organization", {
+      checkbox: loginForm?.remember,
+      fields: {
+        organizationName: loginForm?.organizationName,
+        identifier: loginForm?.identifier,
+      },
+    });
+
+    loginForm?.addEventListener("submit", async (event) => {
       event.preventDefault();
       const result = $("#organization-login-result");
       result.style.color = "var(--muted)";
@@ -173,6 +182,13 @@
           },
           body.remember === "on",
         );
+        window.EnterpriseCore?.rememberLogin?.save?.("organization", {
+          checkbox: event.currentTarget.remember,
+          fields: {
+            organizationName: event.currentTarget.organizationName,
+            identifier: event.currentTarget.identifier,
+          },
+        });
         result.style.color = "var(--ok)";
         result.textContent = "Login successful. Opening workspace...";
         location.replace(await nextUrlFor(data.session.tenantId));

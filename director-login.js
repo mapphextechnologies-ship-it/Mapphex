@@ -225,6 +225,10 @@
     const loginBtn = $("#login-btn");
 
     if (!form || !identifier || !password || !error) return;
+    window.EnterpriseCore?.rememberLogin?.restore?.("director", {
+      checkbox: rememberMe,
+      fields: { identifier },
+    });
 
     const btnOriginalText = loginBtn ? loginBtn.textContent : "";
     if (loginBtn) {
@@ -306,6 +310,10 @@
         },
         !!rememberMe?.checked,
       );
+      window.EnterpriseCore?.rememberLogin?.save?.("director", {
+        checkbox: rememberMe,
+        fields: { identifier },
+      });
 
       window.location.href = "Director.html";
     });

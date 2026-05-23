@@ -118,6 +118,10 @@
     const loginBtn = $("#branch-login-btn");
 
     if (!form || !identifier || !password || !error) return;
+    window.EnterpriseCore?.rememberLogin?.restore?.("branch", {
+      checkbox: rememberMe,
+      fields: { identifier },
+    });
 
     if (loadBranchAccounts().length === 0) {
       if (loginBtn) loginBtn.textContent = "Login";
@@ -174,6 +178,10 @@
         },
         !!rememberMe?.checked,
       );
+      window.EnterpriseCore?.rememberLogin?.save?.("branch", {
+        checkbox: rememberMe,
+        fields: { identifier },
+      });
 
       window.location.href = "Branch.html";
     });
