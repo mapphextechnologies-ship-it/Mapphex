@@ -282,7 +282,7 @@
   };
 
   const PORTAL_VIEW_GROUPS = {
-    dashboard: ["portal-dashboard", "portal-kpis", "dashboard", "finance-guide", "finance-actions-panel", "approvals", "reports"],
+    dashboard: ["portal-dashboard", "portal-kpis", "dashboard", "finance-guide"],
     "portal-records": ["portal-records"],
     approvals: ["approvals"],
     reports: ["reports"],
@@ -467,49 +467,32 @@
     if (!$("#finance-guide")) {
       $("#portal-kpis")?.insertAdjacentHTML(
         "afterend",
-        `<section id="finance-guide" class="finance-dashboard-panel" aria-label="Finance dashboard">
-          <div class="finance-dashboard-main">
-            <div class="panel-header"><h2>Financial Dashboard</h2><span class="badge">Live summary</span></div>
-            <div class="finance-balance-card">
-              <span>Net Position</span>
-              <strong id="finance-dashboard-net">KES 0</strong>
-              <p>Money in minus money out from Finance Ledger entries.</p>
-            </div>
-            <div class="finance-flow-grid">
-              <article><span>Money In</span><strong id="finance-dashboard-in">KES 0</strong><div class="finance-meter"><i id="finance-meter-in"></i></div></article>
-              <article><span>Money Out</span><strong id="finance-dashboard-out">KES 0</strong><div class="finance-meter"><i id="finance-meter-out"></i></div></article>
-            </div>
-          </div>
-          <aside class="finance-dashboard-side">
-            <article><span>Open Approvals</span><strong id="finance-dashboard-approvals">0</strong><p>Payroll and purchase items waiting for review.</p></article>
-            <article><span>Ledger Health</span><strong id="finance-dashboard-health">Ready</strong><p id="finance-dashboard-note">Add the first finance entry to activate reporting.</p></article>
-            <article><span>Next Steps</span><ul><li>Record entries</li><li>Approve pending items</li><li>Export reports</li></ul></article>
-          </aside>
+        `<section id="finance-guide" class="finance-guide-grid" aria-label="Finance workflow">
+          <article><span>01</span><strong>Record</strong><p>Add income, expenses, invoices, payments, payroll, budgets, and taxes into the ledger.</p></article>
+          <article><span>02</span><strong>Approve</strong><p>Review payroll and purchase approvals before they affect finance records.</p></article>
+          <article><span>03</span><strong>Report</strong><p>Export clean finance reports for income, expenses, invoices, payments, payroll, and audit review.</p></article>
         </section>`,
       );
     }
-    if (!$("#finance-actions-panel")) {
-      $("#finance-guide")?.insertAdjacentHTML(
-        "afterend",
-        `<div id="finance-department-grid" class="finance-department-grid">
-          <section id="finance-actions-panel" class="panel finance-actions-panel">
-            <div class="panel-header"><h2>Department Actions</h2><span class="badge">Workflow</span></div>
-            <div id="erp-actions" class="erp-action-list"></div>
-          </section>
-          <article id="approvals" class="panel">
-            <div class="panel-header"><h2>Approvals Inbox</h2><span id="erp-approval-count" class="badge">0 pending</span></div>
-            <div id="erp-approvals" class="erp-approval-list"></div>
-          </article>
-          <article id="reports" class="panel">
-            <div class="panel-header"><h2>Reports & Audit</h2><span class="badge">PDF / Excel</span></div>
-            <div id="erp-reports" class="erp-report-grid"></div>
-          </article>
-        </div>`,
-      );
-    }
     if ($("#finance-workspace-sections")) return;
-    $("#portal-records")?.insertAdjacentHTML("afterend", `<div id="finance-workspace-sections" class="finance-workspace-sections" hidden></div>`);
     $("#portal-records")?.insertAdjacentHTML(
+      "afterend",
+      `<div id="finance-workspace-sections" class="finance-workspace-sections">
+        <article id="approvals" class="panel">
+          <div class="panel-header"><h2>Approvals</h2><span id="erp-approval-count" class="badge">0 pending</span></div>
+          <div id="erp-approvals" class="erp-approval-list"></div>
+        </article>
+        <article id="finance-actions-panel" class="panel finance-actions-panel">
+          <div class="panel-header"><h2>Workflow Actions</h2><span class="badge">Finance</span></div>
+          <div id="erp-actions" class="erp-action-list"></div>
+        </article>
+        <article id="reports" class="panel">
+          <div class="panel-header"><h2>Finance Reports</h2><span class="badge">Export Ready</span></div>
+          <div id="erp-reports" class="erp-report-grid"></div>
+        </article>
+      </div>`,
+    );
+    $("#finance-workspace-sections")?.insertAdjacentHTML(
       "afterend",
       `<section id="finance-revenue" class="panel finance-focus-panel" hidden>
         <div class="panel-header"><h2>Revenue</h2><span class="badge">Money In</span></div>
