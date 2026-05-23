@@ -6,7 +6,7 @@
     <title>Payroll | Finance Portal</title>
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/images/bytewave-icon-192.png" type="image/png" />
-    <link rel="stylesheet" href="finance-payroll.css?v=1" />
+    <link rel="stylesheet" href="finance-payroll.css?v=2" />
   </head>
   <body data-finance-page="payroll">
     <div class="finance-shell">
@@ -23,11 +23,38 @@
       <div class="sidebar-backdrop" data-close-sidebar></div>
       <main class="finance-main">
         <header class="finance-topbar"><button class="menu-button" type="button" aria-label="Open menu" data-menu-button><span></span><span></span><span></span></button><div><p>Workspace Portal</p><h1>Payroll</h1></div><a class="topbar-link" href="organization-module.html?portal=finance">Back to portal</a></header>
-        <section class="hero-panel"><div><p class="eyebrow">People</p><h2>Monthly salary runs</h2><p>See who gets paid, how much, and when.</p></div><button class="primary-action" type="button">Run payroll</button></section>
-        <section class="summary-grid"><article><span>Salary runs</span><strong>2</strong><small>This month</small></article><article><span>Pending</span><strong>2</strong><small>Needs review</small></article><article><span>Total pay</span><strong>KES 0</strong><small>Current total</small></article><article><span>Next run</span><strong>Month end</strong><small>Scheduled</small></article></section>
-        <section class="content-card"><div class="content-head"><div><p class="eyebrow">Payroll</p><h2>Salary runs</h2><p>Monthly salary records and approval status.</p></div><div class="toolbar"><input type="search" placeholder="Search payroll" /><select><option>All</option><option>Pending</option><option>Paid</option></select></div></div><div class="table-wrap"><table><thead><tr><th>Salary run</th><th>Status</th><th>Amount</th><th>Date</th><th>Action</th></tr></thead><tbody data-records-body></tbody></table></div></section>
+        <section class="hero-panel"><div><p class="eyebrow">People</p><h2>HR payroll approvals</h2><p>Review worker payment details sent by HR before Finance approves or rejects salary payment.</p></div><button class="primary-action" type="button" data-seed-payroll>Add HR sample</button></section>
+        <section class="summary-grid"><article><span>Workers sent by HR</span><strong data-total-workers>0</strong><small>Ready for finance review</small></article><article><span>Pending approval</span><strong data-pending-workers>0</strong><small>Needs action</small></article><article><span>Approved payment</span><strong data-approved-workers>0</strong><small>Can be paid</small></article><article><span>Total salary</span><strong data-total-salary>KES 0</strong><small>Pending and approved</small></article></section>
+        <section class="content-card">
+          <div class="content-head">
+            <div>
+              <p class="eyebrow">Payroll</p>
+              <h2>Worker payment requests</h2>
+              <p>Finance can approve or reject each salary payment request after checking the details sent by HR.</p>
+            </div>
+            <div class="toolbar">
+              <input type="search" placeholder="Search name, ID, role" data-payroll-search />
+              <select data-payroll-filter aria-label="Filter payroll status"><option>All</option><option>Pending</option><option>Approved</option><option>Rejected</option></select>
+            </div>
+          </div>
+
+          <form class="payroll-capture-form" data-payroll-form>
+            <label><span>Worker name</span><input name="name" required placeholder="Full worker name" /></label>
+            <label><span>ID / Passport number</span><input name="documentId" required placeholder="ID or passport" /></label>
+            <label><span>Role</span><select name="role" required><option value="">Select role</option><option>HR</option><option>Sales</option><option>Finance</option><option>Inventory</option><option>Procurement</option><option>Cashier</option><option>Employee</option></select></label>
+            <label><span>Salary to pay</span><input name="salary" type="number" min="0" step="1" required placeholder="Amount in KES" /></label>
+            <button class="primary-action" type="submit">Add worker payment</button>
+          </form>
+
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Worker name</th><th>ID / Passport</th><th>Role</th><th>Salary</th><th>Sent by</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody data-records-body></tbody>
+            </table>
+          </div>
+        </section>
       </main>
     </div>
-    <script src="finance-payroll.js?v=1"></script>
+    <script src="finance-payroll.js?v=2"></script>
   </body>
 </html>

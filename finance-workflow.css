@@ -374,6 +374,79 @@ tr:last-child td {
   color: var(--warning);
 }
 
+.status.rejected {
+  background: rgba(251, 113, 133, 0.12);
+  color: #fb7185;
+}
+
+.payroll-capture-form {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 18px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.payroll-capture-form label,
+.payroll-capture-form span {
+  display: grid;
+  gap: 7px;
+}
+
+.payroll-capture-form span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.payroll-capture-form input,
+.payroll-capture-form select {
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0 12px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.payroll-capture-form select option {
+  color: #102033;
+}
+
+.payroll-capture-form .primary-action {
+  align-self: end;
+  min-height: 44px;
+}
+
+.payroll-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.payroll-action {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 10px;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.payroll-action.approve {
+  background: rgba(52, 211, 153, 0.18);
+  border-color: rgba(52, 211, 153, 0.36);
+}
+
+.payroll-action.reject {
+  background: rgba(251, 113, 133, 0.14);
+  border-color: rgba(251, 113, 133, 0.34);
+}
+
 .row-action {
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -450,5 +523,9 @@ tr:last-child td {
 
   .toolbar {
     flex-direction: column;
+  }
+
+  .payroll-capture-form {
+    grid-template-columns: 1fr;
   }
 }
