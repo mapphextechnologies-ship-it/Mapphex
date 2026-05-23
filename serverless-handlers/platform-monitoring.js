@@ -26,6 +26,15 @@ const readArray = async (store, key) => {
   return Array.isArray(value) ? value : [];
 };
 
+const normalizeOrganizationRows = (value) => {
+  if (Array.isArray(value)) return value.filter((row) => row && typeof row === "object");
+  if (value && typeof value === "object") {
+    const rows = Array.isArray(value.organizations) ? value.organizations : Array.isArray(value.rows) ? value.rows : Object.values(value);
+    return rows.filter((row) => row && typeof row === "object" && (row.id || row.organizationId || row.name));
+  }
+  return [];
+};
+
 const summarizeTenant = async (store, org) => {
   const tenantId = org.id;
   const [users, settings, audit, tasks, files, events] = await Promise.all([
@@ -68,8 +77,7 @@ module.exports = async (req, res) => {
     rateLimit(req, { scope: "platform-monitoring", limit: 180, windowMs: 60_000 });
     const superSession = requireSuperAdmin(req);
     const store = getStore();
-    const organizationsRaw = (await store.get(ORGS_KEY)) || [];
-    const organizations = Array.isArray(organizationsRaw) ? organizationsRaw : [];
+    const organizations = normalizeOrganizationRows((await store.get(ORGS_KEY)) || []);
 
     if (req.method === "POST") {
       assertSameOrigin(req);

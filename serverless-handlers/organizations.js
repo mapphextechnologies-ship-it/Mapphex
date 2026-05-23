@@ -130,10 +130,16 @@ const defaultRoleTemplates = (portalIds = []) => {
   ].map((role) => ({ ...role, modulePermissions: modulePermissionsFor(role.portals) }));
 };
 
-const loadOrganizations = async (store) => {
-  const rows = (await store.get(ORGS_KEY)) || [];
-  return Array.isArray(rows) ? rows : [];
+const normalizeOrganizationRows = (value) => {
+  if (Array.isArray(value)) return value.filter((row) => row && typeof row === "object");
+  if (value && typeof value === "object") {
+    const rows = Array.isArray(value.organizations) ? value.organizations : Array.isArray(value.rows) ? value.rows : Object.values(value);
+    return rows.filter((row) => row && typeof row === "object" && (row.id || row.organizationId || row.name));
+  }
+  return [];
 };
+
+const loadOrganizations = async (store) => normalizeOrganizationRows((await store.get(ORGS_KEY)) || []);
 
 const saveOrganizations = (store, rows) => store.set(ORGS_KEY, rows);
 

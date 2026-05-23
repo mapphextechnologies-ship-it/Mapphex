@@ -23,14 +23,30 @@
   };
 
   const num = (value) => Number(value || 0).toLocaleString();
-  const orgRows = () => monitoring.organizations.map((row) => row.organization || row);
+  const monitoringRows = () => (Array.isArray(monitoring.organizations) ? monitoring.organizations : []);
+  const registeredRows = () => (Array.isArray(state.organizations) ? state.organizations : []);
+  const orgKey = (org) => String(org?.id || org?.organizationId || org?.referenceCode || org?.name || "").toLowerCase();
+  const orgRows = () => {
+    const byId = new Map();
+    registeredRows().forEach((org) => {
+      const key = orgKey(org);
+      if (key) byId.set(key, org);
+    });
+    monitoringRows().forEach((row) => {
+      const org = row.organization || row;
+      const key = orgKey(org);
+      if (key) byId.set(key, { ...(byId.get(key) || {}), ...org });
+    });
+    return [...byId.values()];
+  };
 
   const renderKpis = async () => {
     const totals = monitoring.totals || state.totals || {};
-    $("#kpi-orgs").textContent = num(totals.organizations);
-    $("#kpi-active").textContent = num(totals.active);
-    $("#kpi-users").textContent = num(totals.users);
-    $("#kpi-revenue").textContent = num(totals.revenue);
+    const rows = orgRows();
+    $("#kpi-orgs").textContent = num(Math.max(Number(totals.organizations || 0), rows.length));
+    $("#kpi-active").textContent = num(Math.max(Number(totals.active || 0), rows.filter((org) => String(org.status || "").toLowerCase() === "active").length));
+    $("#kpi-users").textContent = num(Math.max(Number(totals.users || 0), rows.reduce((sum, org) => sum + Number(org.metrics?.users || 0), 0)));
+    $("#kpi-revenue").textContent = num(Math.max(Number(totals.revenue || 0), rows.reduce((sum, org) => sum + Number(org.metrics?.revenue || 0), 0)));
     $("#kpi-alerts").textContent = num(totals.securityAlerts || totals.suspended);
     $("#mon-active-users").textContent = num(totals.activeUsers);
     $("#mon-branches").textContent = num(totals.branches);
@@ -48,7 +64,7 @@
     }
   };
 
-  const tenantMetric = (orgId) => monitoring.organizations.find((row) => row.organization?.id === orgId)?.metrics || {};
+  const tenantMetric = (orgId) => monitoringRows().find((row) => row.organization?.id === orgId)?.metrics || {};
 
   const renderOrgs = () => {
     const q = String($("#super-search")?.value || "").toLowerCase().trim();
@@ -80,7 +96,7 @@
   };
 
   const renderUsers = () => {
-    const users = monitoring.organizations.flatMap((row) =>
+    const users = monitoringRows().flatMap((row) =>
       (row.users || []).map((user) => ({ ...user, organization: row.organization?.name, tenantId: row.organization?.id })),
     );
     $("#global-users-table").innerHTML = users
