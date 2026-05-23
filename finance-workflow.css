@@ -135,7 +135,13 @@ h1 {
 }
 
 .approved-section {
+  width: min(100%, 1280px);
+  margin-inline: auto;
   margin-top: 18px;
+}
+
+.approved-section .workflow-panel {
+  min-height: 260px;
 }
 
 .workflow-panel.wide {
