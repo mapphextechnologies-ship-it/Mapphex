@@ -412,21 +412,23 @@
     $("#portal-records")?.insertAdjacentHTML(
       "beforebegin",
       `<div id="finance-workspace-sections" class="finance-workspace-sections">
-      <section class="finance-primary-workspace">
+      <section id="approvals" class="finance-action-stack">
         <article class="panel">
           <div class="panel-header"><h2>Finance Actions</h2><span class="badge">Workflow</span></div>
           <div id="erp-actions" class="erp-action-list"></div>
         </article>
-        <article id="reports" class="panel">
-          <div class="panel-header"><h2>Finance Reports</h2><span class="badge">Export Ready</span></div>
-          <div id="erp-reports" class="erp-report-grid"></div>
-        </article>
-      </section>
-      <aside id="approvals" class="finance-side-workspace">
         <article class="panel">
           <div class="panel-header"><h2>Approvals</h2><span id="erp-approval-count" class="badge">0 pending</span></div>
           <div id="erp-approvals" class="erp-approval-list"></div>
         </article>
+      </section>
+      <section id="reports" class="finance-report-stack">
+        <article class="panel">
+          <div class="panel-header"><h2>Finance Reports</h2><span class="badge">Export Ready</span></div>
+          <div id="erp-reports" class="erp-report-grid"></div>
+        </article>
+      </section>
+      <aside class="finance-audit-stack">
         <article class="panel">
           <div class="panel-header"><h2>Audit Activity</h2><span class="badge">Live</span></div>
           <div id="erp-activity" class="erp-activity-list"></div>
