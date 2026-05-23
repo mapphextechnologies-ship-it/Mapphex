@@ -146,9 +146,15 @@
           });
           data = response.data;
           if (!response.res.ok || !data?.ok) throw new Error(data?.error || "Login failed");
-        } catch {
-          if (!isLocalDevelopment()) throw new Error("Login service unavailable");
-          data = await localLogin(body.organizationName, body.identifier, body.password);
+        } catch (apiErr) {
+          const localData = await localLogin(body.organizationName, body.identifier, body.password);
+          if (localData?.ok) {
+            data = localData;
+          } else if (!isLocalDevelopment()) {
+            throw new Error(apiErr.message || "Login service unavailable");
+          } else {
+            data = localData;
+          }
           if (!data?.ok) throw new Error("Login failed");
         }
         window.EnterpriseCore?.setTenant?.(data.session.tenantId);
