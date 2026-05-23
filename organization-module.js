@@ -427,10 +427,6 @@
           <div class="panel-header"><h2>Approvals</h2><span id="erp-approval-count" class="badge">0 pending</span></div>
           <div id="erp-approvals" class="erp-approval-list"></div>
         </article>
-        <article class="panel">
-          <div class="panel-header"><h2>Audit Activity</h2><span class="badge">Live</span></div>
-          <div id="erp-activity" class="erp-activity-list"></div>
-        </article>
       </aside>
       </div>`,
     );
@@ -576,9 +572,12 @@
         </article>`,
       )
       .join("");
-    $("#erp-activity").innerHTML = activities.length
-      ? activities.map((item) => `<article><strong>${escapeHtml(item.action)}</strong><span>${escapeHtml(item.detail?.message || item.detail?.label || "Activity recorded")}</span><small>${escapeHtml(humanDate(item.at))}</small></article>`).join("")
-      : `<div class="empty-state">Activity will appear as this portal is used.</div>`;
+    const activityList = $("#erp-activity");
+    if (activityList) {
+      activityList.innerHTML = activities.length
+        ? activities.map((item) => `<article><strong>${escapeHtml(item.action)}</strong><span>${escapeHtml(item.detail?.message || item.detail?.label || "Activity recorded")}</span><small>${escapeHtml(humanDate(item.at))}</small></article>`).join("")
+        : `<div class="empty-state">Activity will appear as this portal is used.</div>`;
+    }
   };
 
   const payrollPayloadForHr = () => {
