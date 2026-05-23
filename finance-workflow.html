@@ -1,1 +1,151 @@
-<!-- Finance workflow page cleared. New implementation will be added after instructions are provided. -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Finance Portal | MAPPHEX</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/images/bytewave-icon-192.png" type="image/png" />
+    <link rel="stylesheet" href="finance-workflow.css?v=1" />
+  </head>
+  <body>
+    <div class="finance-shell">
+      <aside class="finance-sidebar" data-sidebar>
+        <div class="sidebar-head">
+          <div class="brand-mark">FI</div>
+          <div>
+            <p>Finance Portal</p>
+            <strong data-org-name>Business Finance</strong>
+          </div>
+        </div>
+
+        <nav class="finance-nav" aria-label="Finance portal navigation">
+          <p class="nav-group">Main</p>
+          <button class="nav-link active" type="button" data-view="dashboard">Dashboard</button>
+
+          <p class="nav-group">Finance</p>
+          <button class="nav-link" type="button" data-view="invoices">Invoices <span>3</span></button>
+          <button class="nav-link" type="button" data-view="approvals">Approvals <span>4</span></button>
+          <button class="nav-link" type="button" data-view="suppliers">Suppliers</button>
+          <button class="nav-link" type="button" data-view="budgets">Budgets</button>
+
+          <p class="nav-group">People</p>
+          <button class="nav-link" type="button" data-view="employees">Employees</button>
+          <button class="nav-link" type="button" data-view="payroll">Payroll <span>!</span></button>
+
+          <p class="nav-group">Accounting</p>
+          <button class="nav-link" type="button" data-view="ledger">Ledger</button>
+          <button class="nav-link" type="button" data-view="reports">Reports</button>
+
+          <p class="nav-group">Tools</p>
+          <button class="nav-link" type="button" data-view="export">Export</button>
+          <button class="nav-link" type="button" data-view="settings">Settings</button>
+        </nav>
+      </aside>
+
+      <div class="sidebar-backdrop" data-close-sidebar></div>
+
+      <main class="finance-main">
+        <header class="finance-topbar">
+          <button class="menu-button" type="button" aria-label="Open menu" data-menu-button>
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+          <div>
+            <p>Workspace Portal</p>
+            <h1 data-page-title>Dashboard</h1>
+          </div>
+          <a class="topbar-link" href="organization-module.html?portal=finance">Back to portal</a>
+        </header>
+
+        <section class="hero-panel">
+          <div>
+            <p class="eyebrow">Finance Portal</p>
+            <h2 data-hero-title>Overview of all money</h2>
+            <p data-hero-copy>Totals, pending items, and recent activity at a glance.</p>
+          </div>
+          <button class="primary-action" type="button" data-main-action>Add record</button>
+        </section>
+
+        <section class="summary-grid" aria-label="Finance summary">
+          <article>
+            <span>Total Money In</span>
+            <strong data-money-in>KES 0</strong>
+            <small>Received sales and payments</small>
+          </article>
+          <article>
+            <span>Total Money Out</span>
+            <strong data-money-out>KES 0</strong>
+            <small>Expenses, salaries, purchases</small>
+          </article>
+          <article>
+            <span>Pending Items</span>
+            <strong data-pending-count>7</strong>
+            <small>Invoices and approvals waiting</small>
+          </article>
+          <article>
+            <span>Recent Activity</span>
+            <strong data-activity-count>0</strong>
+            <small>New finance actions today</small>
+          </article>
+        </section>
+
+        <section class="content-card" data-view-panel>
+          <div class="content-head">
+            <div>
+              <p class="eyebrow" data-section-kicker>Dashboard</p>
+              <h2 data-section-title>Overview of all money</h2>
+              <p data-section-copy>Totals, pending items, and recent activity at a glance.</p>
+            </div>
+            <div class="toolbar">
+              <input type="search" placeholder="Search records" data-search />
+              <select data-filter aria-label="Filter records">
+                <option>All</option>
+                <option>Pending</option>
+                <option>Approved</option>
+                <option>Rejected</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="dashboard-cards" data-dashboard-cards>
+            <button type="button" data-view-shortcut="invoices">
+              <strong>Invoices</strong>
+              <span>All bills received and sent.</span>
+            </button>
+            <button type="button" data-view-shortcut="approvals">
+              <strong>Approvals</strong>
+              <span>Requests waiting for sign-off.</span>
+            </button>
+            <button type="button" data-view-shortcut="suppliers">
+              <strong>Suppliers</strong>
+              <span>Payments going to vendors.</span>
+            </button>
+            <button type="button" data-view-shortcut="reports">
+              <strong>Reports</strong>
+              <span>Summaries by period or department.</span>
+            </button>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th data-col-one>Record</th>
+                  <th>Status</th>
+                  <th>Amount</th>
+                  <th>Date</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody data-records-body></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="finance-workflow.js?v=1"></script>
+  </body>
+</html>
