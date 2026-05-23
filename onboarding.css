@@ -487,15 +487,19 @@
 
 .finance-workspace-sections {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
+  grid-template-columns: minmax(0, 1.8fr) minmax(300px, 0.9fr);
+  gap: 18px;
+  align-items: start;
 }
 
-.finance-workspace {
-  display: contents;
+.finance-primary-workspace,
+.finance-side-workspace {
+  display: grid;
+  gap: 18px;
 }
 
-.finance-workspace > .panel {
+.finance-primary-workspace > .panel,
+.finance-side-workspace > .panel {
   background: rgba(17, 11, 8, 0.72);
   border-color: rgba(173, 122, 82, 0.22);
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
@@ -506,7 +510,22 @@
 }
 
 .finance-simple-page .erp-report-grid {
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.finance-simple-page .erp-action-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.finance-side-workspace .erp-approval-list,
+.finance-side-workspace .erp-activity-list {
+  max-height: 320px;
+  overflow: auto;
+}
+
+.finance-side-workspace .empty-state {
+  margin: 16px 18px 18px;
+  border-radius: 8px;
 }
 
 .erp-action-list,
@@ -842,6 +861,7 @@
   .module-app-shell,
   .module-shared-grid,
   .finance-workspace-sections,
+  .finance-simple-page .erp-action-list,
   .erp-kpi-grid,
   .erp-dashboard-grid,
   .erp-work-grid,
@@ -917,6 +937,10 @@
 
 @media (min-width: 981px) and (max-width: 1200px) {
   .finance-workspace-sections {
+    grid-template-columns: 1fr;
+  }
+
+  .finance-simple-page .erp-report-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
