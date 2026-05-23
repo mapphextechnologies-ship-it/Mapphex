@@ -80,11 +80,11 @@
       workflows: [["Forward payroll to Finance", "finance"], ["Request role access", "admin"], ["Start recruitment", "department"], ["Schedule training", "staff"]],
     },
     finance: {
-      entity: "Finance Entry",
-      form: ["Entry", "Category", "Amount", "Status"],
-      responsibilities: ["Record income", "Record expenses", "Review invoices", "Confirm payments", "Approve payroll", "Track budgets", "Prepare finance reports"],
-      reports: ["Income", "Expenses", "Invoices", "Payments", "Payroll", "Budgets", "Taxes", "Audit log"],
-      workflows: [["Approve payroll", "hr"], ["Approve purchase", "procurement"], ["Send invoice", "sales"], ["Confirm payment", "reporting"]],
+      entity: "Transaction",
+      form: ["Name", "Type", "Amount", "Status"],
+      responsibilities: ["Money In", "Money Out", "Sales", "Expenses", "Payments", "Reports", "Activity"],
+      reports: ["Daily report", "Weekly report", "Monthly report", "Sales", "Expenses", "Payments"],
+      workflows: [["Add sale", "sales"], ["Add expense", "finance"], ["Add product", "inventory"], ["Generate report", "reporting"]],
     },
     sales: {
       entity: "Sales Order",
@@ -200,9 +200,9 @@
     const revenue = Number(reports?.[moduleId]?.revenue || 0);
     return {
       kpis: [
-        [standard.entity === "Finance Record" ? "Transactions" : `${standard.entity}s`, rows],
-        ["Pending approvals", pending],
-        ["Posted transactions", moduleTransactions],
+        [moduleId === "finance" ? "Activity" : standard.entity === "Finance Record" ? "Transactions" : `${standard.entity}s`, rows],
+        [moduleId === "finance" ? "Pending Payments" : "Pending approvals", pending],
+        [moduleId === "finance" ? "Payments" : "Posted transactions", moduleTransactions],
         [revenue > 0 ? "Revenue" : "Reports", revenue > 0 ? revenue : standard.reports.length],
       ],
       chart: [24, 36, 48, 60, 72, Math.min(96, 72 + rows + pending + moduleTransactions)],
@@ -220,7 +220,7 @@
     const custom = orgContext.settings?.moduleSchemas?.[moduleId];
     const labels = Array.isArray(custom?.labels) && custom.labels.length ? custom.labels : standard.form;
     return {
-      title: `${standard.entity} Management`,
+      title: moduleId === "finance" ? "Transactions" : `${standard.entity} Management`,
       labels,
       sample: labels.map(() => ""),
     };
@@ -284,7 +284,7 @@
   };
 
   const PORTAL_VIEW_GROUPS = {
-    dashboard: ["portal-dashboard", "portal-kpis", "finance-dashboard", "portal-records"],
+    dashboard: ["portal-kpis", "finance-dashboard"],
     "portal-records": ["portal-records"],
     approvals: ["approvals"],
     reports: ["reports"],
@@ -440,8 +440,17 @@
     const data = moduleData();
     const rows = Array.isArray(data[moduleId]) ? data[moduleId] : [];
     const q = query.trim().toLowerCase();
-    const visible = q ? rows.filter((row) => row.values.join(" ").toLowerCase().includes(q)) : rows;
+    const filter = moduleId === "finance" ? String($("#finance-filter")?.value || "all").toLowerCase() : "all";
+    const matchesFilter = (row) => {
+      if (filter === "all") return true;
+      const text = (row.values || []).join(" ").toLowerCase();
+      if (filter === "money-in") return /sale|income|payment received|customer payment|mobile money|bank deposit|receipt/.test(text);
+      if (filter === "money-out") return /expense|salary|purchase|bill|tax|supplier|paid out/.test(text);
+      return text.includes(filter);
+    };
+    const visible = rows.filter((row) => (!q || row.values.join(" ").toLowerCase().includes(q)) && matchesFilter(row));
     $("#module-empty").hidden = visible.length > 0;
+    if ($("#module-empty")) $("#module-empty").textContent = moduleId === "finance" ? "No transactions yet. Start by recording your first sale." : "Nothing here yet.";
     $("#module-table-head").innerHTML = [...workflow.labels, "Updated", "Actions"].map((label) => `<th>${escapeHtml(label)}</th>`).join("");
     $("#module-table-body").innerHTML = visible
       .map((row) => `<tr>${row.values.map((value) => `<td>${escapeHtml(value)}</td>`).join("")}<td>${escapeHtml(humanDate(row.updatedAt))}</td><td><button class="btn danger" type="button" data-record-delete="${escapeHtml(row.id)}">Delete</button></td></tr>`)
@@ -459,56 +468,57 @@
     document.querySelector(".module-feature-strip")?.remove();
     document.querySelector(".module-shared-grid")?.remove();
     $("#portal-dashboard")?.classList.add("finance-hero-section");
-    $("#portal-records")?.classList.add("finance-ledger-panel");
+    $("#portal-records")?.classList.add("finance-transactions-panel");
     const recordCopy = $("#module-workflow-subtitle");
-    if (recordCopy) recordCopy.textContent = "Record money in, money out, invoices, payments, payroll, taxes, and approvals in one simple ledger.";
+    if (recordCopy) recordCopy.textContent = "Add sales, payments, expenses, salaries, purchases, and bills in a simple list.";
     $("#module-record-form")?.classList.add("finance-entry-form");
     const recordTitle = $("#portal-records .panel-header h2");
-    if (recordTitle) recordTitle.textContent = "Quick Finance Entry";
+    if (recordTitle) recordTitle.textContent = "Transactions";
     const recordActions = $("#portal-records .panel-header .panel-actions");
     if (recordActions) {
-      recordActions.innerHTML = `<input id="module-search" type="search" placeholder="Search finance entries..." /><button class="btn" data-erp-export="csv" type="button">Export Excel</button><button class="btn" data-erp-export="pdf" type="button">Print / PDF</button>`;
+      recordActions.innerHTML = `<input id="module-search" type="search" placeholder="Search transactions..." /><select id="finance-filter" aria-label="Filter transactions"><option value="all">All</option><option value="money-in">Money In</option><option value="money-out">Money Out</option><option value="sale">Sales</option><option value="payment">Payments</option><option value="expense">Expenses</option></select><button class="btn" data-erp-export="csv" type="button">Export</button><button class="btn" data-erp-export="pdf" type="button">Print</button>`;
     }
     const portalKpis = $("#portal-kpis");
     if (portalKpis && !portalKpis.classList.contains("finance-kpis")) {
       portalKpis.classList.add("finance-kpis");
       portalKpis.innerHTML = `
-        <article class="kpi"><div class="kpi-label">Finance Entries</div><div id="module-kpi-a" class="kpi-value">0</div><div class="kpi-foot muted">Ledger rows</div></article>
-        <article class="kpi"><div class="kpi-label">Money In</div><div id="finance-money-in" class="kpi-value">KES 0</div><div class="kpi-foot muted">Income and received payments</div></article>
-        <article class="kpi"><div class="kpi-label">Money Out</div><div id="finance-money-out" class="kpi-value">KES 0</div><div class="kpi-foot muted">Expenses, purchases, payroll</div></article>
-        <article class="kpi"><div class="kpi-label">Open Items</div><div id="finance-open-items" class="kpi-value">0</div><div class="kpi-foot muted">Pending or unpaid entries</div></article>`;
+        <article class="kpi"><div class="kpi-label">Money In</div><div id="finance-money-in" class="kpi-value">KES 0</div><div class="kpi-foot muted">Sales and payments received</div></article>
+        <article class="kpi"><div class="kpi-label">Money Out</div><div id="finance-money-out" class="kpi-value">KES 0</div><div class="kpi-foot muted">Expenses and bills paid</div></article>
+        <article class="kpi"><div class="kpi-label">Profit</div><div id="finance-dashboard-net-kpi" class="kpi-value">KES 0</div><div class="kpi-foot muted">Money In minus Money Out</div></article>
+        <article class="kpi"><div class="kpi-label">Pending Payments</div><div id="finance-open-items" class="kpi-value">0</div><div class="kpi-foot muted">Payments waiting to be completed</div></article>`;
     }
     if (!$("#finance-dashboard")) {
       $("#portal-kpis")?.insertAdjacentHTML(
         "afterend",
         `<section id="finance-dashboard" class="finance-control-grid" aria-label="Financial dashboard">
           <article class="panel finance-summary-card">
-            <div class="panel-header"><div><p class="eyebrow">Dashboard</p><h2>Today at a glance</h2></div><span class="badge">Live</span></div>
+            <div class="panel-header"><div><p class="eyebrow">Dashboard</p><h2>Today at a glance</h2></div></div>
             <div class="finance-balance-card">
-              <span>Net Profit</span>
+              <span>Profit</span>
               <strong id="finance-dashboard-net">KES 0</strong>
-              <p>Income minus expenses from this business ledger.</p>
+              <p>Money In minus Money Out.</p>
               <div class="finance-meter"><i id="finance-meter-in"></i></div>
             </div>
             <div class="finance-flow-grid">
-              <article><span>Total Income</span><strong id="finance-dashboard-in">KES 0</strong></article>
-              <article><span>Total Expenses</span><strong id="finance-dashboard-out">KES 0</strong></article>
+              <article><span>Money In</span><strong id="finance-dashboard-in">KES 0</strong></article>
+              <article><span>Money Out</span><strong id="finance-dashboard-out">KES 0</strong></article>
+              <article><span>Pending Payments</span><strong id="finance-dashboard-approvals">0</strong></article>
             </div>
           </article>
           <article class="panel finance-quick-panel">
-            <div class="panel-header"><h2>Quick Actions</h2><span class="badge">Simple</span></div>
+            <div class="panel-header"><h2>Quick Actions</h2></div>
             <div class="finance-quick-actions">
-              <button class="erp-action" data-finance-jump="money-in" type="button"><strong>Record Sale</strong><span>Add income or payment received.</span></button>
-              <button class="erp-action" data-finance-jump="money-out" type="button"><strong>Record Expense</strong><span>Add salaries, bills, stock purchase, or tax.</span></button>
-              <button class="erp-action" data-finance-jump="reports" type="button"><strong>Open Reports</strong><span>Daily, weekly, monthly summaries.</span></button>
+              <button class="erp-action finance-primary-action" data-finance-jump="money-in" type="button"><strong>Add Sale</strong><span>Record money received from a sale.</span></button>
+              <button class="erp-action" data-finance-jump="money-out" type="button"><strong>Add Expense</strong><span>Record money spent.</span></button>
+              <button class="erp-action" data-finance-jump="stock" type="button"><strong>Add Product</strong><span>Add or update a stock item.</span></button>
+              <button class="erp-action" data-finance-jump="reports" type="button"><strong>Generate Report</strong><span>View a simple business summary.</span></button>
             </div>
           </article>
           <article class="panel finance-alert-panel">
-            <div class="panel-header"><h2>Alerts</h2><span class="badge">Needs attention</span></div>
+            <div class="panel-header"><h2>Recent Activity</h2></div>
             <div class="finance-alert-list">
-              <article><strong id="finance-dashboard-approvals">0</strong><span>Pending approvals</span></article>
-              <article><strong id="finance-open-invoices">0</strong><span>Pending invoices or open items</span></article>
-              <article><strong id="finance-dashboard-health">Ready</strong><span id="finance-dashboard-note">Add the first finance entry to activate reporting.</span></article>
+              <article><strong id="finance-open-invoices">0</strong><span>Pending payments</span></article>
+              <article><strong id="finance-dashboard-health">Ready</strong><span id="finance-dashboard-note">Start by recording your first sale.</span></article>
             </div>
           </article>
         </section>`,
@@ -519,15 +529,15 @@
       "afterend",
       `<div id="finance-workspace-sections" class="finance-workspace-sections">
         <article id="approvals" class="panel">
-          <div class="panel-header"><h2>Approved list</h2><span id="erp-approval-count" class="badge">0 pending</span></div>
+          <div class="panel-header"><h2>Payments to Review</h2><span id="erp-approval-count" class="badge">0 pending</span></div>
           <div id="erp-approvals" class="erp-approval-list"></div>
         </article>
         <article id="finance-actions-panel" class="panel finance-actions-panel">
-          <div class="panel-header"><h2>Workflow Actions</h2><span class="badge">Finance</span></div>
+          <div class="panel-header"><h2>More Actions</h2><span class="badge">Simple</span></div>
           <div id="erp-actions" class="erp-action-list"></div>
         </article>
         <article id="reports" class="panel">
-          <div class="panel-header"><h2>Finance Reports</h2><span class="badge">Export Ready</span></div>
+          <div class="panel-header"><h2>Reports</h2><span class="badge">Ready</span></div>
           <div id="erp-reports" class="erp-report-grid"></div>
         </article>
       </div>`,
@@ -535,16 +545,16 @@
     $("#finance-workspace-sections")?.insertAdjacentHTML(
       "afterend",
       `<section id="finance-money-in-page" class="panel finance-focus-panel" hidden>
-        <div class="panel-header"><h2>Money In</h2><span class="badge">Sales / Payments</span></div>
-        <div class="finance-focus-body"><strong id="finance-revenue-total">KES 0</strong><p>Record sales, customer payments, invoices, receipts, mobile money, bank payments, and cash received.</p></div>
+        <div class="panel-header"><div><h2>Money In</h2><p class="portal-manager-subtitle">Record sales, customer payments, mobile money payments, and bank deposits.</p></div><button class="btn primary" data-focus-finance-form type="button">Add Sale</button></div>
+        <div class="finance-page-summary"><article><span>Received</span><strong id="finance-revenue-total">KES 0</strong></article><article><span>Payments</span><strong id="finance-payment-count">0</strong></article></div>
       </section>
       <section id="finance-money-out-page" class="panel finance-focus-panel" hidden>
-        <div class="panel-header"><h2>Money Out</h2><span class="badge">Expenses / Bills</span></div>
-        <div class="finance-focus-body"><strong id="finance-expense-total">KES 0</strong><p>Review purchases, payroll, taxes, supplier costs, debts, bills, and other outgoing finance entries.</p></div>
+        <div class="panel-header"><div><h2>Money Out</h2><p class="portal-manager-subtitle">Record expenses, salaries, purchases, and bills.</p></div><button class="btn primary" data-focus-finance-form type="button">Add Expense</button></div>
+        <div class="finance-page-summary"><article><span>Spent</span><strong id="finance-expense-total">KES 0</strong></article><article><span>Expenses</span><strong id="finance-expense-count">0</strong></article></div>
       </section>
       <section id="finance-sales-page" class="panel finance-focus-panel" hidden>
-        <div class="panel-header"><h2>Sales</h2><span class="badge">Receipts</span></div>
-        <div class="finance-focus-body"><strong id="finance-daily-revenue">KES 0</strong><p>Open sales history, receipts, orders, invoice status, and payment records.</p></div>
+        <div class="panel-header"><div><h2>Sales</h2><p class="portal-manager-subtitle">See sales history, receipts, orders, and payments.</p></div><button class="btn primary" data-focus-finance-form type="button">Add Sale</button></div>
+        <div class="finance-page-summary"><article><span>Sales Total</span><strong id="finance-daily-revenue">KES 0</strong></article><article><span>Sales</span><strong id="finance-sales-count">0</strong></article></div>
       </section>
       <section id="finance-stock-page" class="panel finance-focus-panel" hidden>
         <div class="panel-header"><h2>Stock</h2><span class="badge">Inventory</span></div>
@@ -561,9 +571,9 @@
       <section id="finance-notifications-page" class="panel finance-focus-panel" hidden>
         <div class="panel-header"><h2>Notifications</h2><span class="badge">Alerts</span></div>
         <div class="finance-focus-grid">
-          <article><span>Approvals</span><strong id="finance-hero-budgets">0</strong></article>
-          <article><span>Open Items</span><strong id="finance-open-total">0</strong></article>
-          <article><span>Ledger Entries</span><strong id="finance-entry-total">0</strong></article>
+          <article><span>Payments to review</span><strong id="finance-hero-budgets">0</strong></article>
+          <article><span>Pending payments</span><strong id="finance-open-total">0</strong></article>
+          <article><span>Activity</span><strong id="finance-entry-total">0</strong></article>
         </div>
       </section>
       <section id="finance-settings" class="panel finance-focus-panel" hidden>
@@ -591,16 +601,20 @@
     return rows.reduce(
       (totals, row) => {
         const category = String(row.values?.[1] || "").toLowerCase();
+        const text = (row.values || []).join(" ").toLowerCase();
         const amount = Number(String(row.values?.[2] || "").replace(/[^\d.-]/g, "")) || 0;
         const status = String(row.values?.[3] || "").toLowerCase();
-        if (/income|revenue|payment|paid|receipt|sale|invoice/.test(category)) totals.moneyIn += amount;
-        if (/expense|purchase|payroll|tax|budget|debt|cost|bill/.test(category)) totals.moneyOut += amount;
+        if (/income|revenue|payment|paid|receipt|sale|invoice|mobile money|bank deposit|customer payment/.test(text)) totals.moneyIn += amount;
+        if (/expense|purchase|payroll|salary|tax|budget|debt|cost|bill|supplier/.test(text)) totals.moneyOut += amount;
+        if (/sale|receipt|order/.test(text)) totals.sales += 1;
+        if (/payment|mobile money|bank deposit/.test(text)) totals.payments += 1;
+        if (/expense|purchase|salary|bill|tax|supplier/.test(text)) totals.expenses += 1;
         if (/budget/.test(category)) totals.budgets += amount;
         if (/tax/.test(category)) totals.taxes += amount;
         if (/pending|unpaid|draft|open|waiting/.test(status)) totals.openItems += 1;
         return totals;
       },
-      { entries: rows.length, moneyIn: 0, moneyOut: 0, budgets: 0, taxes: 0, openItems: 0 },
+      { entries: rows.length, moneyIn: 0, moneyOut: 0, budgets: 0, taxes: 0, openItems: 0, sales: 0, payments: 0, expenses: 0 },
     );
   };
 
@@ -679,10 +693,12 @@
       const moneyIn = $("#finance-money-in");
       const moneyOut = $("#finance-money-out");
       const openItems = $("#finance-open-items");
+      const netKpi = $("#finance-dashboard-net-kpi");
       if (entries) entries.textContent = totals.entries;
       if (moneyIn) moneyIn.textContent = money(totals.moneyIn);
       if (moneyOut) moneyOut.textContent = money(totals.moneyOut);
       if (openItems) openItems.textContent = totals.openItems;
+      if (netKpi) netKpi.textContent = money(totals.moneyIn - totals.moneyOut);
       const revenueTotal = $("#finance-revenue-total");
       const expenseTotal = $("#finance-expense-total");
       const budgetTotal = $("#finance-budget-total");
@@ -698,6 +714,9 @@
       const dashNote = $("#finance-dashboard-note");
       const meterIn = $("#finance-meter-in");
       const meterOut = $("#finance-meter-out");
+      const paymentCount = $("#finance-payment-count");
+      const expenseCount = $("#finance-expense-count");
+      const salesCount = $("#finance-sales-count");
       const scale = Math.max(totals.moneyIn, totals.moneyOut, 1);
       const pendingApprovals = approvals.filter((item) => item.status === "pending").length;
       if (revenueTotal) revenueTotal.textContent = money(totals.moneyIn);
@@ -712,9 +731,12 @@
       if (dashOut) dashOut.textContent = money(totals.moneyOut);
       if (dashApprovals) dashApprovals.textContent = pendingApprovals;
       if (dashHealth) dashHealth.textContent = totals.entries ? "Active" : "Ready";
-      if (dashNote) dashNote.textContent = totals.entries ? `${totals.entries} finance entr${totals.entries === 1 ? "y" : "ies"} recorded in the ledger.` : "Add the first finance entry to activate reporting.";
+      if (dashNote) dashNote.textContent = totals.entries ? `${totals.entries} transaction${totals.entries === 1 ? "" : "s"} recorded.` : "Start by recording your first sale.";
       if (meterIn) meterIn.style.width = `${Math.max(4, Math.round((totals.moneyIn / scale) * 100))}%`;
       if (meterOut) meterOut.style.width = `${Math.max(4, Math.round((totals.moneyOut / scale) * 100))}%`;
+      if (paymentCount) paymentCount.textContent = totals.payments;
+      if (expenseCount) expenseCount.textContent = totals.expenses;
+      if (salesCount) salesCount.textContent = totals.sales;
       const heroRevenue = $("#finance-hero-revenue");
       const heroBudgets = $("#finance-hero-budgets");
       const dailyRevenue = $("#finance-daily-revenue");
@@ -1210,6 +1232,7 @@
       });
       setActivePortalNav();
       $("#module-search")?.addEventListener("input", (event) => renderRows(moduleId, workflow, event.currentTarget.value));
+      $("#finance-filter")?.addEventListener("change", () => renderRows(moduleId, workflow, $("#module-search")?.value || ""));
       $("#module-table-body")?.addEventListener("click", async (event) => {
         const btn = event.target.closest("[data-record-delete]");
         if (!btn) return;
@@ -1253,6 +1276,13 @@
           const target = financeJump.dataset.financeJump || "transactions";
           const link = Array.from(document.querySelectorAll("[data-module-nav]")).find((item) => item.dataset.moduleNav === target);
           if (link) activatePortalMenuItem(link);
+          return;
+        }
+        const focusFinanceForm = event.target.closest("[data-focus-finance-form]");
+        if (focusFinanceForm) {
+          event.preventDefault();
+          document.getElementById("portal-records")?.scrollIntoView({ behavior: "smooth", block: "start" });
+          document.querySelector("#module-record-form input, #module-record-form select, #module-record-form textarea")?.focus();
           return;
         }
         const action = event.target.closest("[data-erp-action]");
