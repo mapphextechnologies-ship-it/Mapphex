@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Jixels Technology | Phones, Repairs, Accessories & Digital Support</title>
+    <meta
+      name="description"
+      content="Jixels Technology sells quality phones, accessories, device repair, software setup, and business technology support."
+    />
+    <link rel="icon" href="/images/enterprise-icon-192.png" type="image/png" />
+    <link rel="stylesheet" href="jixes.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <nav class="navbar" aria-label="Main navigation">
+        <a class="brand" href="#home" aria-label="Jixels Technology home">
+          <span class="brand-mark">J</span>
+          <span>Jixels Technology</span>
+        </a>
+        <button class="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+        <div class="nav-links" data-nav-links>
+          <a href="#services">Services</a>
+          <a href="#phones">Phones</a>
+          <a href="#plans">Plans</a>
+          <a href="#why">Why Jixels</a>
+          <a href="#contact">Contact</a>
+        </div>
+      </nav>
+    </header>
+
+    <main>
+      <section id="home" class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Phones • Repairs • Accessories • Tech support</p>
+          <h1>Reliable phone and technology services for daily business and personal use.</h1>
+          <p>
+            Jixels Technology helps customers buy the right device, repair damaged phones, set up software,
+            secure accounts, and get practical support without confusion.
+          </p>
+          <div class="hero-actions">
+            <a class="btn primary" href="#contact">Request a quote</a>
+            <a class="btn secondary" href="#phones">View phone deals</a>
+          </div>
+          <div class="hero-stats" aria-label="Service highlights">
+            <span><strong>24-48h</strong> typical repair turnaround</span>
+            <span><strong>100%</strong> tested devices</span>
+            <span><strong>Multi-brand</strong> phone support</span>
+          </div>
+        </div>
+        <div class="hero-media" aria-label="Phone technology showcase">
+          <img src="images/services/phones-hardware.jpg" alt="Smartphones and technology hardware" />
+          <div class="deal-panel">
+            <span>Today at Jixels</span>
+            <strong id="deal-title">Phone setup bundle</strong>
+            <p id="deal-copy">Screen protector, app setup, email setup, and data transfer support.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="services" class="section">
+        <div class="section-head">
+          <p class="eyebrow">What we do</p>
+          <h2>Everything your phone needs, handled in one place.</h2>
+        </div>
+        <div id="service-grid" class="service-grid" aria-live="polite"></div>
+      </section>
+
+      <section id="phones" class="section split">
+        <div>
+          <p class="eyebrow">Phone guide</p>
+          <h2>Choose by what matters most.</h2>
+          <p class="section-copy">
+            Select a buying priority and the page will recommend a phone category, useful accessories, and setup support.
+          </p>
+          <div class="choice-list" data-phone-choices></div>
+        </div>
+        <article class="recommendation" aria-live="polite">
+          <span id="recommendation-label">Recommended package</span>
+          <h3 id="recommendation-title">Business-ready smartphone</h3>
+          <p id="recommendation-copy">Balanced battery, storage, clean setup, account security, and data transfer.</p>
+          <ul id="recommendation-list"></ul>
+        </article>
+      </section>
+
+      <section id="plans" class="section">
+        <div class="section-head">
+          <p class="eyebrow">Simple service plans</p>
+          <h2>Pick the support level that fits the job.</h2>
+        </div>
+        <div id="plan-grid" class="plan-grid"></div>
+      </section>
+
+      <section id="why" class="section why">
+        <div class="section-head">
+          <p class="eyebrow">Why customers choose us</p>
+          <h2>Practical advice, clean work, and clear pricing.</h2>
+        </div>
+        <div class="why-grid">
+          <article>
+            <strong>Device checks first</strong>
+            <p>Phones and accessories are inspected before recommendation or delivery.</p>
+          </article>
+          <article>
+            <strong>Setup included</strong>
+            <p>We help with email, apps, data transfer, backup, and basic account protection.</p>
+          </article>
+          <article>
+            <strong>Business friendly</strong>
+            <p>Support for staff phones, POS devices, repair logs, and repeat supply needs.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="contact" class="section contact-section">
+        <div>
+          <p class="eyebrow">Talk to Jixels</p>
+          <h2>Tell us what you need and we will prepare the right option.</h2>
+          <p class="section-copy">
+            Use the form for phone purchases, accessories, repairs, software setup, or business technology support.
+          </p>
+        </div>
+        <form id="lead-form" class="lead-form">
+          <label>
+            <span>Name</span>
+            <input name="name" required placeholder="Enter your name" />
+          </label>
+          <label>
+            <span>Phone or email</span>
+            <input name="contact" required placeholder="Enter phone or email" />
+          </label>
+          <label>
+            <span>Service needed</span>
+            <select name="service">
+              <option>Buy a phone</option>
+              <option>Phone repair</option>
+              <option>Accessories</option>
+              <option>Software setup</option>
+              <option>Business support</option>
+            </select>
+          </label>
+          <label>
+            <span>Message</span>
+            <textarea name="message" rows="4" placeholder="Describe what you need"></textarea>
+          </label>
+          <button class="btn primary" type="submit">Send request</button>
+          <p id="form-status" class="form-status" role="status"></p>
+        </form>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <span>Jixels Technology</span>
+      <span>Phones, repair, accessories, and digital support.</span>
+    </footer>
+
+    <script src="jixes.js"></script>
+  </body>
+</html>
