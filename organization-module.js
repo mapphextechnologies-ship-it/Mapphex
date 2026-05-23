@@ -248,20 +248,21 @@
   const menuItemsFor = (moduleId, moduleDef) => {
     if (moduleId === "finance") {
       return [
-        ["Dashboard", "dashboard", "dashboard"],
-        ["Revenue", "finance-revenue", "revenue"],
-        ["Expenses", "finance-expenses", "expenses"],
-        ["Payroll Approvals", "approvals", "payroll-approvals"],
-        ["Transactions", "portal-records", "transactions"],
-        ["Budgets", "finance-budgets", "budgets"],
-        ["Reports", "reports", "reports"],
-        ["Taxes", "finance-taxes", "taxes"],
-        ["Analytics", "finance-analytics", "analytics"],
-        ["Settings", "finance-settings", "settings"],
-      ].map(([label, target, hash]) => ({
+        ["Dashboard", "dashboard", "dashboard", "finance-dashboard.html"],
+        ["Revenue", "finance-revenue", "revenue", "finance-revenue.html"],
+        ["Expenses", "finance-expenses", "expenses", "finance-expenses.html"],
+        ["Payroll Approvals", "approvals", "payroll-approvals", "finance-payroll-approvals.html"],
+        ["Transactions", "portal-records", "transactions", "finance-transactions.html"],
+        ["Budgets", "finance-budgets", "budgets", "finance-budgets.html"],
+        ["Reports", "reports", "reports", "finance-reports.html"],
+        ["Taxes", "finance-taxes", "taxes", "finance-taxes.html"],
+        ["Analytics", "finance-analytics", "analytics", "finance-analytics.html"],
+        ["Settings", "finance-settings", "settings", "finance-settings.html"],
+      ].map(([label, target, hash, page]) => ({
         label,
         target,
         hash,
+        page,
         icon: label.slice(0, 1).toUpperCase(),
       }));
     }
@@ -356,9 +357,14 @@
 
   const renderNav = (moduleId, moduleDef) => {
     const items = menuItemsFor(moduleId, moduleDef);
+    const tenant = encodeURIComponent(window.EnterpriseCore?.currentTenantId?.() || "");
     $("#module-sidebar-title").textContent = `${moduleDef.title} Menu`;
     $("#module-nav").innerHTML = items
-      .map((item, idx) => `<a class="${idx === 0 ? "active" : ""}" href="#${escapeHtml(item.hash)}" data-module-nav="${escapeHtml(item.hash)}" data-module-target="${escapeHtml(item.target)}"><span><b aria-hidden="true">${escapeHtml(item.icon)}</b>${escapeHtml(item.label)}</span><small>${idx === 0 ? "Open" : "View"}</small></a>`)
+      .map((item, idx) => {
+        const href = item.page ? `${item.page}?tenant=${tenant}` : `#${escapeHtml(item.hash)}`;
+        const external = item.page ? ` data-module-external="true"` : "";
+        return `<a class="${idx === 0 ? "active" : ""}" href="${href}" data-module-nav="${escapeHtml(item.hash)}" data-module-target="${escapeHtml(item.target)}"${external}><span><b aria-hidden="true">${escapeHtml(item.icon)}</b>${escapeHtml(item.label)}</span><small>${idx === 0 ? "Open" : "View"}</small></a>`;
+      })
       .join("");
   };
 
@@ -1119,7 +1125,10 @@
       $("#module-nav")?.addEventListener("click", (event) => {
         const link = event.target.closest("[data-module-nav]");
         if (link) {
-          const target = document.getElementById(link.dataset.moduleTarget || "");
+          if (link.dataset.moduleExternal === "true") {
+            closeMobileMenu();
+            return;
+          }
           event.preventDefault();
           history.replaceState(null, "", `#${link.dataset.moduleNav}`);
           setActivePortalNav();
