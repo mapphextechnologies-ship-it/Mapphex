@@ -282,7 +282,7 @@
   };
 
   const PORTAL_VIEW_GROUPS = {
-    dashboard: ["portal-dashboard", "portal-kpis", "dashboard", "finance-guide"],
+    dashboard: ["portal-dashboard", "portal-kpis", "dashboard", "finance-guide", "finance-actions-panel"],
     "portal-records": ["portal-records"],
     approvals: ["approvals"],
     reports: ["reports"],
@@ -302,6 +302,7 @@
       "portal-kpis",
       "portal-records",
       "dashboard",
+      "finance-actions-panel",
       "approvals",
       "reports",
       "finance-guide",
@@ -459,6 +460,15 @@
         </section>`,
       );
     }
+    if (!$("#finance-actions-panel")) {
+      $("#finance-guide")?.insertAdjacentHTML(
+        "afterend",
+        `<section id="finance-actions-panel" class="panel finance-actions-panel">
+          <div class="panel-header"><h2>Workflow Actions</h2><span class="badge">Finance</span></div>
+          <div id="erp-actions" class="erp-action-list"></div>
+        </section>`,
+      );
+    }
     if ($("#finance-workspace-sections")) return;
     $("#portal-records")?.insertAdjacentHTML(
       "afterend",
@@ -466,10 +476,6 @@
         <article id="approvals" class="panel">
           <div class="panel-header"><h2>Approvals</h2><span id="erp-approval-count" class="badge">0 pending</span></div>
           <div id="erp-approvals" class="erp-approval-list"></div>
-        </article>
-        <article class="panel">
-          <div class="panel-header"><h2>Workflow Actions</h2><span class="badge">Finance</span></div>
-          <div id="erp-actions" class="erp-action-list"></div>
         </article>
         <article id="reports" class="panel">
           <div class="panel-header"><h2>Finance Reports</h2><span class="badge">Export Ready</span></div>

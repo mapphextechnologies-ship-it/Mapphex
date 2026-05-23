@@ -546,9 +546,15 @@
   box-shadow: 0 22px 54px rgba(0, 0, 0, 0.32);
 }
 
+.finance-actions-panel {
+  border-color: rgba(211, 154, 103, 0.30);
+  background: rgba(17, 11, 8, 0.82);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
+}
+
 .finance-workspace-sections {
   display: grid;
-  grid-template-columns: minmax(260px, 0.9fr) minmax(260px, 1fr) minmax(0, 1.25fr);
+  grid-template-columns: minmax(260px, 0.9fr) minmax(0, 1.25fr);
   gap: 14px;
   margin-top: 18px;
   align-items: start;
