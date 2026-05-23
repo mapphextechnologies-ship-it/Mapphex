@@ -1,4 +1,4 @@
-const CACHE_NAME = "enterprise-erp-v76";
+const CACHE_NAME = "enterprise-erp-v77";
 const APP_SHELL = [
   "./",
   "./manifest.webmanifest",
@@ -13,6 +13,16 @@ const APP_SHELL = [
   "./portal-auth.html",
   "./organization-workspace.html",
   "./organization-module.html",
+  "./finance-dashboard.html",
+  "./finance-revenue.html",
+  "./finance-expenses.html",
+  "./finance-payroll-approvals.html",
+  "./finance-transactions.html",
+  "./finance-budgets.html",
+  "./finance-reports.html",
+  "./finance-taxes.html",
+  "./finance-analytics.html",
+  "./finance-settings.html",
   "./finance-workflow.html",
   "./organization-admin.html",
   "./Agent.html",
