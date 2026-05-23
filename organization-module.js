@@ -390,8 +390,8 @@
     document.body.classList.add("finance-simple-page");
     document.querySelector(".module-feature-strip")?.remove();
     document.querySelector(".module-shared-grid")?.remove();
-    const recordCopy = document.querySelector(".module-record-head p");
-    if (recordCopy) recordCopy.textContent = "Add simple ledger entries for income, expenses, invoices, payments, payroll, budgets, and taxes.";
+    const recordCopy = $("#module-workflow-subtitle");
+    if (recordCopy) recordCopy.textContent = "Approves payrolls and purchases, monitors transactions, tracks revenue, invoices, receipts, taxes, debt, payments, budgets, and profit.";
     $("#module-record-form")?.classList.add("finance-entry-form");
     const recordTitle = $("#portal-records .panel-header h2");
     if (recordTitle) recordTitle.textContent = "Finance Ledger";
