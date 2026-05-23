@@ -622,8 +622,17 @@
   grid-template-columns: minmax(180px, 1.2fr) minmax(150px, 0.9fr) minmax(130px, 0.8fr) minmax(130px, 0.8fr) auto;
 }
 
-.finance-simple-page .erp-report-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+.finance-simple-page #reports .erp-report-grid {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 18px;
+}
+
+.finance-simple-page #reports .erp-report-grid .finance-report-button {
+  flex: 0 0 150px;
+  min-height: 46px;
+  white-space: nowrap;
 }
 
 .finance-simple-page .erp-action-list {
@@ -1154,8 +1163,8 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .finance-simple-page .erp-report-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .finance-simple-page #reports .erp-report-grid .finance-report-button {
+    flex-basis: 140px;
   }
 }
 
