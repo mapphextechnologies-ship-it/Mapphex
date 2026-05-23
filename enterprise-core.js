@@ -5,13 +5,14 @@
   const DEFAULT_TENANT_ID = "default-company";
   const TENANT_KEY = "enterprise_active_tenant_v1";
   const SESSION_META_KEY = "enterprise_session_meta_v1";
+  const ORGS_KEY = "platform_organizations_v1";
   const AUDIT_KEY = "enterprise_audit_v1";
   const QUEUE_KEY = "enterprise_task_queue_v1";
   const NOTIFY_KEY = "enterprise_notify_v1";
   const CSRF_KEY = "enterprise_csrf_v1";
   const LEGACY_PREFIX = "jix" + "els_";
   const PREFIXABLE = new RegExp(`^(${LEGACY_PREFIX}|enterprise_)`, "i");
-  const GLOBAL_KEYS = new Set(["enterprise_api_enabled_v1", `${LEGACY_PREFIX}api_enabled_v1`, TENANT_KEY]);
+  const GLOBAL_KEYS = new Set(["enterprise_api_enabled_v1", `${LEGACY_PREFIX}api_enabled_v1`, TENANT_KEY, ORGS_KEY]);
 
   const cleanId = (value) =>
     String(value || "")
@@ -140,7 +141,7 @@
   };
 
   const getSession = () => {
-    const session = readJson(sessionStorage, SESSION_META_KEY, null) || null;
+    const session = readJson(sessionStorage, SESSION_META_KEY, null) || readJson(localStorage, SESSION_META_KEY, null) || null;
     if (!session) return null;
     if (session.expiresAt && Date.now() > Date.parse(session.expiresAt)) {
       clearSession();
@@ -157,7 +158,11 @@
       expiresAt: session?.expiresAt || new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
     };
     writeJson(sessionStorage, SESSION_META_KEY, payload);
-    rawLocalRemove.call(localStorage, scopeKey(SESSION_META_KEY));
+    if (persistent) {
+      writeJson(localStorage, SESSION_META_KEY, payload);
+    } else {
+      rawLocalRemove.call(localStorage, scopeKey(SESSION_META_KEY));
+    }
     return payload;
   };
 

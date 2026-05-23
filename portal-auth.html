@@ -24,26 +24,18 @@
           </div>
         </div>
 
-        <div class="auth-tabs" role="tablist" aria-label="Portal access">
-          <button id="portal-login-tab" class="btn primary" type="button" data-auth-mode="login">Login</button>
-          <button id="portal-forgot-tab" class="btn" type="button" data-auth-mode="forgot">Forgot password</button>
-        </div>
-
-        <form id="portal-login-form" class="auth-form" autocomplete="on">
-          <label class="field"><span>Organization name</span><input name="organizationName" required autocomplete="organization" /></label>
-          <label class="field"><span>Organization email / ID</span><input name="identifier" required autocomplete="organization-title" /></label>
-          <label class="field"><span>Your email</span><input name="email" type="email" required autocomplete="username" /></label>
-          <label class="field"><span>Password</span><input name="password" type="password" required autocomplete="current-password" minlength="6" /></label>
+        <form id="portal-login-form" class="auth-form portal-access-form" autocomplete="on">
+          <label class="field"><span>Organization name</span><input name="organizationName" required autocomplete="organization" placeholder="Registered organization name" /></label>
+          <label class="field"><span>Organization email</span><input name="identifier" type="email" required autocomplete="email" placeholder="Registered organization email" /></label>
+          <label class="field"><span>Your name</span><input name="name" autocomplete="name" placeholder="Your registered name" /></label>
+          <label class="field"><span>Your email</span><input name="email" type="email" required autocomplete="off" placeholder="Portal user email" /></label>
+          <label class="field"><span>Portal password</span><input name="portalPassword" type="password" required autocomplete="new-password" minlength="6" placeholder="Portal user password" /></label>
           <label class="remember-row"><input name="remember" type="checkbox" checked /> <span>Keep me signed in on this device</span></label>
-          <button id="portal-login-btn" class="btn primary" type="submit">Open Portal</button>
+          <div class="auth-actions">
+            <button id="portal-login-btn" class="btn primary" type="submit" name="intent" value="login">Open Portal</button>
+            <button id="portal-register-btn" class="btn" type="submit" name="intent" value="register">Register Account</button>
+          </div>
         </form>
-
-        <form id="portal-forgot-form" class="auth-form" autocomplete="off" hidden>
-          <label class="field"><span>Organization email / ID</span><input name="identifier" required /></label>
-          <label class="field"><span>Your email</span><input name="email" type="email" required /></label>
-          <button class="btn primary" type="submit">Request Reset</button>
-        </form>
-
         <p id="portal-auth-result" class="form-error" role="alert" aria-live="polite"></p>
         <div class="auth-footer"><a id="portal-auth-back" class="btn" href="organization-workspace.html">Back to workspace</a></div>
       </section>

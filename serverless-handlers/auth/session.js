@@ -12,6 +12,7 @@ const {
   verifyOrganizationUser,
 } = require("../organizations");
 const { assertSameOrigin, decodeSessionToken, rateLimit, requireActiveTenantSession } = require("../../api/_lib/security");
+const { PORTAL_CATALOG, VALID_PORTAL_IDS } = require("../../api/_lib/portal-catalog");
 
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
 
@@ -77,6 +78,48 @@ const findUserForToken = async (store, token) => {
   return null;
 };
 
+const normalizeEmail = (value) => String(value || "").trim().toLowerCase();
+
+const publicUser = (user = {}) => {
+  const { activationToken, passwordHash, passwordResetToken, passwordSetupToken, ...safe } = user;
+  return safe;
+};
+
+const publicOrg = (org = {}) => {
+  const { adminPasswordHash, localPasswordHash, ...safe } = org;
+  return safe;
+};
+
+const technologyPortalIds = new Set(["technology"]);
+const allowsPortalSelfRegistration = (portalId) => {
+  if (portalId === "admin") return false;
+  if (technologyPortalIds.has(portalId)) return false;
+  const portal = PORTAL_CATALOG.find((item) => item.id === portalId);
+  return String(portal?.category || "").toLowerCase() !== "technology";
+};
+
+const findOrganization = async (store, identifier, email, organizationName = "") => {
+  const rows = (await store.get(ORGS_KEY)) || [];
+  const ident = normalizeEmail(identifier);
+  const cleanIdent = ident
+    .replace(/[^a-z0-9_-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 64);
+  const mail = normalizeEmail(email || ident);
+  const name = normalizeEmail(organizationName);
+  return (Array.isArray(rows) ? rows : []).find(
+    (row) =>
+      (!name || normalizeEmail(row.name) === name) &&
+      (String(row.id || "") === cleanIdent ||
+        normalizeEmail(row.organizationId) === ident ||
+        normalizeEmail(row.referenceCode) === ident ||
+        normalizeEmail(row.admin?.email) === mail ||
+        normalizeEmail(row.admin?.email) === ident ||
+        normalizeEmail(row.contact?.email) === mail ||
+        normalizeEmail(row.contact?.email) === ident),
+  );
+};
+
 module.exports = async (req, res) => {
   try {
     rateLimit(req, { scope: "auth-session", limit: 80, windowMs: 60_000 });
@@ -134,6 +177,74 @@ module.exports = async (req, res) => {
           }
         }
         return sendJson(res, 200, { ok: true });
+      }
+
+      if (action === "register-portal-user") {
+        const organizationName = String(body?.organizationName || "").trim();
+        const identifier = String(body?.identifier || body?.tenantId || "").trim();
+        const email = normalizeEmail(body?.email);
+        const name = String(body?.userName || body?.fullName || body?.displayName || "").trim() || email.split("@")[0] || "Portal User";
+        const password = String(body?.password || "");
+        const portalId = String(body?.portalId || "staff").trim().toLowerCase();
+        if (!organizationName || !identifier || !email || password.length < 6) {
+          return sendJson(res, 400, { ok: false, error: "Organization name, organization ID, user email, and 6+ character password are required" });
+        }
+        if (portalId !== "workspace" && !VALID_PORTAL_IDS.has(portalId)) return sendJson(res, 404, { ok: false, error: "Portal not found" });
+        if (!allowsPortalSelfRegistration(portalId)) {
+          return sendJson(res, 403, { ok: false, error: "Accounts for this portal must be created by an organization admin" });
+        }
+        const organization = await findOrganization(store, identifier, email, organizationName);
+        if (!organization || !["active", "verified"].includes(String(organization.status || "").toLowerCase())) {
+          return sendJson(res, 404, { ok: false, error: "Organization was not found or is not active" });
+        }
+        const tenantId = organization.id;
+        const usersKey = scopeTenantKey(tenantId, USERS_KEY);
+        const settingsKey = scopeTenantKey(tenantId, "enterprise_org_settings_v1");
+        const [usersRaw, settings] = await Promise.all([store.get(usersKey), store.get(settingsKey)]);
+        const users = Array.isArray(usersRaw) ? usersRaw : [];
+        if (users.some((user) => normalizeEmail(user.email || user.username) === email)) {
+          return sendJson(res, 409, { ok: false, error: "This email already has an account. Use Open Portal to log in." });
+        }
+        const allowed = new Set(
+          [
+            ...(settings?.installedPortals || []),
+            ...(settings?.selectedComponents || []),
+            ...(settings?.allowedPortals || []),
+            ...(settings?.recommendedPortals || []),
+            ...(organization?.selectedComponents || []),
+          ].map(String),
+        );
+        if (portalId !== "workspace" && !allowed.has(portalId)) {
+          return sendJson(res, 403, { ok: false, error: "This portal is not available for your organization" });
+        }
+        const portalAccess = portalId !== "workspace" ? [portalId] : [];
+        const user = {
+          id: `user-${Date.now()}-${crypto.randomBytes(5).toString("hex")}`,
+          name,
+          email,
+          username: email,
+          role: "staff",
+          permissions: portalId !== "workspace" ? [`${portalId}.read`] : [],
+          portalAccess,
+          passwordHash: hashOrganizationSecret(password),
+          activationToken: "",
+          emailVerified: false,
+          registrationSource: "portal-self-registration",
+          registeredPortalId: portalId,
+          status: "active",
+          createdAt: new Date().toISOString(),
+        };
+        const nextUsers = [user, ...users].slice(0, 2000);
+        await store.set(usersKey, nextUsers);
+        await recordAuthActivity(store, tenantId, { type: "user.self_registered", userId: user.id, email, role: user.role, portalId, ...clientDevice(req) });
+        await appendEvent(store, tenantId, "org.user.self_registered", {
+          userId: user.id,
+          email,
+          role: user.role,
+          portalId,
+          portalTitle: PORTAL_CATALOG.find((item) => item.id === portalId)?.title || portalId,
+        });
+        return sendJson(res, 200, { ok: true, tenantId, user: publicUser(user), organization: publicOrg(organization) });
       }
 
       const requestedRole = String(body?.role || "org_admin").trim().toLowerCase();

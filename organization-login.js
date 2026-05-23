@@ -14,6 +14,28 @@
     }
   };
 
+  const readOrganizations = () => {
+    const byId = new Map();
+    const addRows = (rows) => {
+      (Array.isArray(rows) ? rows : []).forEach((row) => {
+        const id = row?.id || row?.organizationId || `${row?.name || "org"}-${byId.size}`;
+        byId.set(id, row);
+      });
+    };
+
+    addRows(readJson(ORGS_KEY, []));
+    addRows(readJson(`tenant:default-company:${ORGS_KEY}`, []));
+    try {
+      for (let idx = 0; idx < localStorage.length; idx += 1) {
+        const key = localStorage.key(idx);
+        if (key && key.endsWith(`:${ORGS_KEY}`)) addRows(readJson(key, []));
+      }
+    } catch {
+      // storage enumeration may be unavailable
+    }
+    return Array.from(byId.values());
+  };
+
   const isLocalDevelopment = () => ["localhost", "127.0.0.1", ""].includes(location.hostname);
 
   const cleanId = (value) =>
@@ -46,7 +68,7 @@
     const name = String(organizationName || "").trim().toLowerCase();
     const ident = String(identifier || "").trim().toLowerCase();
     const cleanIdent = cleanId(ident);
-    const rows = readJson(ORGS_KEY, []);
+    const rows = readOrganizations();
     const passwordHash = await digest(password || "");
     const organization = (Array.isArray(rows) ? rows : []).find(
       (row) =>
@@ -140,6 +162,7 @@
             tenantId: data.session.tenantId,
             token: data.token,
             organizationId: data.organization?.organizationId,
+            localMode: data.localMode === true,
             expiresAt: new Date(data.session.exp).toISOString(),
           },
           body.remember === "on",

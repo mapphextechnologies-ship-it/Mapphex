@@ -44,6 +44,7 @@
       "org.modules.enabled": "Portals installed",
       "org.modules.disabled": "Portal uninstalled",
       "org.user.created": "User added",
+      "org.user.self_registered": "User registered",
       "org.user.updated": "User permissions updated",
       "org.user.status.changed": "User status changed",
       "org.user.deleted": "User deleted",
@@ -72,6 +73,8 @@
         return `Removed ${(payload.portalIds || []).join(", ") || "selected portal"} from the workspace.`;
       case "org.user.created":
         return `Added ${payload.role || "user"} account.`;
+      case "org.user.self_registered":
+        return `${payload.email || "A user"} registered for ${payload.portalTitle || payload.portalId || "a portal"}.`;
       case "org.user.updated":
         return `Updated role and portal access for ${payload.email || "a user"}.`;
       case "org.user.status.changed":

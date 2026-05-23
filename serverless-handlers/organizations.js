@@ -414,7 +414,9 @@ module.exports.verifyOrganizationAdmin = async (identifier, email, password, org
       (row.id === cleanIdent ||
         String(row.organizationId || "").toLowerCase() === ident ||
         String(row.referenceCode || "").toLowerCase() === ident ||
+        String(row.admin?.email || "").toLowerCase() === ident ||
         String(row.admin?.email || "").toLowerCase() === mail ||
+        String(row.contact?.email || "").toLowerCase() === ident ||
         String(row.contact?.email || "").toLowerCase() === mail),
   );
   if (!org || !["active", "verified"].includes(String(org.status || "").toLowerCase()) || !verifySecret(password, org.adminPasswordHash)) return null;
@@ -434,7 +436,9 @@ module.exports.verifyOrganizationUser = async (identifier, email, password, orga
       (row.id === cleanIdent ||
         String(row.organizationId || "").toLowerCase() === ident ||
         String(row.referenceCode || "").toLowerCase() === ident ||
+        String(row.admin?.email || "").toLowerCase() === ident ||
         String(row.admin?.email || "").toLowerCase() === mail ||
+        String(row.contact?.email || "").toLowerCase() === ident ||
         String(row.contact?.email || "").toLowerCase() === mail),
   );
   if (!org || !["active", "verified"].includes(String(org.status || "").toLowerCase())) return null;

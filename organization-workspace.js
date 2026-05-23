@@ -231,9 +231,10 @@
       settingsState = { ...settings, portalCatalog: admin.portalCatalog || PORTAL_CATALOG };
 
       const orgName = org?.name || "Organization";
-      $("#workspace-title").textContent = "Bytewave";
+      document.title = orgName;
+      $("#workspace-title").textContent = orgName;
       $("#workspace-subtitle").textContent = `${org?.organizationId || tenantId} • ${org?.businessType || settings.businessType || "company"}`;
-      $("#portal-hub-heading").textContent = `Bytewave - ${orgName}`;
+      $("#portal-hub-heading").textContent = orgName;
       $("#portal-hub-summary").textContent = `One installed workspace app for ${orgName}'s selected modules, organization data, and secure workflows.`;
       $("#profile-name").textContent = orgName;
       const monthly = Number(settings.monthlyAmount || settings.estimatedTotal || org?.monthlyAmount || org?.estimatedTotal || 0) || 0;
