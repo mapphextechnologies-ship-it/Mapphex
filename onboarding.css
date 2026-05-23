@@ -569,7 +569,7 @@
 }
 
 .finance-simple-page .erp-action-list {
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
 }
 
 .finance-workspace-sections .erp-approval-list {
