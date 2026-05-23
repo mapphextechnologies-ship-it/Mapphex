@@ -8,6 +8,8 @@
   const catalog = window.EnterpriseModules?.catalog || [];
   const portal = window.EnterpriseModules?.get?.(portalId) || catalog.find((item) => item.id === portalId) || null;
   const technologyPortalIds = new Set(["technology"]);
+  const branchPortalIds = new Set(["branch", "device-branch"]);
+  let organizationContext = null;
 
   const allowsSelfRegistration = () => {
     if (portalId === "admin") return false;
@@ -69,19 +71,22 @@
     if (portalId !== "workspace" && !roleCanOpen(session)) throw new Error("Access denied for this portal");
   };
 
+  const organizationNameFor = (body) => body.organizationName || organizationContext?.name || "";
+  const identifierFor = (body) => body.identifier || organizationContext?.contact?.email || organizationContext?.admin?.email || tenant || "";
+
   const loginPayload = (body) => ({
     action: "organization-login",
-    organizationName: body.organizationName,
-    identifier: body.identifier,
-    email: body.email,
+    organizationName: organizationNameFor(body),
+    identifier: identifierFor(body),
+    email: body.email || identifierFor(body),
     password: body.portalPassword,
     portalId,
   });
 
   const registerPayload = (body) => ({
     action: "register-portal-user",
-    organizationName: body.organizationName,
-    identifier: body.identifier,
+    organizationName: organizationNameFor(body),
+    identifier: identifierFor(body),
     userName: body.name,
     email: body.email,
     password: body.portalPassword,
@@ -100,6 +105,7 @@
 
   const applyOrganizationContext = (organization) => {
     if (!organization) return;
+    organizationContext = organization;
     document.querySelectorAll('input[name="organizationName"]').forEach((input) => {
       if (!input.value) input.value = organization.name || "";
     });
@@ -119,6 +125,13 @@
       portalId === "admin"
         ? "Use your organization admin account. Admin access is created by the organization owner."
         : "Use your organization account, or register your portal account before opening this portal.";
+    if (branchPortalIds.has(portalId)) {
+      document.querySelectorAll('input[name="organizationName"], input[name="identifier"]').forEach((input) => {
+        input.required = false;
+        input.closest(".field")?.setAttribute("hidden", "");
+      });
+      $("#portal-auth-subtitle").textContent = "Use your branch account to open this portal.";
+    }
     $("#portal-login-btn").textContent = `Open ${title}`;
     if (!allowsSelfRegistration()) $("#portal-register-btn").hidden = true;
     $("#portal-auth-back").href = workspaceTarget();

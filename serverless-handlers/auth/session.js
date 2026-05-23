@@ -250,7 +250,9 @@ module.exports = async (req, res) => {
       const identifier = String(body?.identifier || body?.tenantId || body?.email || body?.username || "").trim();
       const email = String(body?.email || body?.username || body?.identifier || "").trim().toLowerCase();
       const organizationName = String(body?.organizationName || body?.name || "").trim();
-      if (!organizationName || !identifier || !body?.password) {
+      const portalId = String(body?.portalId || "").trim().toLowerCase();
+      const nameOptional = ["branch", "device-branch"].includes(portalId);
+      if ((!organizationName && !nameOptional) || !identifier || !body?.password) {
         return sendJson(res, 400, { ok: false, error: "Organization name, organization email or ID, and password are required" });
       }
       let tenantId = getTenantId(req, body);
