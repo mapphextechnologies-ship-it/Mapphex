@@ -487,15 +487,14 @@
 
 .finance-workspace-sections {
   display: grid;
-  grid-template-columns: minmax(0, 1.8fr) minmax(300px, 0.9fr);
-  gap: 18px;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.35fr) minmax(240px, 0.85fr) minmax(240px, 0.85fr);
+  gap: 14px;
   align-items: start;
 }
 
 .finance-primary-workspace,
 .finance-side-workspace {
-  display: grid;
-  gap: 18px;
+  display: contents;
 }
 
 .finance-primary-workspace > .panel,
@@ -510,11 +509,11 @@
 }
 
 .finance-simple-page .erp-report-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .finance-simple-page .erp-action-list {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
 }
 
 .finance-side-workspace .erp-approval-list,
@@ -937,7 +936,7 @@
 
 @media (min-width: 981px) and (max-width: 1200px) {
   .finance-workspace-sections {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .finance-simple-page .erp-report-grid {
