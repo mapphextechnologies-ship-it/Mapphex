@@ -1,4 +1,4 @@
-const CACHE_NAME = "mapphex-erp-v173";
+const CACHE_NAME = "mapphex-erp-v174";
 const APP_SHELL = [
   "./",
   "./manifest.webmanifest",

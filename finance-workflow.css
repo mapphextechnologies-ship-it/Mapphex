@@ -7,8 +7,8 @@
   --soft: #050914;
   --blue: #0077ff;
   --blue-soft: rgba(0, 119, 255, 0.16);
-  --green: #34d399;
-  --green-soft: rgba(52, 211, 153, 0.12);
+  --green: #38bdf8;
+  --green-soft: rgba(56, 189, 248, 0.12);
   --warning: #f59e0b;
   --shadow: 0 22px 70px rgba(0, 0, 0, 0.28);
 }
@@ -555,16 +555,16 @@ tr:last-child td {
 }
 
 .payroll-action.approve {
-  background: rgba(52, 211, 153, 0.18);
-  border-color: rgba(52, 211, 153, 0.36);
+  background: rgba(56, 189, 248, 0.18);
+  border-color: rgba(56, 189, 248, 0.36);
 }
 
 .payroll-action.approve:hover,
 .payroll-action.approve.is-clicked {
   color: #062318;
-  background: #34d399;
+  background: #38bdf8;
   border-color: #6ee7b7;
-  box-shadow: 0 10px 22px rgba(52, 211, 153, 0.25);
+  box-shadow: 0 10px 22px rgba(56, 189, 248, 0.25);
   transform: translateY(-2px) scale(1.03);
 }
 

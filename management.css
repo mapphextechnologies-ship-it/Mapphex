@@ -162,7 +162,7 @@
   min-height: 126px;
   padding: 16px;
   border-radius: 8px;
-  border: 1px solid rgba(111, 78, 55, 0.18);
+  border: 1px solid rgba(37, 99, 235, 0.18);
   background: rgba(255, 255, 255, 0.08);
 }
 
@@ -439,8 +439,8 @@
 }
 
 .status-active {
-  border-color: rgba(52, 211, 153, 0.35);
-  color: #bbf7d0;
+  border-color: rgba(56, 189, 248, 0.35);
+  color: #dbeafe;
 }
 
 .status-suspended {

@@ -25,8 +25,8 @@
 }
 
 .budget-action.approve {
-  border-color: rgba(52, 211, 153, 0.45);
-  color: #34d399;
+  border-color: rgba(56, 189, 248, 0.45);
+  color: #38bdf8;
 }
 
 .budget-action.clear {

@@ -18,7 +18,7 @@
   --accent: #0077ff;
   --accent-2: #5bd6ff;
   --danger: #fb7185;
-  --ok: #34d399;
+  --ok: #38bdf8;
   --warn: #fbbf24;
   --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial,
     "Noto Sans", "Liberation Sans", sans-serif;
@@ -131,8 +131,8 @@ code {
   gap: 8px;
   padding: 8px 12px;
   border-radius: 999px;
-  border: 1px solid rgba(52, 211, 153, 0.35);
-  background: rgba(52, 211, 153, 0.10);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  background: rgba(56, 189, 248, 0.10);
   color: rgba(255, 255, 255, 0.92);
   font-weight: 600;
 }
