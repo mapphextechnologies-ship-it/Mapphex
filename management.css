@@ -134,8 +134,8 @@
 }
 
 .status-pending {
-  border-color: rgba(251, 191, 36, 0.42);
-  color: #fde68a;
+  border-color: rgba(91, 214, 255, 0.42);
+  color: #dff6ff;
 }
 
 .status-rejected {

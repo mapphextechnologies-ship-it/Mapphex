@@ -777,6 +777,40 @@
   gap: 16px;
 }
 
+body[data-module-shell="sales"] {
+  background:
+    radial-gradient(900px 560px at 12% -10%, rgba(0, 119, 255, 0.26), transparent 60%),
+    radial-gradient(760px 480px at 92% 0%, rgba(56, 189, 248, 0.18), transparent 58%),
+    linear-gradient(180deg, #050914, #07111f 62%, #05070d) !important;
+}
+
+body[data-module-shell="sales"] .topbar,
+body[data-module-shell="sales"] .module-sidebar,
+body[data-module-shell="sales"] .panel,
+body[data-module-shell="sales"] .kpi,
+body[data-module-shell="sales"] .sales-pipeline-card,
+body[data-module-shell="sales"] .sales-report-generator {
+  border-color: rgba(91, 214, 255, 0.16);
+  background: rgba(2, 8, 18, 0.78);
+}
+
+body[data-module-shell="sales"] .module-nav a,
+body[data-module-shell="sales"] .sales-pipeline-list button,
+body[data-module-shell="sales"] .sales-focus-list span,
+body[data-module-shell="sales"] .module-page-summary article,
+body[data-module-shell="sales"] .sales-report-status-grid article,
+body[data-module-shell="sales"] .sales-report-summary article {
+  border-color: rgba(91, 214, 255, 0.14);
+  background: rgba(3, 10, 22, 0.46);
+}
+
+body[data-module-shell="sales"] .module-nav a:hover,
+body[data-module-shell="sales"] .module-nav a.active,
+body[data-module-shell="sales"] .sales-pipeline-list button:hover {
+  border-color: rgba(91, 214, 255, 0.38);
+  background: rgba(0, 119, 255, 0.16);
+}
+
 .sales-metric-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
