@@ -20,6 +20,7 @@
   const store = () => window.EnterpriseStore || null;
   let orgContext = { businessType: "general", settings: {}, organization: {} };
   let activeModuleId = "";
+  let installedPortalIds = new Set();
 
   const currentModuleView = () => {
     const params = new URLSearchParams(location.search);
@@ -458,6 +459,7 @@
   const moduleData = () => storeGet(MODULE_DATA_KEY, {});
   const saveModuleData = (data) => storeSet(MODULE_DATA_KEY, data);
   const syncStore = () => store()?.flush?.().catch(() => null);
+  const portalInstalled = (id) => installedPortalIds.has(id);
   const modulePrefs = () => storeGet(MODULE_PREFS_KEY, {});
   const saveModulePrefs = (data) => storeSet(MODULE_PREFS_KEY, data);
   const erpState = () => storeGet(ERP_STATE_KEY, {});
@@ -2101,10 +2103,27 @@
       : row.values
           .map((value) => Number(String(value).replace(/[^\d.-]/g, "")))
           .find((value) => Number.isFinite(value) && value > 0) || 0;
+    if (moduleId === "pharmacy") {
+      const action = String(row.values?.[4] || "").toLowerCase();
+      const financeReady = portalInstalled("finance") && amount > 0 && /paid|dispensed|sale|sales|returned/.test(action);
+      const inventoryReady = portalInstalled("inventory") && /stock|dispensed|returned|expired|order/.test(action);
+      if (!financeReady && !inventoryReady) return;
+      await window.ERPClient?.postTransaction?.({
+        sourceModule: moduleId,
+        type: financeReady ? "pharmacy_sale" : "stock_receipt",
+        targetModules: [financeReady ? "finance" : "", inventoryReady ? "inventory" : ""].filter(Boolean),
+        amount,
+        quantity: 1,
+        itemId: row.values?.[0] || row.id,
+        ref: row.id,
+        status: financeReady ? "posted" : "inventory-only",
+        payload: { values: row.values, integration: { finance: financeReady, inventory: inventoryReady } },
+      }).catch(() => null);
+      return;
+    }
     const transactionTypes = {
       sales: "sale",
       retail: "sale",
-      pharmacy: "pharmacy_sale",
       hospital: "hospital_billing",
       restaurant: "restaurant_order",
       technology: "service_invoice",
@@ -2116,6 +2135,7 @@
     await window.ERPClient?.postTransaction?.({
       sourceModule: moduleId,
       type: transactionTypes[moduleId] || "module_record",
+      targetModules: ["finance", "inventory"].filter((id) => portalInstalled(id)),
       amount,
       quantity: 1,
       itemId: moduleId === "sales" ? row.values?.[1] || row.id : row.values[0] || row.id,
@@ -2160,6 +2180,7 @@
       }
 
       const installed = new Set((settings.installedPortals || []).filter((id) => VALID_PORTAL_IDS.has(id)));
+      installedPortalIds = installed;
       if (!moduleId || !installed.has(moduleId)) {
         location.replace(`portal-selection.html?tenant=${encodeURIComponent(session.tenantId)}`);
         return;
