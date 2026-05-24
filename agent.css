@@ -101,7 +101,6 @@ body.portal-sidebar-collapsed .sidebar-link::before {
 .sidebar-link.active {
   color: #ffffff;
   background: rgba(0, 119, 255, 0.16);
-  box-shadow: inset 3px 0 0 #5bd6ff;
   transform: translateX(2px);
 }
 

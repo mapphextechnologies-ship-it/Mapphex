@@ -168,7 +168,6 @@ select {
 .nav-link.active {
   color: #fff;
   background: var(--blue-soft);
-  box-shadow: inset 3px 0 0 #5bd6ff;
   transform: translateX(2px);
 }
 
@@ -186,6 +185,11 @@ select {
   font-size: 0.75rem;
   font-weight: 800;
   text-align: center;
+}
+
+.nav-link span:empty,
+.nav-link span[hidden] {
+  display: none;
 }
 
 .finance-main {

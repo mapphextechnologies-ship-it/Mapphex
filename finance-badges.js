@@ -4,6 +4,12 @@
   const PAYROLL_KEY = "mapphex_finance_payroll_requests_v1";
   const oldSampleInvoiceNumbers = new Set(["INV-001", "INV-002", "INV-003"]);
 
+  const setBadgeCount = (badge, count) => {
+    const value = Number(count || 0);
+    badge.textContent = value > 0 ? String(value) : "";
+    badge.hidden = value <= 0;
+  };
+
   const isOldSampleInvoice = (row) => {
     const sampleName = ["Customer invoice", "Supplier bill", "Service invoice"].includes(String(row?.name || ""));
     return oldSampleInvoiceNumbers.has(String(row?.invoiceNumber || "")) && sampleName && String(row?.amount || "") === "KES 0";
@@ -15,7 +21,7 @@
     const storedRows = window.MapphexFinanceDB ? await window.MapphexFinanceDB.read(INVOICES_KEY, []) : [];
     const rows = Array.isArray(storedRows) ? storedRows.filter((row) => !isOldSampleInvoice(row)) : [];
     badges.forEach((badge) => {
-      badge.textContent = String(rows.length);
+      setBadgeCount(badge, rows.length);
     });
   };
 
@@ -25,7 +31,7 @@
     const storedRows = window.MapphexFinanceDB ? await window.MapphexFinanceDB.read(APPROVALS_KEY, []) : [];
     const rows = Array.isArray(storedRows) ? storedRows : [];
     badges.forEach((badge) => {
-      badge.textContent = String(rows.length);
+      setBadgeCount(badge, rows.length);
     });
   };
 
@@ -36,7 +42,7 @@
     const rows = Array.isArray(storedRows) ? storedRows : [];
     const unpaid = rows.filter((row) => String(row?.status || "Unpaid").toLowerCase() !== "paid").length;
     badges.forEach((badge) => {
-      badge.textContent = String(unpaid);
+      setBadgeCount(badge, unpaid);
     });
   };
 

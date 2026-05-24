@@ -533,13 +533,13 @@
       const records = Array.isArray(moduleData()[moduleId]) ? moduleData()[moduleId] : [];
       const hash = String(item.hash || "");
       const label = String(item.label || "").toLowerCase();
-      if (hash === "dashboard") return records.length;
-      if (item.target === "approvals") return (state.approvals || []).filter((row) => row.status === "pending").length;
+      if (hash === "dashboard") return records.length || "";
+      if (item.target === "approvals") return (state.approvals || []).filter((row) => row.status === "pending").length || "";
       if (item.target === "reports") return blueprintFor(moduleId).reports.length;
       if (/setting/.test(label)) return "";
-      if (/revenue/.test(label)) return records.filter((row) => /\d/.test((row.values || []).join(" "))).length;
+      if (/revenue/.test(label)) return records.filter((row) => /\d/.test((row.values || []).join(" "))).length || "";
       const matching = records.filter((row) => (row.values || []).join(" ").toLowerCase().includes(label));
-      return matching.length || 0;
+      return matching.length || "";
     };
     const groupOrder = ["Main", "Finance", "Branch", "Operations", "People", "Workflow", "Accounting", "Insights", "Tools"];
     const groups = items.reduce((list, item) => {

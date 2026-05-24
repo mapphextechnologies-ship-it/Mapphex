@@ -400,7 +400,6 @@
 .module-nav a.active {
   color: #ffffff;
   background: rgba(0, 119, 255, 0.16);
-  box-shadow: inset 3px 0 0 #5bd6ff;
   transform: translateX(2px);
 }
 
@@ -2278,7 +2277,6 @@ body[data-module-shell="sales"] .sales-pipeline-list button:hover {
 .finance-simple-page .module-nav a:hover {
   border-color: rgba(37, 99, 235, 0.26);
   background: #eff6ff;
-  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.1);
   transform: translateY(-1px);
 }
 
