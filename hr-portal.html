@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HR Portal - MAPPHEX</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/images/enterprise-icon-192.png" type="image/png" />
+    <link rel="stylesheet" href="director.css" />
+    <link rel="stylesheet" href="branch.css" />
+    <link rel="stylesheet" href="enterprise-platform.css" />
+  </head>
+  <body data-department-portal="hr" data-portal-title="HR Portal">
+    <header class="topbar">
+      <div class="brand">
+        <img class="logo-img" src="/images/enterprise-logo.png" alt="" />
+        <div><div id="portal-title" class="brand-title">HR Portal</div><div id="portal-subtitle" class="brand-subtitle muted">Organization workforce</div></div>
+      </div>
+      <div class="topbar-actions"><a id="workspace-link" class="btn" href="organization-workspace.html">Workspace</a><a class="btn" href="index.html?logout=1">Logout</a></div>
+    </header>
+
+    <div class="branch-shell">
+      <aside class="branch-sidebar">
+        <nav class="sidebar-nav">
+          <div class="sidebar-nav-group"><strong>Main</strong><a class="sidebar-link active" href="#overview" data-nav="overview" data-icon="O">Overview</a></div>
+          <div class="sidebar-nav-group"><strong>People</strong><a class="sidebar-link" href="#employees" data-nav="employees" data-icon="E">Employees</a><a class="sidebar-link" href="#attendance" data-nav="attendance" data-icon="A">Attendance</a><a class="sidebar-link" href="#leave" data-nav="leave" data-icon="L">Leave</a><a class="sidebar-link" href="#payroll" data-nav="payroll" data-icon="P">Payroll</a></div>
+          <div class="sidebar-nav-group"><strong>Growth</strong><a class="sidebar-link" href="#recruitment" data-nav="recruitment" data-icon="R">Recruitment</a><a class="sidebar-link" href="#performance" data-nav="performance" data-icon="V">Performance</a><a class="sidebar-link" href="#documents" data-nav="documents" data-icon="D">Documents</a></div>
+          <div class="sidebar-nav-group"><strong>System</strong><a class="sidebar-link" href="#reports" data-nav="reports" data-icon="S">Reports</a><a class="sidebar-link" href="#settings" data-nav="settings" data-icon="G">Settings</a></div>
+        </nav>
+      </aside>
+
+      <main class="layout">
+        <section class="panel" data-section="overview" id="overview">
+          <div class="panel-header"><h2>HR Overview</h2><div class="panel-actions"><button id="hr-export-btn" class="btn">Export employees</button><button id="hr-print-btn" class="btn primary">Print report</button></div></div>
+          <div class="kpis">
+            <article class="kpi"><div class="kpi-label">Employees</div><div id="hr-kpi-employees" class="kpi-value">0</div><div class="kpi-foot muted">Active workforce</div></article>
+            <article class="kpi"><div class="kpi-label">New hires</div><div id="hr-kpi-hires" class="kpi-value">0</div><div class="kpi-foot muted">This month</div></article>
+            <article class="kpi"><div class="kpi-label">On leave</div><div id="hr-kpi-leave" class="kpi-value">0</div><div class="kpi-foot muted">Today</div></article>
+            <article class="kpi"><div class="kpi-label">Payroll</div><div id="hr-kpi-payroll" class="kpi-value">KES 0</div><div class="kpi-foot muted">Prepared runs</div></article>
+          </div>
+        </section>
+
+        <section class="panel" data-section="employees" id="employees">
+          <div class="panel-header"><h2>Employee Records</h2><div class="panel-actions muted">Add, edit by re-adding same details, deactivate when staff leaves</div></div>
+          <form id="employee-form" class="branch-form">
+            <label class="field"><span>Full name</span><input name="name" required /></label><label class="field"><span>National ID / passport</span><input name="nationalId" /></label><label class="field"><span>Phone</span><input name="phone" /></label><label class="field"><span>Email</span><input name="email" type="email" /></label>
+            <label class="field"><span>Role / job title</span><input name="role" required /></label><label class="field"><span>Department</span><input name="department" required /></label><label class="field"><span>Branch</span><select id="hr-branch" name="branchId"></select></label><label class="field"><span>Contract type</span><select name="contractType"><option>permanent</option><option>contract</option><option>casual</option><option>intern</option></select></label>
+            <label class="field"><span>Start date</span><input name="startDate" type="date" /></label><label class="field"><span>Salary / pay rate</span><input name="salary" type="number" min="0" step="1" /></label><label class="field"><span>Bank / M-Pesa</span><input name="payrollContact" /></label><label class="field"><span>Emergency contact</span><input name="emergencyContact" /></label>
+            <label class="field" style="grid-column:1/-1"><span>Notes / documents</span><input name="notes" /></label><button class="btn primary" type="submit">Save employee</button>
+          </form>
+          <div class="table-wrap"><table class="table"><thead><tr><th>Name</th><th>Role</th><th>Department</th><th>Branch</th><th>Contract</th><th>Status</th><th class="num">Salary</th><th>Action</th></tr></thead><tbody id="employees-tbody"></tbody></table></div>
+        </section>
+
+        <section class="panel" data-section="attendance" id="attendance">
+          <div class="panel-header"><h2>Attendance</h2></div>
+          <form id="attendance-form" class="branch-form"><label class="field"><span>Employee</span><select class="employee-select" name="employeeId"></select></label><label class="field"><span>Date</span><input name="date" type="date" /></label><label class="field"><span>Status</span><select name="status"><option>present</option><option>absent</option><option>late</option><option>half day</option></select></label><label class="field"><span>Notes</span><input name="notes" /></label><button class="btn primary" type="submit">Record attendance</button></form>
+          <div class="table-wrap"><table class="table"><thead><tr><th>Date</th><th>Employee</th><th>Branch</th><th>Status</th><th>Notes</th></tr></thead><tbody id="attendance-tbody"></tbody></table></div>
+        </section>
+
+        <section class="panel" data-section="leave" id="leave">
+          <div class="panel-header"><h2>Leave Requests</h2></div>
+          <form id="leave-form" class="branch-form"><label class="field"><span>Employee</span><select class="employee-select" name="employeeId"></select></label><label class="field"><span>Type</span><select name="type"><option>Annual</option><option>Sick</option><option>Maternity</option><option>Paternity</option><option>Unpaid</option></select></label><label class="field"><span>Start</span><input name="startDate" type="date" /></label><label class="field"><span>End</span><input name="endDate" type="date" /></label><button class="btn primary" type="submit">Request leave</button></form>
+          <div class="table-wrap"><table class="table"><thead><tr><th>Employee</th><th>Type</th><th>Dates</th><th>Status</th><th>Action</th></tr></thead><tbody id="leave-tbody"></tbody></table></div>
+        </section>
+
+        <section class="panel" data-section="payroll" id="payroll">
+          <div class="panel-header"><h2>Payroll</h2></div>
+          <form id="payroll-form" class="branch-form"><label class="field"><span>Employee</span><select class="employee-select" name="employeeId"></select></label><label class="field"><span>Period</span><input name="period" type="month" /></label><label class="field"><span>Base pay</span><input name="basePay" type="number" min="0" /></label><label class="field"><span>Allowances</span><input name="allowances" type="number" min="0" /></label><label class="field"><span>Deductions</span><input name="deductions" type="number" min="0" /></label><button class="btn primary" type="submit">Prepare payroll</button></form>
+          <div class="table-wrap"><table class="table"><thead><tr><th>Period</th><th>Employee</th><th class="num">Base</th><th class="num">Allowances</th><th class="num">Deductions</th><th class="num">Net</th><th>Status</th></tr></thead><tbody id="payroll-tbody"></tbody></table></div>
+        </section>
+
+        <section class="panel" data-section="recruitment" id="recruitment">
+          <div class="panel-header"><h2>Recruitment</h2></div>
+          <form id="vacancy-form" class="branch-form"><label class="field"><span>Job title</span><input name="title" required /></label><label class="field"><span>Branch</span><select name="branchId" id="attendance-branch"></select></label><label class="field"><span>Requirements</span><input name="requirements" /></label><label class="field"><span>Applicants</span><input name="applicants" type="number" min="0" /></label><button class="btn primary" type="submit">Post vacancy</button></form>
+          <div class="table-wrap"><table class="table"><thead><tr><th>Vacancy</th><th>Branch</th><th>Requirements</th><th>Status</th><th>Applicants</th></tr></thead><tbody id="recruitment-tbody"></tbody></table></div>
+        </section>
+
+        <section class="panel" data-section="performance" id="performance">
+          <div class="panel-header"><h2>Performance</h2></div>
+          <form id="performance-form" class="branch-form"><label class="field"><span>Employee</span><select class="employee-select" name="employeeId"></select></label><label class="field"><span>Period</span><input name="period" /></label><label class="field"><span>Reviewer</span><input name="reviewer" /></label><label class="field"><span>Score</span><input name="score" type="number" min="0" max="100" /></label><label class="field" style="grid-column:1/-1"><span>Notes</span><input name="notes" /></label><button class="btn primary" type="submit">Save review</button></form>
+          <div class="table-wrap"><table class="table"><thead><tr><th>Employee</th><th>Period</th><th>Reviewer</th><th>Score</th><th>Notes</th></tr></thead><tbody id="performance-tbody"></tbody></table></div>
+        </section>
+
+        <section class="panel" data-section="documents" id="documents">
+          <div class="panel-header"><h2>Documents</h2></div>
+          <form id="document-form" class="branch-form"><label class="field"><span>Employee</span><select class="employee-select" name="employeeId"></select></label><label class="field"><span>Document type</span><input name="documentType" /></label><label class="field"><span>Expiry date</span><input name="expiryDate" type="date" /></label><label class="field"><span>Notes</span><input name="notes" /></label><button class="btn primary" type="submit">File document</button></form>
+          <div class="table-wrap"><table class="table"><thead><tr><th>Employee</th><th>Document</th><th>Expiry</th><th>Status</th><th>Notes</th></tr></thead><tbody id="documents-tbody"></tbody></table></div>
+        </section>
+
+        <section class="panel" data-section="reports" id="reports"><div class="panel-header"><h2>Reports</h2><div class="panel-actions muted">Use print/export from Overview for headcount and payroll summaries.</div></div><div class="report-output">Headcount, attendance, payroll, leave, recruitment, and performance data is generated from the records above.</div></section>
+        <section class="panel" data-section="settings" id="settings"><div class="panel-header"><h2>HR Settings</h2></div><pre id="hr-settings-output" class="report-output"></pre></section>
+      </main>
+    </div>
+    <script src="enterprise-core.js?v=2"></script><script src="auth-guard.js?v=2"></script><script src="kv-client.js"></script><script src="enterprise-store.js"></script><script src="department-portals.js?v=1"></script>
+  </body>
+</html>
