@@ -52,19 +52,19 @@ const readArray = async (store, key) => {
 
 const rolePortalDefaults = (role) => {
   const clean = String(role || "").toLowerCase();
-  if (clean === "director") return ["director", "reporting", "analytics"];
-  if (clean === "branch") return ["device-branch", "branch", "inventory", "sales"];
-  if (clean === "agent") return ["agent", "sales", "customer"];
-  if (clean === "team-leader" || clean === "team_leader") return ["agent", "sales", "reporting"];
+  if (clean === "director") return ["technology", "director", "reporting", "analytics"];
+  if (clean === "branch") return ["technology", "device-branch", "branch", "inventory", "sales"];
+  if (clean === "agent") return ["technology", "agent", "sales", "customer"];
+  if (clean === "team-leader" || clean === "team_leader") return ["technology", "team-leader", "agent", "sales", "reporting"];
   return [];
 };
 
 const rolePermissionDefaults = (role, portals = []) => {
   const clean = String(role || "").toLowerCase();
-  if (clean === "director") return ["director.read", "director.manage", "reporting.read", "analytics.read"];
-  if (clean === "branch") return ["device-branch.read", "device-branch.manage", "inventory.read", "sales.create"];
-  if (clean === "agent") return ["agent.read", "sales.create", "customer.read"];
-  if (clean === "team-leader" || clean === "team_leader") return ["agent.read", "agent.manage", "sales.read", "reporting.read"];
+  if (clean === "director") return ["technology.read", "director.read", "director.manage", "reporting.read", "analytics.read"];
+  if (clean === "branch") return ["technology.read", "device-branch.read", "device-branch.manage", "inventory.read", "sales.create"];
+  if (clean === "agent") return ["technology.read", "agent.read", "sales.create", "customer.read"];
+  if (clean === "team-leader" || clean === "team_leader") return ["technology.read", "team-leader.read", "team-leader.manage", "agent.read", "agent.manage", "sales.read", "reporting.read"];
   return (Array.isArray(portals) ? portals : []).map((id) => `${id}.read`);
 };
 

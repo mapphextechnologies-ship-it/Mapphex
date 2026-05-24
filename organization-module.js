@@ -436,7 +436,8 @@
   const hydrateSharedData = async () => {
     const shared = store();
     if (!shared?.bootstrap) return;
-    await shared.bootstrap([MODULE_DATA_KEY, ACTIVITY_KEY, ERP_STATE_KEY, TRANSACTIONS_KEY, REPORTS_KEY, MODULE_PREFS_KEY]).catch(() => null);
+    const boot = await shared.bootstrap([MODULE_DATA_KEY, ACTIVITY_KEY, ERP_STATE_KEY, TRANSACTIONS_KEY, REPORTS_KEY, MODULE_PREFS_KEY]).catch(() => null);
+    if (boot?.apiState === "ok" || boot?.source === "api" || boot?.source === "cache" || boot?.source === "indexeddb") return;
     const remote = await window.ERPClient?.getState?.().catch(() => null);
     if (remote?.departmentWorkflows) storeSet(ERP_STATE_KEY, remote.departmentWorkflows);
     if (remote?.moduleRecords) storeSet(MODULE_DATA_KEY, remote.moduleRecords);
@@ -447,6 +448,7 @@
 
   const moduleData = () => storeGet(MODULE_DATA_KEY, {});
   const saveModuleData = (data) => storeSet(MODULE_DATA_KEY, data);
+  const syncStore = () => store()?.flush?.().catch(() => null);
   const modulePrefs = () => storeGet(MODULE_PREFS_KEY, {});
   const saveModulePrefs = (data) => storeSet(MODULE_PREFS_KEY, data);
   const erpState = () => storeGet(ERP_STATE_KEY, {});
@@ -604,6 +606,7 @@
     const label = link.dataset.moduleLabel || "Records";
     const hash = link.dataset.moduleNav || label.toLowerCase().replace(/[^a-z0-9]+/g, "-");
     const workflow = workflowFor(moduleId);
+    const canManageRecords = ["sales", "pharmacy"].includes(moduleId);
     const rows = Array.isArray(moduleData()[moduleId]) ? moduleData()[moduleId] : [];
     const matchingRows = rows.filter((row) => {
       const text = (row.values || []).join(" ").toLowerCase();
@@ -615,10 +618,10 @@
           .map(
             (row) => `<tr>${workflow.labels
               .map((field, idx) => `<td data-label="${escapeHtml(field)}">${escapeHtml(row.values?.[idx] || "-")}</td>`)
-              .join("")}<td data-label="Updated">${escapeHtml(humanDate(row.updatedAt))}</td>${moduleId === "sales" ? `<td data-label="Actions"><button class="btn danger" type="button" data-record-delete="${escapeHtml(row.id)}">Delete</button></td>` : ""}</tr>`,
+              .join("")}<td data-label="Updated">${escapeHtml(humanDate(row.updatedAt))}</td>${canManageRecords ? `<td data-label="Actions"><button class="btn danger" type="button" data-record-delete="${escapeHtml(row.id)}">Delete</button></td>` : ""}</tr>`,
           )
           .join("")
-      : `<tr><td colspan="${workflow.labels.length + (moduleId === "sales" ? 2 : 1)}" class="muted">No ${escapeHtml(label.toLowerCase())} records yet.</td></tr>`;
+      : `<tr><td colspan="${workflow.labels.length + (canManageRecords ? 2 : 1)}" class="muted">No ${escapeHtml(label.toLowerCase())} records yet.</td></tr>`;
     const actionCopy = {
       orders: "Track who ordered, what they are buying, where it is going, amount, and invoice status.",
       products: "Keep products, pricing, and sales items easy to review.",
@@ -677,7 +680,7 @@
         <div class="panel-actions">
           <button class="btn" data-erp-export="xlsx" type="button">Export XLSX</button>
           <button class="btn" data-focus-record-form type="button">Add Record</button>
-          ${moduleId === "sales" ? `<button class="btn danger" data-clear-module-records type="button">Clear All</button>` : ""}
+          ${canManageRecords ? `<button class="btn danger" data-clear-module-records type="button">Clear All</button>` : ""}
         </div>
       </div>
       <div class="module-page-summary">
@@ -687,7 +690,7 @@
       </div>
       <div class="table-wrap">
         <table class="table">
-          <thead><tr>${workflow.labels.map((field) => `<th>${escapeHtml(field)}</th>`).join("")}<th>Updated</th>${moduleId === "sales" ? "<th>Actions</th>" : ""}</tr></thead>
+          <thead><tr>${workflow.labels.map((field) => `<th>${escapeHtml(field)}</th>`).join("")}<th>Updated</th>${canManageRecords ? "<th>Actions</th>" : ""}</tr></thead>
           <tbody>${rowsHtml}</tbody>
         </table>
       </div>`;
@@ -1029,14 +1032,18 @@
     }
     document.body.classList.remove("finance-simple-page");
     document.body.classList.remove("branch-management-page");
-    if (moduleId === "sales") {
+    if (moduleId === "sales" || moduleId === "pharmacy") {
       const recordActions = $("#portal-records .panel-header .panel-actions");
       if (recordActions) {
-        recordActions.innerHTML = `<input id="module-search" type="search" placeholder="Search sales records..." /><button class="btn danger" data-clear-module-records type="button">Clear All</button>`;
+        const recordLabel = moduleId === "pharmacy" ? "pharmacy records" : "sales records";
+        recordActions.innerHTML = `<input id="module-search" type="search" placeholder="Search ${recordLabel}..." /><button class="btn danger" data-clear-module-records type="button">Clear All</button>`;
       }
     }
     if ($("#erp-sections")) return;
     const blueprint = blueprintFor(moduleId);
+    const dashboardInsightCard = moduleId === "pharmacy"
+      ? ""
+      : `<article class="erp-card"><strong>Performance</strong>${renderBars(blueprint.chart)}<span class="muted">A quick look at recent movement</span></article>`;
     const salesDashboardSection = moduleId === "sales"
       ? `<section id="dashboard" class="panel sales-dashboard-page">
           <div class="panel-header">
@@ -1079,7 +1086,7 @@
           </div>
           <div id="erp-kpis" class="erp-kpi-grid"></div>
           <div class="erp-dashboard-grid">
-            <article class="erp-card"><strong>Performance</strong>${renderBars(blueprint.chart)}<span class="muted">A quick look at recent movement</span></article>
+            ${dashboardInsightCard}
             <article class="erp-card"><strong>Responsibilities</strong><ul>${blueprint.responsibilities.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></article>
           </div>
         </section>`;
@@ -2054,8 +2061,7 @@
       await hydrateSharedData();
       if (moduleId === "sales") {
         clearLegacySalesRecords();
-        clearSavedSalesDashboardState();
-        await store()?.flush?.().catch(() => null);
+        syncStore();
       }
       ensurePortalState(moduleId);
       applyModulePreferences(moduleId);
@@ -2125,7 +2131,7 @@
         saveModuleData(data);
         appendActivity(moduleId, "record.deleted", { id: recordId, message: `${row?.values?.[0] || "Record"} deleted.` });
         refreshCurrentModuleView();
-        await store()?.flush?.().catch(() => null);
+        syncStore();
       };
       $("#module-search")?.addEventListener("input", (event) => renderRows(moduleId, workflow, event.currentTarget.value));
       $("#finance-filter")?.addEventListener("change", () => renderRows(moduleId, workflow, $("#module-search")?.value || ""));
@@ -2150,10 +2156,12 @@
         data[moduleId] = rows.slice(0, 500);
         saveModuleData(data);
         appendActivity(moduleId, "record.created", { values, message: values.join(" • ") });
-        await postModuleRecordTransaction(moduleId, row);
         event.currentTarget.reset();
         refreshCurrentModuleView();
-        await store()?.flush?.().catch(() => null);
+        syncStore();
+        postModuleRecordTransaction(moduleId, row)
+          .then(() => syncStore())
+          .catch(() => null);
       });
 
       document.addEventListener("click", (event) => {
@@ -2215,7 +2223,7 @@
           saveModuleData(data);
           appendActivity(moduleId, "records.cleared", { message: `${deleted} ${moduleDef.title} records cleared.` });
           refreshCurrentModuleView();
-          store()?.flush?.().catch(() => null);
+          syncStore();
           return;
         }
         const action = event.target.closest("[data-erp-action]");

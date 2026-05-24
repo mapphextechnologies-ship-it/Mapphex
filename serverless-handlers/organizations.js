@@ -17,6 +17,7 @@ const INVITES_KEY = "enterprise_user_invites_v1";
 const AUTH_ACTIVITY_KEY = "enterprise_auth_activity_v1";
 const SESSION_DEVICES_KEY = "enterprise_session_devices_v1";
 const BASE_PORTALS = ["admin", "staff", "reporting"];
+const PHONE_SERVICE_PORTALS = ["admin", "technology", "director", "departments", "device-departments", "device-branch", "team-leader", "agent", "customer", "sales", "finance", "staff", "reporting", "analytics"];
 const SERVICE_PORTALS = {
   company: ["admin", "departments", "staff", "reporting"],
   agency: ["admin", "staff", "customer", "sales", "reporting"],
@@ -82,10 +83,10 @@ const SERVICE_PORTALS = {
   "cybersecurity-services": ["admin", "technology", "departments", "staff", "customer", "finance", "reporting", "analytics"],
   "web-development": ["admin", "technology", "staff", "customer", "sales", "finance", "reporting"],
   "app-development": ["admin", "technology", "staff", "customer", "sales", "finance", "reporting", "analytics"],
-  "device-repair": ["admin", "technology", "inventory", "customer", "sales", "finance", "reporting"],
-  "technology-devices": ["admin", "technology", "branch", "inventory", "customer", "finance", "staff", "reporting", "analytics"],
-  "technology-services": ["admin", "technology", "customer", "sales", "finance", "staff", "reporting", "analytics"],
-  "internet-services": ["admin", "technology", "branch", "customer", "finance", "staff", "reporting"],
+  "device-repair": [...PHONE_SERVICE_PORTALS, "inventory"],
+  "technology-devices": [...PHONE_SERVICE_PORTALS, "branch", "inventory"],
+  "technology-services": PHONE_SERVICE_PORTALS,
+  "internet-services": [...PHONE_SERVICE_PORTALS, "branch"],
   "digital-agency": ["admin", "technology", "staff", "customer", "sales", "finance", "reporting"],
 };
 
