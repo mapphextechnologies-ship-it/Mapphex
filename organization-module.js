@@ -1401,16 +1401,20 @@
         return;
       }
 
-      const installed = new Set(
-        [
-          ...(settings.installedPortals || []),
-          ...(settings.selectedComponents || []),
-          ...(settings.allowedPortals || []),
-          ...(settings.recommendedPortals || []),
-        ].filter((id) => VALID_PORTAL_IDS.has(id)),
-      );
+      const installed = new Set((settings.installedPortals || []).filter((id) => VALID_PORTAL_IDS.has(id)));
       if (!moduleId || !installed.has(moduleId)) {
         location.replace(`portal-selection.html?tenant=${encodeURIComponent(session.tenantId)}`);
+        return;
+      }
+      const role = String(session.role || "").toLowerCase();
+      const portalAccess = Array.isArray(session.portalAccess) ? session.portalAccess : [];
+      const hasPortalAccess =
+        ["org_admin", "admin", "director"].includes(role) ||
+        portalAccess.includes(moduleId) ||
+        window.EnterpriseCore?.hasPermission?.(`${moduleId}.read`, session) ||
+        window.EnterpriseCore?.hasPermission?.(`${moduleId}.manage`, session);
+      if (!hasPortalAccess) {
+        location.replace("access-denied.html");
         return;
       }
 

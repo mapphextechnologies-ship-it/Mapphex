@@ -124,7 +124,7 @@
     $("#portal-auth-subtitle").textContent =
       portalId === "admin"
         ? "Use your organization admin account. Admin access is created by the organization owner."
-        : "Use your organization account, or register your portal account before opening this portal.";
+        : "Use your organization account. New portal accounts must be approved and assigned by your organization admin before they can open portals.";
     if (branchPortalIds.has(portalId)) {
       document.querySelectorAll('input[name="organizationName"], input[name="identifier"]').forEach((input) => {
         input.required = false;
@@ -170,7 +170,8 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(registerPayload(body)),
           });
-          result.textContent = "Account created. Opening portal...";
+          result.textContent = "Account request sent. Your organization admin must approve and assign portal access before you can open it.";
+          return;
         }
         const data = await fetchJson("/api/auth/session", {
           method: "POST",

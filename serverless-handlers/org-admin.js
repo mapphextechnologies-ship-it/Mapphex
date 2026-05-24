@@ -123,7 +123,7 @@ module.exports = async (req, res) => {
         ? body.permissions.map((p) => safeString(p, 80)).filter(Boolean)
         : users[idx].permissions || roleTemplate?.permissions || [];
       const status = safeString(body.status || users[idx].status || "active", 40);
-      if (!["active", "disabled", "invited"].includes(status)) return sendJson(res, 400, { ok: false, error: "Invalid user status" });
+      if (!["active", "disabled", "invited", "pending"].includes(status)) return sendJson(res, 400, { ok: false, error: "Invalid user status" });
       const next = [...users];
       next[idx] = {
         ...next[idx],
@@ -141,7 +141,7 @@ module.exports = async (req, res) => {
     if (body.action === "set-user-status") {
       const userId = safeString(body.userId || body.id, 120);
       const status = safeString(body.status || "active", 40);
-      if (!["active", "disabled", "invited"].includes(status)) return sendJson(res, 400, { ok: false, error: "Invalid user status" });
+      if (!["active", "disabled", "invited", "pending"].includes(status)) return sendJson(res, 400, { ok: false, error: "Invalid user status" });
       const idx = users.findIndex((user) => user.id === userId);
       if (idx < 0) return sendJson(res, 404, { ok: false, error: "User not found" });
       const next = [...users];

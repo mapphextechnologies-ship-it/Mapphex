@@ -147,6 +147,30 @@
 
   const tenantId = () => tenantFromUrl() || cleanTenantId(activeSession()?.tenantId) || tenantFromStorage();
 
+  const enforceFinanceAccess = () => {
+    const session = activeSession();
+    if (!session?.tenantId) {
+      location.replace(`organization-login.html${tenantFromUrl() ? `?tenant=${encodeURIComponent(tenantFromUrl())}` : ""}`);
+      return false;
+    }
+    const role = String(session.role || "").toLowerCase();
+    const portalAccess = Array.isArray(session.portalAccess) ? session.portalAccess : [];
+    const permissions = Array.isArray(session.permissions) ? session.permissions : [];
+    const allowed =
+      ["org_admin", "admin", "director"].includes(role) ||
+      portalAccess.includes("finance") ||
+      permissions.includes("finance.read") ||
+      permissions.includes("finance.manage") ||
+      permissions.includes("*");
+    if (!allowed) {
+      location.replace("access-denied.html");
+      return false;
+    }
+    return true;
+  };
+
+  if (!enforceFinanceAccess()) return;
+
   const readAnyLocalJson = (key, fallback) => {
     const direct = safeJsonParse(readRawStorage(localStorage, key), null);
     if (direct !== null) return direct;

@@ -119,12 +119,13 @@
     $("#org-user-portals").innerHTML = portalChecks || `<span class="muted">No installed portals yet.</span>`;
     $("#org-users-table").innerHTML = state.users
       .map((user) => {
-        const portals = (user.portalAccess || []).map(portalLabel).join(", ") || "Inherited";
+        const portals = (user.portalAccess || []).map(portalLabel).join(", ") || "Not assigned";
         const disabled = user.status === "disabled";
+        const pending = user.status === "pending";
         return `<tr>
           <td>${escapeHtml(user.name)}</td>
           <td>${escapeHtml(user.email)}</td>
-          <td><select data-user-role="${escapeHtml(user.id)}"><option ${user.role === "staff" ? "selected" : ""}>staff</option><option ${user.role === "manager" ? "selected" : ""}>manager</option><option ${user.role === "finance" ? "selected" : ""}>finance</option><option ${user.role === "hr" ? "selected" : ""}>hr</option><option ${user.role === "sales" ? "selected" : ""}>sales</option><option ${user.role === "org_admin" ? "selected" : ""}>org_admin</option></select></td>
+          <td><select data-user-role="${escapeHtml(user.id)}"><option ${user.role === "staff" ? "selected" : ""}>staff</option><option ${user.role === "manager" ? "selected" : ""}>manager</option><option ${user.role === "finance" ? "selected" : ""}>finance</option><option ${user.role === "hr" ? "selected" : ""}>hr</option><option ${user.role === "sales" ? "selected" : ""}>sales</option><option ${user.role === "inventory" ? "selected" : ""}>inventory</option><option ${user.role === "procurement" ? "selected" : ""}>procurement</option><option ${user.role === "customer_service" ? "selected" : ""}>customer_service</option><option ${user.role === "org_admin" ? "selected" : ""}>org_admin</option></select></td>
           <td><span class="muted">${escapeHtml(portals)}</span></td>
           <td>${escapeHtml(user.status || "active")}</td>
           <td class="table-actions">
@@ -132,6 +133,7 @@
             <button class="btn" type="button" data-user-portals="${escapeHtml(user.id)}">Portals</button>
             <button class="btn" type="button" data-user-invite="${escapeHtml(user.id)}">Invite</button>
             <button class="btn" type="button" data-user-reset="${escapeHtml(user.id)}">Reset</button>
+            ${pending ? `<button class="btn primary" type="button" data-user-status="${escapeHtml(user.id)}" data-status="active">Approve</button>` : ""}
             <button class="btn ${disabled ? "primary" : "danger"}" type="button" data-user-status="${escapeHtml(user.id)}" data-status="${disabled ? "active" : "disabled"}">${disabled ? "Activate" : "Disable"}</button>
             <button class="btn danger" type="button" data-user-delete="${escapeHtml(user.id)}">Delete</button>
           </td>

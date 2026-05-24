@@ -202,33 +202,24 @@ module.exports = async (req, res) => {
         if (users.some((user) => normalizeEmail(user.email || user.username) === email)) {
           return sendJson(res, 409, { ok: false, error: "This email already has an account. Use Open Portal to log in." });
         }
-        const allowed = new Set(
-          [
-            ...(settings?.installedPortals || []),
-            ...(settings?.selectedComponents || []),
-            ...(settings?.allowedPortals || []),
-            ...(settings?.recommendedPortals || []),
-            ...(organization?.selectedComponents || []),
-          ].map(String),
-        );
+        const allowed = new Set([...(settings?.installedPortals || [])].map(String));
         if (portalId !== "workspace" && !allowed.has(portalId)) {
-          return sendJson(res, 403, { ok: false, error: "This portal is not available for your organization" });
+          return sendJson(res, 403, { ok: false, error: "This portal is not approved by your organization admin yet" });
         }
-        const portalAccess = portalId !== "workspace" ? [portalId] : [];
         const user = {
           id: `user-${Date.now()}-${crypto.randomBytes(5).toString("hex")}`,
           name,
           email,
           username: email,
           role: "staff",
-          permissions: portalId !== "workspace" ? [`${portalId}.read`] : [],
-          portalAccess,
+          permissions: [],
+          portalAccess: [],
           passwordHash: hashOrganizationSecret(password),
           activationToken: "",
           emailVerified: false,
           registrationSource: "portal-self-registration",
           registeredPortalId: portalId,
-          status: "active",
+          status: "pending",
           createdAt: new Date().toISOString(),
         };
         const nextUsers = [user, ...users].slice(0, 2000);
@@ -241,7 +232,7 @@ module.exports = async (req, res) => {
           portalId,
           portalTitle: PORTAL_CATALOG.find((item) => item.id === portalId)?.title || portalId,
         });
-        return sendJson(res, 200, { ok: true, tenantId, user: publicUser(user), organization: publicOrg(organization) });
+        return sendJson(res, 200, { ok: true, tenantId, user: publicUser(user), organization: publicOrg(organization), pendingApproval: true });
       }
 
       const requestedRole = String(body?.role || "org_admin").trim().toLowerCase();
@@ -267,6 +258,25 @@ module.exports = async (req, res) => {
         return sendJson(res, 401, { ok: false, error: "Invalid organization credentials" });
       }
       tenantId = organization.id;
+      if (user && String(user.status || "active").toLowerCase() !== "active") {
+        const status = String(user.status || "pending").toLowerCase();
+        return sendJson(res, 403, {
+          ok: false,
+          error: status === "pending"
+            ? "Your account is waiting for organization admin approval"
+            : "Your account is not active. Contact your organization admin.",
+        });
+      }
+      if (portalId && portalId !== "workspace" && user) {
+        const settings = (await store.get(scopeTenantKey(tenantId, "enterprise_org_settings_v1"))) || {};
+        const installed = new Set((settings.installedPortals || []).map(String));
+        const portalAccess = new Set((user.portalAccess || []).map(String));
+        const permissions = new Set((user.permissions || []).map(String));
+        if (!installed.has(portalId)) return sendJson(res, 403, { ok: false, error: "This portal is not approved by your organization admin yet" });
+        if (!portalAccess.has(portalId) && !permissions.has(`${portalId}.read`) && !permissions.has(`${portalId}.manage`)) {
+          return sendJson(res, 403, { ok: false, error: "Your organization admin has not assigned this portal to you yet" });
+        }
+      }
       const now = Date.now();
       const effectiveRole = user?.role || role;
       const claims = {

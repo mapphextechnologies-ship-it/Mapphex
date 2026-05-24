@@ -187,8 +187,9 @@ const createOrganization = async (req, res, body) => {
     : safeString(body.selectedComponents || "", 500).split(",").map((id) => safeString(id, 40)).filter(Boolean);
   const requestedPortalPricing = body.portalPricing && typeof body.portalPricing === "object" && !Array.isArray(body.portalPricing) ? body.portalPricing : {};
   const servicePortals = mergeUniqueStrings(Array.isArray(body.recommendedPortals) && body.recommendedPortals.length ? body.recommendedPortals : SERVICE_PORTALS[businessType] || BASE_PORTALS).filter((id) => VALID_PORTAL_IDS.has(id));
-  const installedPortals = mergeUniqueStrings(selectedComponents.length ? selectedComponents : servicePortals).filter((id) => VALID_PORTAL_IDS.has(id));
-  const billablePortals = installedPortals.length ? installedPortals : servicePortals;
+  const requestedPortals = mergeUniqueStrings(selectedComponents.length ? selectedComponents : servicePortals).filter((id) => VALID_PORTAL_IDS.has(id));
+  const installedPortals = [];
+  const billablePortals = requestedPortals.length ? requestedPortals : servicePortals;
   const portalPricing = Object.fromEntries(
     billablePortals.map((id) => [id, Math.max(0, Number(requestedPortalPricing[id] ?? pricing.priceFor(id)) || 0)]),
   );
@@ -230,7 +231,7 @@ const createOrganization = async (req, res, body) => {
     serviceTitle,
     servicePricing,
     registrationSource,
-    selectedComponents: installedPortals,
+    selectedComponents: requestedPortals,
     estimatedTotal,
     monthlyAmount,
     portalPricing,
@@ -257,7 +258,7 @@ const createOrganization = async (req, res, body) => {
       username: adminUsername,
       role: "org_admin",
       permissions: ["*"],
-      portalAccess: installedPortals,
+      portalAccess: [],
       passwordHash: adminPasswordHash,
       passwordSetupToken,
       emailVerified: false,
@@ -268,20 +269,20 @@ const createOrganization = async (req, res, body) => {
   await store.set(invitesKey, []);
   await store.set(profileKey, publicOrg(org));
   await store.set(settingsKey, {
-    modules: Array.from(new Set(["dashboard", ...installedPortals])),
+    modules: ["dashboard"],
     installedPortals,
     recommendedPortals: servicePortals,
     allowedPortals: servicePortals,
     navigation: installedPortals,
-    defaultRoles: defaultRoleTemplates(installedPortals),
-    modulePermissions: modulePermissionsFor(installedPortals),
+    defaultRoles: defaultRoleTemplates([]),
+    modulePermissions: {},
     agreementAccepted: false,
     onboardingComplete: false,
     businessType,
     serviceCategory,
     serviceTitle,
     servicePricing,
-    selectedComponents: installedPortals,
+    selectedComponents: requestedPortals,
     estimatedTotal,
     monthlyAmount,
     portalPricing,
@@ -451,7 +452,7 @@ module.exports.verifyOrganizationUser = async (identifier, email, password, orga
   const usersKey = scopeTenantKey(org.id, USERS_KEY);
   const users = (await store.get(usersKey)) || [];
   const user = (Array.isArray(users) ? users : []).find((row) => String(row.email || "").trim().toLowerCase() === mail);
-  if (!user || String(user.status || "active").toLowerCase() !== "active" || !user.passwordHash || !verifySecret(password, user.passwordHash)) return null;
+  if (!user || !user.passwordHash || !verifySecret(password, user.passwordHash)) return null;
   return { organization: publicOrg(org), user };
 };
 
