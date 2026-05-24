@@ -129,10 +129,11 @@
 
     loginForm?.addEventListener("submit", async (event) => {
       event.preventDefault();
+      const form = event.currentTarget || loginForm;
       const result = $("#organization-login-result");
       result.style.color = "var(--muted)";
       result.textContent = "Verifying credentials...";
-      const body = Object.fromEntries(new FormData(event.currentTarget).entries());
+      const body = Object.fromEntries(new FormData(form).entries());
       if (!body.organizationName || !body.identifier || !body.password) {
         result.style.color = "var(--danger)";
         result.textContent = "Organization name, organization email or ID, and password are required.";
@@ -184,10 +185,10 @@
           body.remember === "on",
         );
         window.EnterpriseCore?.rememberLogin?.save?.("organization", {
-          checkbox: event.currentTarget.remember,
+          checkbox: form?.remember,
           fields: {
-            organizationName: event.currentTarget.organizationName,
-            identifier: event.currentTarget.identifier,
+            organizationName: form?.organizationName,
+            identifier: form?.identifier,
           },
         });
         result.style.color = "var(--ok)";

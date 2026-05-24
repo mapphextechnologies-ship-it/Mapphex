@@ -150,11 +150,12 @@
     loadOrganizationContext().then(applyOrganizationContext).catch(() => null);
     $("#portal-login-form")?.addEventListener("submit", async (event) => {
       event.preventDefault();
+      const formEl = event.currentTarget || form;
       const result = $("#portal-auth-result");
       result.style.color = "var(--muted)";
       const intent = event.submitter?.value === "register" ? "register" : "login";
       result.textContent = intent === "register" ? "Creating your portal account..." : "Checking access...";
-      const body = Object.fromEntries(new FormData(event.currentTarget).entries());
+      const body = Object.fromEntries(new FormData(formEl).entries());
       try {
         if (intent === "register") {
           await fetchJson("/api/auth/session", {
@@ -185,12 +186,12 @@
           body.remember === "on",
         );
         window.EnterpriseCore?.rememberLogin?.save?.(`portal-${portalId}`, {
-          checkbox: event.currentTarget.remember,
+          checkbox: formEl?.remember,
           fields: {
-            organizationName: event.currentTarget.organizationName,
-            identifier: event.currentTarget.identifier,
-            name: event.currentTarget.name,
-            email: event.currentTarget.email,
+            organizationName: formEl?.organizationName,
+            identifier: formEl?.identifier,
+            name: formEl?.name,
+            email: formEl?.email,
           },
         });
         await ensureAllowed(session);
