@@ -15,7 +15,7 @@
         <nav class="finance-nav" aria-label="Finance portal navigation">
           <p class="nav-group">Main</p><a class="nav-link" href="finance-workflow.html">Dashboard</a>
           <p class="nav-group">Finance</p><a class="nav-link" href="finance-invoices.html">Invoices <span data-invoice-badge>0</span></a><a class="nav-link" href="finance-approvals.html">Approvals <span data-approval-badge>0</span></a><a class="nav-link" href="finance-suppliers.html">Suppliers</a><a class="nav-link active" href="finance-budgets.html">Budgets</a>
-          <p class="nav-group">People</p><a class="nav-link" href="finance-employees.html">Employees</a><a class="nav-link" href="finance-payroll.html">Payroll <span>!</span></a>
+          <p class="nav-group">People</p><a class="nav-link" href="finance-employees.html">Employees</a><a class="nav-link" href="finance-payroll.html">Payroll <span data-payroll-badge>0</span></a>
           <p class="nav-group">Accounting</p><a class="nav-link" href="finance-ledger.html">Ledger</a><a class="nav-link" href="finance-reports.html">Reports</a>
           <p class="nav-group">Tools</p><a class="nav-link" href="finance-settings.html">Settings</a>
         </nav>
@@ -24,13 +24,13 @@
       <main class="finance-main">
         <header class="finance-topbar"><button class="menu-button" type="button" aria-label="Open menu" data-menu-button><span></span><span></span><span></span></button><div><p>Workspace Portal</p><h1>Budgets</h1></div><a class="topbar-link" href="organization-workspace.html" data-finance-back>Back to portal</a></header>
         <section class="hero-panel"><div><p class="eyebrow">Finance</p><h2>Department budget allocations</h2><p>See how much is assigned and how much has been used.</p></div><button class="primary-action" type="button">Add budget</button></section>
-        <section class="summary-grid"><article><span>Assigned</span><strong>KES 0</strong><small>Total budget</small></article><article><span>Used</span><strong>KES 0</strong><small>Spent amount</small></article><article><span>Remaining</span><strong>KES 0</strong><small>Available</small></article><article><span>Pending</span><strong>1</strong><small>Needs approval</small></article></section>
+        <section class="summary-grid"><article><span>Assigned</span><strong>KES 0</strong><small>Total budget</small></article><article><span>Used</span><strong>KES 0</strong><small>Spent amount</small></article><article><span>Remaining</span><strong>KES 0</strong><small>Available</small></article><article><span>Pending</span><strong>0</strong><small>Needs approval</small></article></section>
         <section class="content-card"><div class="content-head"><div><p class="eyebrow">Budgets</p><h2>Budget list</h2><p>Department allocations and usage.</p></div><div class="toolbar"><input type="search" placeholder="Search budgets" /><select><option>All</option><option>Pending</option><option>Approved</option></select></div></div><div class="table-wrap"><table><thead><tr><th>Budget</th><th>Status</th><th>Amount</th><th>Date</th><th>Action</th></tr></thead><tbody data-records-body></tbody></table></div></section>
         <footer class="finance-footer">Powered by © Mapphex Technology</footer>
       </main>
     </div>
-    <script src="finance-db.js?v=4"></script>
-    <script src="finance-badges.js?v=2"></script>
+    <script src="finance-db.js?v=5"></script>
+    <script src="finance-badges.js?v=3"></script>
     <script src="finance-budgets.js?v=3"></script>
   </body>
 </html>

@@ -2,7 +2,7 @@
   "use strict";
 
   const LOCAL_PREFIX = "finance_preview_";
-  const RESET_MARKER = "mapphex_finance_data_reset_2026_05_24_v1";
+  const RESET_MARKER = "mapphex_finance_data_reset_2026_05_24_v2";
   const SETTINGS_KEY = "mapphex_finance_settings_v1";
   const DEFAULT_SETTINGS = {
     theme: "dark",

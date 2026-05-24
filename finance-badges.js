@@ -1,6 +1,7 @@
 (() => {
   const INVOICES_KEY = "mapphex_finance_invoices_v1";
   const APPROVALS_KEY = "mapphex_finance_approvals_v1";
+  const PAYROLL_KEY = "mapphex_finance_payroll_requests_v1";
   const oldSampleInvoiceNumbers = new Set(["INV-001", "INV-002", "INV-003"]);
 
   const isOldSampleInvoice = (row) => {
@@ -28,11 +29,23 @@
     });
   };
 
+  const updatePayrollBadges = async () => {
+    const badges = [...document.querySelectorAll("[data-payroll-badge]")];
+    if (!badges.length) return;
+    const storedRows = window.MapphexFinanceDB ? await window.MapphexFinanceDB.read(PAYROLL_KEY, []) : [];
+    const rows = Array.isArray(storedRows) ? storedRows : [];
+    const unpaid = rows.filter((row) => String(row?.status || "Unpaid").toLowerCase() !== "paid").length;
+    badges.forEach((badge) => {
+      badge.textContent = String(unpaid);
+    });
+  };
+
   const updateBadges = () => {
     updateInvoiceBadges();
     updateApprovalBadges();
+    updatePayrollBadges();
   };
 
   document.addEventListener("DOMContentLoaded", updateBadges);
-  window.MapphexFinanceBadges = Object.freeze({ updateInvoiceBadges, updateApprovalBadges, updateBadges });
+  window.MapphexFinanceBadges = Object.freeze({ updateInvoiceBadges, updateApprovalBadges, updatePayrollBadges, updateBadges });
 })();
