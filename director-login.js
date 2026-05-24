@@ -307,6 +307,19 @@
           userId: account.id,
           email: account.email,
           username: account.username || "",
+          tenantId: account.tenantId || window.EnterpriseCore?.currentTenantId?.() || "",
+          organizationId: account.organizationId || "",
+        },
+        !!rememberMe?.checked,
+      );
+      window.EnterpriseCore?.setSession?.(
+        {
+          role: "director",
+          userId: account.id,
+          sub: account.email,
+          tenantId: account.tenantId || window.EnterpriseCore?.currentTenantId?.() || "",
+          organizationId: account.organizationId || "",
+          portalAccess: ["director"],
         },
         !!rememberMe?.checked,
       );

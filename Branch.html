@@ -19,8 +19,8 @@
         </button>
         <img class="logo-img" src="/images/enterprise-logo.png" alt="" />
         <div>
-          <div class="brand-title">MAPPHEX</div>
-          <div class="brand-subtitle muted">Branch ERP Dashboard</div>
+          <div id="branch-brand-title" class="brand-title">MAPPHEX</div>
+          <div id="branch-brand-subtitle" class="brand-subtitle muted">Branch ERP Dashboard</div>
         </div>
       </div>
 
@@ -78,19 +78,19 @@
           </article>
 
           <article class="kpi">
-            <div class="kpi-label">Items in stock</div>
+            <div id="b-kpi-stock-label" class="kpi-label">Items in stock</div>
             <div id="b-kpi-stock" class="kpi-value">0</div>
             <div class="kpi-foot muted">This branch</div>
           </article>
 
           <article class="kpi">
-            <div class="kpi-label">Items sold</div>
+            <div id="b-kpi-sold-label" class="kpi-label">Items sold</div>
             <div id="b-kpi-sold" class="kpi-value">0</div>
             <div class="kpi-foot muted">This branch</div>
           </article>
 
           <article class="kpi">
-            <div class="kpi-label">Top product/service</div>
+            <div id="b-kpi-top-label" class="kpi-label">Top product/service</div>
             <div id="b-kpi-top" class="kpi-value">—</div>
             <div class="kpi-foot muted">Highest sold</div>
           </article>
@@ -99,38 +99,53 @@
 
       <section class="panel" id="inventory" data-section="inventory">
         <div class="panel-header">
-          <h2>Inventory Entry</h2>
+          <h2 id="inventory-heading">Inventory Entry</h2>
           <div class="panel-actions">
             <button id="add-phone-btn" class="btn primary" type="button">
-              Add product/service
+              Add item
             </button>
           </div>
         </div>
 
         <div class="branch-form">
           <label class="field">
-            <span>Product / service name</span>
+            <span id="ph-model-label">Product / service name</span>
             <input id="ph-model" type="text" placeholder="e.g. Antibiotics, school fees, web hosting, cement" />
           </label>
 
           <label class="field">
-            <span>Category</span>
+            <span id="ph-category-label">Category</span>
             <input id="ph-color" type="text" placeholder="e.g. Medicine, SaaS, Hardware, Food, Tuition" />
           </label>
 
           <label class="field">
-            <span>Unit / attributes</span>
+            <span id="ph-unit-label">Unit / attributes</span>
             <input id="ph-storage" type="text" placeholder="e.g. pcs, kg, monthly, batch, custom attribute" />
           </label>
 
           <label class="field">
-            <span>SKU / service code / asset reference</span>
+            <span id="ph-code-label">SKU / service code / asset reference</span>
             <input id="ph-serial" type="text" placeholder="e.g. SKU-000123, SVC-001, ASSET-01" />
           </label>
 
           <label class="field">
-            <span>Price (KES)</span>
+            <span>Cost price (KES)</span>
+            <input id="ph-cost" type="number" min="0" step="1" placeholder="e.g. 18000" />
+          </label>
+
+          <label class="field">
+            <span>Selling price (KES)</span>
             <input id="ph-price" type="number" min="0" step="1" placeholder="e.g. 25000" />
+          </label>
+
+          <label class="field">
+            <span>Reorder level</span>
+            <input id="ph-reorder" type="number" min="0" step="1" placeholder="e.g. 5" />
+          </label>
+
+          <label class="field">
+            <span>Expiry date</span>
+            <input id="ph-expiry" type="date" />
           </label>
 
           <div class="report-buttons" style="justify-content:flex-start;">
@@ -144,10 +159,13 @@
             <thead>
               <tr>
                 <th>Serial</th>
-                <th>Name</th>
-                <th>Category</th>
-                <th>Unit / Attributes</th>
-                <th class="num">Price</th>
+                <th id="inv-name-heading">Name</th>
+                <th id="inv-category-heading">Category</th>
+                <th id="inv-unit-heading">Unit / Attributes</th>
+                <th class="num">Cost</th>
+                <th class="num">Selling</th>
+                <th class="num">Reorder</th>
+                <th>Expiry</th>
                 <th>Status</th>
                 <th>Assigned to</th>
                 <th class="num">Action</th>
@@ -314,6 +332,7 @@
                 <th class="num">Balance</th>
                 <th>Status</th>
                 <th>Sold by</th>
+                <th class="num">Receipt</th>
               </tr>
             </thead>
             <tbody id="tx-tbody"></tbody>
@@ -401,7 +420,7 @@
     <script src="enterprise-store.js"></script>
     <script src="erp-client.js"></script>
     <script src="enterprise-platform.js"></script>
-    <script src="branch.js"></script>
+    <script src="branch.js?v=3"></script>
     <script src="pwa.js"></script>
   </body>
 </html>

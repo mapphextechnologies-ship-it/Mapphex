@@ -19,8 +19,8 @@
         </button>
         <img class="logo-img" src="/images/enterprise-logo.png" alt="" />
         <div>
-          <div class="brand-title">MAPPHEX</div>
-          <div class="brand-subtitle muted">Director ERP Dashboard</div>
+          <div id="director-brand-title" class="brand-title">MAPPHEX</div>
+          <div id="director-brand-subtitle" class="brand-subtitle muted">Director ERP Dashboard</div>
         </div>
       </div>
 
@@ -80,24 +80,24 @@
         <div class="kpis">
           <article class="kpi">
             <div class="kpi-label">Branches</div>
-            <div id="kpi-branches" class="kpi-value">47</div>
-            <div class="kpi-foot muted">Across Kenya</div>
+            <div id="kpi-branches" class="kpi-value">0</div>
+            <div id="kpi-branches-foot" class="kpi-foot muted">This organization</div>
           </article>
 
           <article class="kpi">
-            <div class="kpi-label">Items in stock</div>
+            <div id="kpi-stock-label" class="kpi-label">Items in stock</div>
             <div id="kpi-stock" class="kpi-value">0</div>
             <div class="kpi-foot muted">All branches</div>
           </article>
 
           <article class="kpi">
-            <div class="kpi-label">Items sold</div>
+            <div id="kpi-sold-label" class="kpi-label">Items sold</div>
             <div id="kpi-sold" class="kpi-value">0</div>
             <div class="kpi-foot muted">All time</div>
           </article>
 
           <article class="kpi">
-            <div class="kpi-label">Employees</div>
+            <div id="kpi-employees-label" class="kpi-label">Employees</div>
             <div id="kpi-employees" class="kpi-value">0</div>
             <div class="kpi-foot muted">HR snapshot</div>
           </article>
@@ -145,12 +145,12 @@
             <thead>
               <tr>
                 <th>Branch</th>
-                <th class="num">Models</th>
+                <th id="branches-items-heading" class="num">Categories</th>
                 <th class="num">In stock</th>
                 <th class="num">Sold</th>
                 <th class="num">Damaged</th>
                 <th class="num">Lost</th>
-                <th>Top product/service</th>
+                <th id="branches-top-heading">Top product/service</th>
               </tr>
             </thead>
             <tbody id="branches-tbody"></tbody>
@@ -308,7 +308,7 @@
     <script src="erp-client.js"></script>
     <script src="enterprise-platform.js"></script>
     <script src="ui-menu.js?v=2"></script>
-    <script src="director.js"></script>
+    <script src="director.js?v=3"></script>
     <script src="pwa.js"></script>
 </body>
 </html>

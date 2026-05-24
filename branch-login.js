@@ -206,6 +206,17 @@
         },
         !!rememberMe?.checked,
       );
+      window.EnterpriseCore?.setSession?.(
+        {
+          role: "branch",
+          userId: account.id,
+          sub: account.email,
+          tenantId: orgId,
+          branchId: account.branchId,
+          portalAccess: ["branch", "sales"],
+        },
+        !!rememberMe?.checked,
+      );
       window.EnterpriseCore?.rememberLogin?.save?.("branch", {
         checkbox: rememberMe,
         fields: { organizationId, identifier },

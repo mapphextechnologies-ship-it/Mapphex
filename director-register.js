@@ -314,6 +314,7 @@
         role: "director",
         username: uname,
         email: mail,
+        tenantId: window.EnterpriseCore?.currentTenantId?.() || "",
         salt,
         passwordHash,
         createdAt: new Date().toISOString(),

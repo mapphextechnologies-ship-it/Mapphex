@@ -8,6 +8,8 @@
   const DIRECTOR_ACCOUNT_KEY = "enterprise_director_account_v1";
   const BRANCH_ACCOUNTS_KEY = "enterprise_branch_accounts_v1";
   const DATA_KEY = "enterprise_erp_v1";
+  const ORGS_KEY = "platform_organizations_v1";
+  const SETTINGS_KEY = "enterprise_org_settings_v1";
   const UI_BRANCHES_OPEN_KEY = "enterprise_ui_branches_open_v1";
   const UI_REPORTS_OPEN_KEY = "enterprise_ui_reports_open_v1";
   const API_ENABLED_KEY = "enterprise_api_enabled_v1";
@@ -137,6 +139,43 @@
     return Number.isFinite(num) ? num.toLocaleString("en-US") : "0";
   };
 
+  const cleanTenantId = (value) =>
+    String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 64);
+
+  const BUSINESS_LABELS = {
+    retail: { stock: "Products in stock", sold: "Products sold", item: "Product", items: "Products", staff: "Cashiers / Agents", top: "Top product" },
+    pharmacy: { stock: "Medicines in stock", sold: "Medicines dispensed", item: "Medicine", items: "Medicines", staff: "Pharmacists", top: "Top medicine" },
+    restaurant: { stock: "Menu items ready", sold: "Orders completed", item: "Menu item", items: "Menu items", staff: "Waiters / Chefs", top: "Top menu item" },
+    hotel: { stock: "Rooms / services", sold: "Bookings completed", item: "Room / service", items: "Rooms / services", staff: "Receptionists", top: "Top booking" },
+    school: { stock: "Supplies / services", sold: "Fee payments", item: "Supply / service", items: "Supplies / services", staff: "Teachers / Admin", top: "Top fee item" },
+    clinic: { stock: "Services / medicines", sold: "Consultations", item: "Service / medicine", items: "Services / medicines", staff: "Doctors / Nurses", top: "Top service" },
+    logistics: { stock: "Cargo / items active", sold: "Deliveries completed", item: "Cargo / item", items: "Cargo / items", staff: "Drivers / Dispatch", top: "Top route" },
+    warehouse: { stock: "SKUs in stock", sold: "Dispatches", item: "SKU", items: "SKUs", staff: "Operators", top: "Top SKU" },
+    bar: { stock: "Bar stock", sold: "Tabs / sales", item: "Bar item", items: "Bar stock", staff: "Bartenders", top: "Top bar item" },
+    company: { stock: "Items in stock", sold: "Items sold", item: "Item / service", items: "Items / services", staff: "Staff", top: "Top product/service" },
+  };
+
+  const businessKey = (value) => {
+    const key = String(value || "company").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    if (key.includes("pharmacy")) return "pharmacy";
+    if (key.includes("restaurant") || key.includes("food")) return "restaurant";
+    if (key.includes("hotel") || key.includes("guest")) return "hotel";
+    if (key.includes("school") || key.includes("academic")) return "school";
+    if (key.includes("clinic") || key.includes("hospital")) return "clinic";
+    if (key.includes("logistics") || key.includes("delivery")) return "logistics";
+    if (key.includes("warehouse") || key.includes("wholesale")) return "warehouse";
+    if (key.includes("bar") || key.includes("pub")) return "bar";
+    if (key.includes("retail") || key.includes("shop")) return "retail";
+    return BUSINESS_LABELS[key] ? key : "company";
+  };
+
+  const getBusinessLabels = (value) => BUSINESS_LABELS[businessKey(value)] || BUSINESS_LABELS.company;
+
   const isoNow = () => new Date().toISOString();
 
   const clamp = (num, min, max) => Math.min(max, Math.max(min, num));
@@ -202,11 +241,29 @@
     !!session && session.role === "director" && !!session.userId;
 
   const requireDirector = () => {
+    const orgSession = window.EnterpriseCore?.requireOrganizationSession?.();
+    const orgRole = String(orgSession?.role || "").toLowerCase();
+    if (orgSession && (orgRole === "director" || orgRole === "org_admin" || orgRole === "admin")) {
+      if (orgSession.tenantId) window.EnterpriseCore?.setTenant?.(orgSession.tenantId);
+      return {
+        role: "director",
+        userId: orgSession.userId || orgSession.sub || "organization-director",
+        email: orgSession.sub || orgSession.email || "",
+        username: orgSession.name || orgSession.sub || "",
+        tenantId: orgSession.tenantId || "",
+        organizationId: orgSession.organizationId || "",
+        portalAccess: orgSession.portalAccess || [],
+        organizationSession: true,
+      };
+    }
+
     const session = getSession();
     if (!isDirector(session)) {
       window.location.href = "director-login.html";
       return null;
     }
+    const tenantId = cleanTenantId(session.tenantId || window.EnterpriseCore?.currentTenantId?.());
+    if (tenantId) window.EnterpriseCore?.setTenant?.(tenantId);
     return session;
   };
 
@@ -224,6 +281,18 @@
     "Logistics delivery",
     "Manufacturing raw material",
   ];
+
+  const getOrganizationContext = (session = {}) => {
+    const tenantId = cleanTenantId(session.tenantId || window.EnterpriseCore?.currentTenantId?.());
+    if (tenantId) window.EnterpriseCore?.setTenant?.(tenantId);
+    const settings = loadJson(SETTINGS_KEY, {}) || {};
+    const orgs = loadJson(ORGS_KEY, []);
+    const organization = Array.isArray(orgs)
+      ? orgs.find((org) => cleanTenantId(org?.id) === tenantId || cleanTenantId(org?.organizationId) === tenantId) || null
+      : null;
+    const businessType = settings.businessType || organization?.businessType || "company";
+    return { tenantId, settings, organization, businessType, labels: getBusinessLabels(businessType) };
+  };
 
   const kenyaCities = () => [
     "Nairobi",
@@ -668,15 +737,24 @@
     if (!session) return;
 
     let data = ensureData();
+    const orgContext = getOrganizationContext(session);
+    const tenantId = orgContext.tenantId;
+    const labels = orgContext.labels;
 
     const sessionBadge = $("#session-badge");
+    const brandTitle = $("#director-brand-title");
+    const brandSubtitle = $("#director-brand-subtitle");
     const logoutBtn = $("#logout-btn");
     const syncBtn = $("#sync-btn");
     const realtimeIndicator = $("#realtime-indicator");
 
     const kpiBranches = $("#kpi-branches");
+    const kpiBranchesFoot = $("#kpi-branches-foot");
+    const kpiStockLabel = $("#kpi-stock-label");
     const kpiStock = $("#kpi-stock");
+    const kpiSoldLabel = $("#kpi-sold-label");
     const kpiSold = $("#kpi-sold");
+    const kpiEmployeesLabel = $("#kpi-employees-label");
     const kpiEmployees = $("#kpi-employees");
     const branchAccountSummary = $("#branch-account-summary");
     const branchAccountsRefreshBtn = $("#branch-accounts-refresh-btn");
@@ -713,14 +791,40 @@
 
     const deptCards = Array.from(document.querySelectorAll("[data-dept]"));
 
-    if (sessionBadge) sessionBadge.textContent = "Director";
+    const applyOrganizationContext = () => {
+      const orgName = orgContext.organization?.name || orgContext.settings?.organizationName || "MAPPHEX";
+      const orgCode = orgContext.organization?.organizationId || tenantId || "organization";
+      if (brandTitle) brandTitle.textContent = orgName;
+      if (brandSubtitle) brandSubtitle.textContent = `${orgCode} - Director workspace`;
+      if (sessionBadge) sessionBadge.textContent = `${labels.items} Director`;
+      if (kpiBranchesFoot) kpiBranchesFoot.textContent = orgName === "MAPPHEX" ? "This organization" : orgName;
+      if (kpiStockLabel) kpiStockLabel.textContent = labels.stock;
+      if (kpiSoldLabel) kpiSoldLabel.textContent = labels.sold;
+      if (kpiEmployeesLabel) kpiEmployeesLabel.textContent = labels.staff;
+      const itemsHeading = $("#branches-items-heading");
+      const topHeading = $("#branches-top-heading");
+      if (itemsHeading) itemsHeading.textContent = labels.items;
+      if (topHeading) topHeading.textContent = labels.top;
+    };
+    applyOrganizationContext();
 
     const loadBranchAccounts = () => {
       const accounts = loadJson(BRANCH_ACCOUNTS_KEY, []);
-      return Array.isArray(accounts) ? accounts : [];
+      const list = Array.isArray(accounts) ? accounts : [];
+      if (!tenantId) return list;
+      return list.filter((account) => !account.tenantId || cleanTenantId(account.tenantId) === tenantId);
     };
 
-    const saveBranchAccounts = (accounts) => saveJson(BRANCH_ACCOUNTS_KEY, accounts);
+    const saveBranchAccounts = (accounts) => {
+      const all = loadJson(BRANCH_ACCOUNTS_KEY, []);
+      if (!tenantId || !Array.isArray(all)) {
+        saveJson(BRANCH_ACCOUNTS_KEY, accounts);
+        return;
+      }
+      const scopedIds = new Set(accounts.map((account) => account.id));
+      const merged = all.filter((account) => !scopedIds.has(account.id)).concat(accounts);
+      saveJson(BRANCH_ACCOUNTS_KEY, merged);
+    };
 
     const branchById = (branchId) =>
       (Array.isArray(data.branches) ? data.branches : []).find((branch) => branch.id === branchId) || null;

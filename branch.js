@@ -7,6 +7,8 @@
   const SESSION_SESSION_KEY = "enterprise_session_branch_tmp_v1";
   const BRANCH_ACCOUNTS_KEY = "enterprise_branch_accounts_v1";
   const DATA_KEY = "enterprise_erp_v1";
+  const ORGS_KEY = "platform_organizations_v1";
+  const SETTINGS_KEY = "enterprise_org_settings_v1";
   const BRANCH_COUNT = 47;
   const API_ENABLED_KEY = "enterprise_api_enabled_v1";
 
@@ -84,6 +86,52 @@
     const num = Number(value || 0);
     return Number.isFinite(num) ? num.toLocaleString("en-US") : "0";
   };
+
+  const escapeHtml = (value) =>
+    String(value ?? "").replace(/[&<>"']/g, (char) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    })[char]);
+
+  const cleanTenantId = (value) =>
+    String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 64);
+
+  const BUSINESS_LABELS = {
+    retail: { item: "Product", items: "Products", category: "Category", unit: "Unit / attributes", code: "SKU / asset reference", stock: "Products in stock", sold: "Products sold", top: "Top product", placeholder: "e.g. Sugar, cement, shoes" },
+    pharmacy: { item: "Medicine", items: "Medicines", category: "Drug category", unit: "Dosage / pack size", code: "Batch / SKU code", stock: "Medicines in stock", sold: "Medicines dispensed", top: "Top medicine", placeholder: "e.g. Amoxicillin 500mg" },
+    restaurant: { item: "Menu item", items: "Menu items", category: "Meal category", unit: "Portion / size", code: "Menu code", stock: "Menu items ready", sold: "Orders completed", top: "Top menu item", placeholder: "e.g. Beef stew" },
+    hotel: { item: "Room / service", items: "Rooms / services", category: "Room type", unit: "Capacity / package", code: "Room / service code", stock: "Rooms / services", sold: "Bookings completed", top: "Top booking", placeholder: "e.g. Deluxe room" },
+    school: { item: "Supply / fee item", items: "Supplies / fee items", category: "Department / class", unit: "Term / unit", code: "Fee / item code", stock: "Supplies / services", sold: "Fee payments", top: "Top fee item", placeholder: "e.g. Term fee" },
+    clinic: { item: "Service / medicine", items: "Services / medicines", category: "Clinical category", unit: "Dose / visit", code: "Service / batch code", stock: "Services / medicines", sold: "Consultations", top: "Top service", placeholder: "e.g. Consultation" },
+    logistics: { item: "Cargo / item", items: "Cargo / items", category: "Cargo type", unit: "Weight / route", code: "Waybill / item code", stock: "Cargo / items active", sold: "Deliveries completed", top: "Top route", placeholder: "e.g. Nairobi delivery" },
+    warehouse: { item: "SKU", items: "SKUs", category: "Stock category", unit: "Pack / unit", code: "SKU code", stock: "SKUs in stock", sold: "Dispatches", top: "Top SKU", placeholder: "e.g. SKU-001" },
+    bar: { item: "Bar item", items: "Bar stock", category: "Drink category", unit: "Bottle / crate / tot", code: "Stock code", stock: "Bar stock", sold: "Tabs / sales", top: "Top bar item", placeholder: "e.g. Lager crate" },
+    company: { item: "Product / service", items: "Items / services", category: "Category", unit: "Unit / attributes", code: "SKU / service code / asset reference", stock: "Items in stock", sold: "Items sold", top: "Top product/service", placeholder: "e.g. Product, service, asset" },
+  };
+
+  const businessKey = (value) => {
+    const key = String(value || "company").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    if (key.includes("pharmacy")) return "pharmacy";
+    if (key.includes("restaurant") || key.includes("food")) return "restaurant";
+    if (key.includes("hotel") || key.includes("guest")) return "hotel";
+    if (key.includes("school") || key.includes("academic")) return "school";
+    if (key.includes("clinic") || key.includes("hospital")) return "clinic";
+    if (key.includes("logistics") || key.includes("delivery")) return "logistics";
+    if (key.includes("warehouse") || key.includes("wholesale")) return "warehouse";
+    if (key.includes("bar") || key.includes("pub")) return "bar";
+    if (key.includes("retail") || key.includes("shop")) return "retail";
+    return BUSINESS_LABELS[key] ? key : "company";
+  };
+
+  const getBusinessLabels = (value) => BUSINESS_LABELS[businessKey(value)] || BUSINESS_LABELS.company;
 
   const isoNow = () => new Date().toISOString();
 
@@ -241,6 +289,18 @@
     return accounts.find((a) => a.id === session.userId && (!a.tenantId || a.tenantId === session.tenantId)) || null;
   };
 
+  const getOrganizationContext = (session = {}) => {
+    const tenantId = cleanTenantId(session.tenantId || window.EnterpriseCore?.currentTenantId?.());
+    if (tenantId) window.EnterpriseCore?.setTenant?.(tenantId);
+    const settings = loadJson(SETTINGS_KEY, {}) || {};
+    const orgs = loadJson(ORGS_KEY, []);
+    const organization = Array.isArray(orgs)
+      ? orgs.find((org) => cleanTenantId(org?.id) === tenantId || cleanTenantId(org?.organizationId) === tenantId) || null
+      : null;
+    const businessType = settings.businessType || organization?.businessType || "company";
+    return { tenantId, settings, organization, businessType, labels: getBusinessLabels(businessType) };
+  };
+
   const computeBranchTotals = (branch) => {
     const inventory = Array.isArray(branch.inventory) ? branch.inventory : [];
     const dl = Array.isArray(branch.damageLoss) ? branch.damageLoss : [];
@@ -326,6 +386,8 @@
     const logoutBtn = $("#branch-logout-btn");
     const syncBtn = $("#branch-sync-btn");
     const ledgerIndicator = $("#ledger-indicator");
+    const brandTitle = $("#branch-brand-title");
+    const brandSubtitle = $("#branch-brand-subtitle");
 
     const menuToggle = $("#menu-toggle");
     const menuClose = $("#menu-close");
@@ -333,8 +395,11 @@
     const menuBackdrop = $("#menu-backdrop");
 
     const kpiModels = $("#b-kpi-models");
+    const kpiStockLabel = $("#b-kpi-stock-label");
     const kpiStock = $("#b-kpi-stock");
+    const kpiSoldLabel = $("#b-kpi-sold-label");
     const kpiSold = $("#b-kpi-sold");
+    const kpiTopLabel = $("#b-kpi-top-label");
     const kpiTop = $("#b-kpi-top");
 
     const invTbody = $("#branch-inventory-tbody");
@@ -343,7 +408,10 @@
     const phoneColor = $("#ph-color");
     const phoneStorage = $("#ph-storage");
     const phoneSerial = $("#ph-serial");
+    const phoneCost = $("#ph-cost");
     const phonePrice = $("#ph-price");
+    const phoneReorder = $("#ph-reorder");
+    const phoneExpiry = $("#ph-expiry");
     const phoneSaveBtn = $("#ph-save-btn");
     const phoneClearBtn = $("#ph-clear-btn");
 
@@ -389,6 +457,38 @@
     const chartStock = $("#chart-stock");
     const chartSold = $("#chart-sold");
     const chartDL = $("#chart-dl");
+
+    const orgContext = getOrganizationContext(session);
+    const labels = orgContext.labels;
+    let editingSerial = "";
+
+    const applyOrganizationContext = () => {
+      const orgName = orgContext.organization?.name || orgContext.settings?.organizationName || "MAPPHEX";
+      const orgCode = orgContext.organization?.organizationId || orgContext.tenantId || "organization";
+      if (brandTitle) brandTitle.textContent = orgName;
+      if (brandSubtitle) brandSubtitle.textContent = `${orgCode} - Branch workspace`;
+      if (kpiStockLabel) kpiStockLabel.textContent = labels.stock;
+      if (kpiSoldLabel) kpiSoldLabel.textContent = labels.sold;
+      if (kpiTopLabel) kpiTopLabel.textContent = labels.top;
+      const inventoryHeading = $("#inventory-heading");
+      if (inventoryHeading) inventoryHeading.textContent = `${labels.item} Entry`;
+      const modelLabel = $("#ph-model-label");
+      const categoryLabel = $("#ph-category-label");
+      const unitLabel = $("#ph-unit-label");
+      const codeLabel = $("#ph-code-label");
+      if (modelLabel) modelLabel.textContent = `${labels.item} name`;
+      if (categoryLabel) categoryLabel.textContent = labels.category;
+      if (unitLabel) unitLabel.textContent = labels.unit;
+      if (codeLabel) codeLabel.textContent = labels.code;
+      if (phoneModel) phoneModel.placeholder = labels.placeholder;
+      const invNameHeading = $("#inv-name-heading");
+      const invCategoryHeading = $("#inv-category-heading");
+      const invUnitHeading = $("#inv-unit-heading");
+      if (invNameHeading) invNameHeading.textContent = labels.item;
+      if (invCategoryHeading) invCategoryHeading.textContent = labels.category;
+      if (invUnitHeading) invUnitHeading.textContent = labels.unit;
+    };
+    applyOrganizationContext();
 
     const getBranch = () =>
       (data.branches || []).find((b) => b.id === session.branchId) || null;
@@ -558,10 +658,9 @@
       rebuildInventoryFromPhones(branch);
 
       invTbody.textContent = "";
-      for (const [idx, p] of phones
+      for (const p of phones
         .slice()
-        .sort((a, z) => String(a.serial || "").localeCompare(String(z.serial || "")))
-        .entries()) {
+        .sort((a, z) => String(a.serial || "").localeCompare(String(z.serial || "")))) {
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td></td>
@@ -569,6 +668,9 @@
           <td></td>
           <td></td>
           <td class="num"></td>
+          <td class="num"></td>
+          <td class="num"></td>
+          <td></td>
           <td></td>
           <td></td>
           <td class="num"></td>
@@ -578,9 +680,35 @@
         tr.children[1].textContent = itemName(p) || "—";
         tr.children[2].textContent = itemCategory(p) || "—";
         tr.children[3].textContent = itemUnit(p) || "—";
-        tr.children[4].textContent = formatInt(p.price || 0);
-        tr.children[5].textContent = String(p.status || "in_stock").replace("_", " ");
-        tr.children[6].textContent = p.assignedAgentName || p.assignedAgentUsername || "Open";
+        tr.children[4].textContent = formatInt(p.costPrice || p.cost || 0);
+        tr.children[5].textContent = formatInt(p.price || 0);
+        tr.children[6].textContent = formatInt(p.reorderLevel || 0);
+        tr.children[7].textContent = p.expiryDate || "N/A";
+        tr.children[8].textContent = String(p.status || "in_stock").replace("_", " ");
+        tr.children[9].textContent = p.assignedAgentName || p.assignedAgentUsername || "Open";
+
+        const actions = document.createElement("div");
+        actions.className = "report-buttons";
+        actions.style.justifyContent = "flex-end";
+
+        const editBtn = document.createElement("button");
+        editBtn.className = "btn";
+        editBtn.type = "button";
+        editBtn.textContent = "Edit";
+        editBtn.disabled = String(p.status || "in_stock") === "sold";
+        editBtn.addEventListener("click", () => {
+          editingSerial = String(p.serial || "");
+          if (phoneModel) phoneModel.value = itemName(p) || "";
+          if (phoneColor) phoneColor.value = itemCategory(p) || "";
+          if (phoneStorage) phoneStorage.value = itemUnit(p) || "";
+          if (phoneSerial) phoneSerial.value = p.serial || "";
+          if (phoneCost) phoneCost.value = String(Number(p.costPrice || p.cost || 0) || "");
+          if (phonePrice) phonePrice.value = String(Number(p.price || 0) || "");
+          if (phoneReorder) phoneReorder.value = String(Number(p.reorderLevel || 0) || "");
+          if (phoneExpiry) phoneExpiry.value = p.expiryDate || "";
+          if (phoneSaveBtn) phoneSaveBtn.textContent = "Update item";
+          phoneModel?.focus?.();
+        });
 
         const delBtn = document.createElement("button");
         delBtn.className = "btn";
@@ -599,7 +727,9 @@
           renderKPIs();
         });
 
-        tr.children[7].appendChild(delBtn);
+        actions.appendChild(editBtn);
+        actions.appendChild(delBtn);
+        tr.children[10].appendChild(actions);
         invTbody.appendChild(tr);
       }
     };
@@ -609,7 +739,12 @@
       if (phoneColor) phoneColor.value = "";
       if (phoneStorage) phoneStorage.value = "";
       if (phoneSerial) phoneSerial.value = "";
+      if (phoneCost) phoneCost.value = "";
       if (phonePrice) phonePrice.value = "";
+      if (phoneReorder) phoneReorder.value = "";
+      if (phoneExpiry) phoneExpiry.value = "";
+      editingSerial = "";
+      if (phoneSaveBtn) phoneSaveBtn.textContent = "Save item";
     };
 
     const addPhone = async () => {
@@ -620,28 +755,31 @@
       const color = String(phoneColor?.value || "").trim();
       const storage = String(phoneStorage?.value || "").trim();
       const serial = String(phoneSerial?.value || "").trim();
+      const costPrice = Math.max(0, Number(phoneCost?.value || 0));
       const price = Math.max(0, Number(phonePrice?.value || 0));
+      const reorderLevel = Math.max(0, Number(phoneReorder?.value || 0));
+      const expiryDate = String(phoneExpiry?.value || "").trim();
 
       if (!model) return phoneModel?.focus?.();
       if (!serial) return phoneSerial?.focus?.();
       if (!Number.isFinite(price) || price <= 0) return phonePrice?.focus?.();
 
       const exists = (branch.phones || []).some(
-        (p) => String(p.serial || "").toLowerCase() === serial.toLowerCase(),
+        (p) => String(p.serial || "").toLowerCase() === serial.toLowerCase() && String(p.serial || "") !== editingSerial,
       );
       if (exists) {
         phoneSerial?.focus?.();
         return;
       }
       const previouslySold = (branch.soldPhones || []).some(
-        (p) => String(p.serial || "").toLowerCase() === serial.toLowerCase(),
+        (p) => String(p.serial || "").toLowerCase() === serial.toLowerCase() && String(p.serial || "") !== editingSerial,
       );
       if (previouslySold) {
         phoneSerial?.focus?.();
         return;
       }
 
-      branch.phones.push({
+      const itemPatch = {
         serial,
         model,
         name: model,
@@ -649,10 +787,22 @@
         category: color,
         storage,
         unit: storage,
+        costPrice,
         price,
+        reorderLevel,
+        expiryDate,
         status: "in_stock",
-        createdAt: isoNow(),
-      });
+        updatedAt: isoNow(),
+      };
+
+      const editIndex = editingSerial
+        ? branch.phones.findIndex((p) => String(p.serial || "") === editingSerial)
+        : -1;
+      if (editIndex >= 0) {
+        branch.phones[editIndex] = { ...branch.phones[editIndex], ...itemPatch };
+      } else {
+        branch.phones.push({ ...itemPatch, createdAt: isoNow() });
+      }
 
       rebuildInventoryFromPhones(branch);
       branch.updatedAt = isoNow();
@@ -701,8 +851,7 @@
     const setTxButtonState = () => {
       if (!txAddBtn) return;
       const serial = String(txSerial?.value || "").trim();
-      const customerPhone = String(txCustomerPhone?.value || "").trim();
-      txAddBtn.disabled = !serial || !customerPhone;
+      txAddBtn.disabled = !serial;
     };
 
     const sendSmsReceipt = (to, message) => {
@@ -753,6 +902,53 @@
         contents: { en: body },
         data: { type: "transaction", branchId: branch?.id || "", amountKes: amount, reference: tx?.ref || "" },
       }).catch(() => null);
+    };
+
+    const printReceipt = (tx, branch) => {
+      const amount = Number(tx?.amount || 0) || 0;
+      const paid = Number(tx?.amountPaid ?? tx?.paidAmount ?? amount) || 0;
+      const balance = Math.max(0, Number(tx?.balance ?? (amount - paid)) || 0);
+      const item = tx?.phone?.name || tx?.phone?.model || tx?.model || "Item";
+      const html = `
+        <!doctype html>
+        <html>
+          <head>
+            <meta charset="utf-8" />
+            <title>Receipt ${escapeHtml(tx?.ref || "")}</title>
+            <style>
+              body { font-family: Arial, sans-serif; color: #111; margin: 24px; }
+              .receipt { max-width: 360px; margin: 0 auto; border: 1px solid #ddd; padding: 18px; }
+              h1 { font-size: 20px; margin: 0 0 4px; }
+              p { margin: 6px 0; }
+              .row { display: flex; justify-content: space-between; gap: 16px; border-top: 1px solid #eee; padding: 8px 0; }
+              .total { font-weight: 800; font-size: 18px; }
+            </style>
+          </head>
+          <body>
+            <div class="receipt">
+              <h1>${escapeHtml(branch?.name || "Branch receipt")}</h1>
+              <p>${escapeHtml(new Date(tx?.at || Date.now()).toLocaleString())}</p>
+              <div class="row"><span>Item</span><strong>${escapeHtml(item)}</strong></div>
+              <div class="row"><span>Serial</span><span>${escapeHtml(tx?.serial || "")}</span></div>
+              <div class="row"><span>Customer</span><span>${escapeHtml(tx?.customerPhone || "")}</span></div>
+              <div class="row"><span>Channel</span><span>${escapeHtml(String(tx?.channel || "").toUpperCase())}</span></div>
+              <div class="row"><span>Reference</span><span>${escapeHtml(tx?.ref || "")}</span></div>
+              <div class="row total"><span>Amount</span><span>KES ${escapeHtml(formatInt(amount))}</span></div>
+              <div class="row"><span>Paid</span><span>KES ${escapeHtml(formatInt(paid))}</span></div>
+              <div class="row"><span>Balance</span><span>KES ${escapeHtml(formatInt(balance))}</span></div>
+              <p>Thank you.</p>
+            </div>
+            <script>window.print();<\/script>
+          </body>
+        </html>`;
+      const receiptWindow = window.open("", "_blank", "width=420,height=640");
+      if (!receiptWindow) {
+        if (txSms) txSms.textContent = "Allow popups to print the receipt.";
+        return;
+      }
+      receiptWindow.document.open();
+      receiptWindow.document.write(html);
+      receiptWindow.document.close();
     };
 
     const renderTransactions = async () => {
@@ -816,6 +1012,7 @@
           <td class="num"></td>
           <td></td>
           <td></td>
+          <td class="num"></td>
         `;
         tr.children[0].textContent = obj.at ? new Date(obj.at).toLocaleString() : "—";
         tr.children[1].textContent = String(modelRaw || "—") || "—";
@@ -828,6 +1025,12 @@
         tr.children[8].textContent = formatInt(balance);
         tr.children[9].textContent = status;
         tr.children[10].textContent = soldBy || "—";
+        const receiptBtn = document.createElement("button");
+        receiptBtn.className = "btn";
+        receiptBtn.type = "button";
+        receiptBtn.textContent = "Print";
+        receiptBtn.addEventListener("click", () => printReceipt(obj, branch));
+        tr.children[11].appendChild(receiptBtn);
         txTbody.appendChild(tr);
       }
 
