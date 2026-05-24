@@ -1542,6 +1542,64 @@
     return true;
   };
 
+  const salesReportDetails = (reportName, period) => {
+    const rows = Array.isArray(moduleData().sales) ? moduleData().sales : [];
+    const state = ensurePortalState("sales");
+    const activities = Array.isArray(storeGet(ACTIVITY_KEY, [])) ? storeGet(ACTIVITY_KEY, []) : [];
+    const transactions = Array.isArray(storeGet(TRANSACTIONS_KEY, [])) ? storeGet(TRANSACTIONS_KEY, []) : [];
+    const filteredRecords = rows.filter((row) => inPeriod(row.updatedAt, period));
+    const filteredApprovals = (state.approvals || []).filter((item) => (item.target === "sales" || item.moduleId === "sales" || item.source === "sales") && inPeriod(item.updatedAt || item.createdAt, period));
+    const filteredMessages = (state.messages || []).filter((item) => (item.moduleId === "sales" || item.to === "sales" || item.from === "sales") && inPeriod(item.createdAt, period));
+    const filteredActivities = activities.filter((item) => item.moduleId === "sales" && inPeriod(item.at, period));
+    const filteredTransactions = transactions.filter((item) => item.sourceModule === "sales" && inPeriod(item.createdAt, period));
+    const totalAmount = filteredRecords.reduce((sum, row) => {
+      const amount = (row.values || []).map((value) => Number(String(value).replace(/[^\d.-]/g, ""))).find((value) => Number.isFinite(value) && value > 0) || 0;
+      return sum + amount;
+    }, 0);
+    return {
+      reportName: reportName || "Orders",
+      period: period || "monthly",
+      records: filteredRecords,
+      approvals: filteredApprovals,
+      messages: filteredMessages,
+      activities: filteredActivities,
+      transactions: filteredTransactions,
+      totalAmount,
+    };
+  };
+
+  const renderSalesReportPreview = (details, formatLabel, generatedAtText) => {
+    const recordRows = details.records.length
+      ? details.records
+          .slice(0, 8)
+          .map((row) => `<tr><td>${escapeHtml(row.values?.[0] || "-")}</td><td>${escapeHtml(row.values?.[1] || "-")}</td><td>${escapeHtml(row.values?.[2] || "-")}</td><td>${escapeHtml(row.values?.[3] || "-")}</td><td>${escapeHtml(humanDate(row.updatedAt))}</td></tr>`)
+          .join("")
+      : `<tr><td colspan="5" class="muted">No sales records for this period.</td></tr>`;
+    const approvalRows = details.approvals.length
+      ? details.approvals
+          .slice(0, 6)
+          .map((row) => `<li><strong>${escapeHtml(row.title || "Approval")}</strong><span>${escapeHtml(row.status || "pending")} - ${escapeHtml(row.reason || row.note || "No note")}</span></li>`)
+          .join("")
+      : `<li><span>No approval records for this period.</span></li>`;
+    return `<div class="sales-report-result">
+      <strong>${escapeHtml(details.reportName)} report ready</strong>
+      <span>${escapeHtml(details.period)} - ${escapeHtml(formatLabel)} - ${escapeHtml(generatedAtText)}</span>
+      <div class="sales-report-summary">
+        <article><span>Sales records</span><strong>${details.records.length}</strong></article>
+        <article><span>Approvals</span><strong>${details.approvals.length}</strong></article>
+        <article><span>Transactions</span><strong>${details.transactions.length}</strong></article>
+        <article><span>Total amount</span><strong>${escapeHtml(money(details.totalAmount))}</strong></article>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Customer</th><th>Order / Quotation</th><th>Amount</th><th>Invoice Status</th><th>Updated</th></tr></thead>
+          <tbody>${recordRows}</tbody>
+        </table>
+      </div>
+      <div class="sales-report-notes"><h3>Approval notes</h3><ul>${approvalRows}</ul></div>
+    </div>`;
+  };
+
   const setSalesReportStatus = (reportName, period, format) => {
     const report = reportName || "Orders";
     const selectedPeriod = period || "monthly";
@@ -1561,7 +1619,7 @@
       time.textContent = generatedAtText;
     }
     if (output) {
-      output.innerHTML = `<strong>${escapeHtml(report)} report ready</strong><span>${escapeHtml(selectedPeriod)} - ${escapeHtml(formatLabel)} - ${escapeHtml(generatedAtText)}</span>`;
+      output.innerHTML = renderSalesReportPreview(salesReportDetails(report, selectedPeriod), formatLabel, generatedAtText);
     }
     return generatedAtText;
   };
@@ -1569,6 +1627,15 @@
   const printSalesReport = (reportName, period, generatedAtText) => {
     const title = `${reportName || "Orders"} report`;
     const generatedAt = generatedAtText || document.querySelector("[data-sales-report-time]")?.dataset.salesGeneratedAt || new Date().toLocaleString();
+    const details = salesReportDetails(reportName, period);
+    const recordRows = details.records.length
+      ? details.records
+          .map((row) => `<tr><td>${escapeHtml(row.values?.[0] || "-")}</td><td>${escapeHtml(row.values?.[1] || "-")}</td><td>${escapeHtml(row.values?.[2] || "-")}</td><td>${escapeHtml(row.values?.[3] || "-")}</td><td>${escapeHtml(humanDate(row.updatedAt))}</td></tr>`)
+          .join("")
+      : `<tr><td colspan="5">No sales records for this period.</td></tr>`;
+    const approvalRows = details.approvals.length
+      ? details.approvals.map((row) => `<tr><td>${escapeHtml(row.title || "Approval")}</td><td>${escapeHtml(row.status || "pending")}</td><td>${escapeHtml(row.reason || row.note || "")}</td><td>${escapeHtml(humanDate(row.updatedAt || row.createdAt))}</td></tr>`).join("")
+      : `<tr><td colspan="4">No approval records for this period.</td></tr>`;
     const reportWindow = window.open("", "_blank", "width=900,height=700");
     if (!reportWindow) {
       window.print();
@@ -1585,14 +1652,30 @@
             table { width: 100%; border-collapse: collapse; margin-top: 18px; }
             th, td { padding: 12px; border: 1px solid #d1d5db; text-align: left; }
             th { background: #f3f4f6; }
+            .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 18px 0; }
+            .summary div { border: 1px solid #d1d5db; padding: 12px; }
+            .summary span { display: block; color: #6b7280; font-size: 12px; }
+            .summary strong { display: block; margin-top: 4px; }
           </style>
         </head>
         <body>
           <h1>${escapeHtml(title)}</h1>
           <p>${escapeHtml(period || "daily")} - PDF - ${escapeHtml(generatedAt)}</p>
+          <div class="summary">
+            <div><span>Sales records</span><strong>${details.records.length}</strong></div>
+            <div><span>Approvals</span><strong>${details.approvals.length}</strong></div>
+            <div><span>Transactions</span><strong>${details.transactions.length}</strong></div>
+            <div><span>Total amount</span><strong>${escapeHtml(money(details.totalAmount))}</strong></div>
+          </div>
+          <h2>Sales records</h2>
           <table>
-            <thead><tr><th>Report</th><th>Period</th><th>Generated</th></tr></thead>
-            <tbody><tr><td>${escapeHtml(reportName || "Orders")}</td><td>${escapeHtml(period || "daily")}</td><td>${escapeHtml(generatedAt)}</td></tr></tbody>
+            <thead><tr><th>Customer</th><th>Order / Quotation</th><th>Amount</th><th>Invoice Status</th><th>Updated</th></tr></thead>
+            <tbody>${recordRows}</tbody>
+          </table>
+          <h2>Approval review</h2>
+          <table>
+            <thead><tr><th>Title</th><th>Status</th><th>Note</th><th>Updated</th></tr></thead>
+            <tbody>${approvalRows}</tbody>
           </table>
         </body>
       </html>`);

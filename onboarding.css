@@ -899,6 +899,53 @@
   color: rgba(255, 255, 255, 0.94);
 }
 
+.sales-report-result {
+  display: grid;
+  gap: 14px;
+}
+
+.sales-report-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.sales-report-summary article {
+  padding: 12px;
+  border: 1px solid rgba(130, 190, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.sales-report-summary span,
+.sales-report-notes span {
+  color: rgba(218, 232, 255, 0.68);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.sales-report-notes h3 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+
+.sales-report-notes ul {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  list-style: none;
+}
+
+.sales-report-notes li {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid rgba(130, 190, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
 .module-record-form .btn {
   min-height: 44px;
 }
@@ -1855,6 +1902,7 @@
   .module-page-summary,
   .module-settings-summary,
   .module-settings-form fieldset,
+  .sales-report-summary,
   .sales-metric-grid,
   .sales-work-layout,
   .sales-review-layout,
