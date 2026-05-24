@@ -18,6 +18,7 @@
   const VALID_PORTAL_IDS = window.EnterpriseModules?.validIds || new Set(PORTAL_CATALOG.map((portal) => portal.id));
   const store = () => window.EnterpriseStore || null;
   let orgContext = { businessType: "general", settings: {}, organization: {} };
+  let activeModuleId = "";
 
   const redirectFinanceModule = () => {
     const params = new URLSearchParams(location.search);
@@ -345,11 +346,22 @@
   };
 
   const setPortalView = (target = "dashboard") => {
-    const group = PORTAL_VIEW_GROUPS[target] || PORTAL_VIEW_GROUPS["portal-records"];
+    const branchGroups = {
+      dashboard: ["portal-dashboard", "portal-kpis", "branch-management-overview"],
+      "portal-records": ["portal-records"],
+      approvals: ["approvals"],
+      reports: ["reports"],
+      logout: [],
+    };
+    const group =
+      activeModuleId === "branch"
+        ? branchGroups[target] || branchGroups.dashboard
+        : PORTAL_VIEW_GROUPS[target] || PORTAL_VIEW_GROUPS["portal-records"];
     const visible = new Set(group);
     [
       "portal-dashboard",
       "portal-kpis",
+      "branch-management-overview",
       "portal-records",
       "dashboard",
       "finance-actions-panel",
@@ -1315,6 +1327,7 @@
       }
 
       const moduleDef = enrichPortal((admin.portalCatalog || PORTAL_CATALOG).find((item) => item.id === moduleId));
+      activeModuleId = moduleId;
       const workflow = workflowFor(moduleId);
       const org = mine?.organization || {};
       const permissions = settings.modulePermissions?.[moduleId] || [];
