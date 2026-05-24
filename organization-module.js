@@ -1447,13 +1447,99 @@
     URL.revokeObjectURL(link.href);
   };
 
-  const downloadText = (filename, text, type = "text/plain") => {
-    const blob = new Blob([text], { type });
+  const downloadBlob = (filename, blob) => {
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = filename;
     link.click();
     URL.revokeObjectURL(link.href);
+  };
+
+  const downloadText = (filename, text, type = "text/plain") => {
+    downloadBlob(filename, new Blob([text], { type }));
+  };
+
+  const zipCrcTable = (() => {
+    const table = [];
+    for (let idx = 0; idx < 256; idx += 1) {
+      let value = idx;
+      for (let bit = 0; bit < 8; bit += 1) value = value & 1 ? 0xedb88320 ^ (value >>> 1) : value >>> 1;
+      table[idx] = value >>> 0;
+    }
+    return table;
+  })();
+
+  const crc32 = (bytes) => {
+    let crc = 0xffffffff;
+    bytes.forEach((byte) => {
+      crc = zipCrcTable[(crc ^ byte) & 0xff] ^ (crc >>> 8);
+    });
+    return (crc ^ 0xffffffff) >>> 0;
+  };
+
+  const writeZipNumber = (target, offset, value, bytes) => {
+    for (let idx = 0; idx < bytes; idx += 1) target[offset + idx] = (value >>> (idx * 8)) & 0xff;
+  };
+
+  const createStoredZip = (files) => {
+    const encoder = new TextEncoder();
+    const entries = files.map((file) => {
+      const name = encoder.encode(file.name);
+      const data = typeof file.content === "string" ? encoder.encode(file.content) : file.content;
+      return { name, data, crc: crc32(data), offset: 0 };
+    });
+    const localSize = entries.reduce((sum, entry) => sum + 30 + entry.name.length + entry.data.length, 0);
+    const centralSize = entries.reduce((sum, entry) => sum + 46 + entry.name.length, 0);
+    const output = new Uint8Array(localSize + centralSize + 22);
+    let offset = 0;
+    entries.forEach((entry) => {
+      entry.offset = offset;
+      writeZipNumber(output, offset, 0x04034b50, 4);
+      writeZipNumber(output, offset + 4, 20, 2);
+      writeZipNumber(output, offset + 6, 0, 2);
+      writeZipNumber(output, offset + 8, 0, 2);
+      writeZipNumber(output, offset + 10, 0, 2);
+      writeZipNumber(output, offset + 12, 0, 2);
+      writeZipNumber(output, offset + 14, entry.crc, 4);
+      writeZipNumber(output, offset + 18, entry.data.length, 4);
+      writeZipNumber(output, offset + 22, entry.data.length, 4);
+      writeZipNumber(output, offset + 26, entry.name.length, 2);
+      writeZipNumber(output, offset + 28, 0, 2);
+      output.set(entry.name, offset + 30);
+      output.set(entry.data, offset + 30 + entry.name.length);
+      offset += 30 + entry.name.length + entry.data.length;
+    });
+    const centralOffset = offset;
+    entries.forEach((entry) => {
+      writeZipNumber(output, offset, 0x02014b50, 4);
+      writeZipNumber(output, offset + 4, 20, 2);
+      writeZipNumber(output, offset + 6, 20, 2);
+      writeZipNumber(output, offset + 8, 0, 2);
+      writeZipNumber(output, offset + 10, 0, 2);
+      writeZipNumber(output, offset + 12, 0, 2);
+      writeZipNumber(output, offset + 14, 0, 2);
+      writeZipNumber(output, offset + 16, entry.crc, 4);
+      writeZipNumber(output, offset + 20, entry.data.length, 4);
+      writeZipNumber(output, offset + 24, entry.data.length, 4);
+      writeZipNumber(output, offset + 28, entry.name.length, 2);
+      writeZipNumber(output, offset + 30, 0, 2);
+      writeZipNumber(output, offset + 32, 0, 2);
+      writeZipNumber(output, offset + 34, 0, 2);
+      writeZipNumber(output, offset + 36, 0, 2);
+      writeZipNumber(output, offset + 38, 0, 4);
+      writeZipNumber(output, offset + 42, entry.offset, 4);
+      output.set(entry.name, offset + 46);
+      offset += 46 + entry.name.length;
+    });
+    writeZipNumber(output, offset, 0x06054b50, 4);
+    writeZipNumber(output, offset + 4, 0, 2);
+    writeZipNumber(output, offset + 6, 0, 2);
+    writeZipNumber(output, offset + 8, entries.length, 2);
+    writeZipNumber(output, offset + 10, entries.length, 2);
+    writeZipNumber(output, offset + 12, centralSize, 4);
+    writeZipNumber(output, offset + 16, centralOffset, 4);
+    writeZipNumber(output, offset + 20, 0, 2);
+    return output;
   };
 
   const periodStart = (period) => {
@@ -1598,6 +1684,105 @@
       </div>
       <div class="sales-report-notes"><h3>Approval notes</h3><ul>${approvalRows}</ul></div>
     </div>`;
+  };
+
+  const exportSalesReportExcel = (reportName, period, generatedAtText) => {
+    const details = salesReportDetails(reportName, period);
+    const generatedAt = generatedAtText || document.querySelector("[data-sales-report-time]")?.dataset.salesGeneratedAt || new Date().toLocaleString();
+    const xml = (value) => escapeHtml(value ?? "");
+    const rows = [
+      ["Sales Report"],
+      ["Report", details.reportName],
+      ["Period", details.period],
+      ["Generated", generatedAt],
+      ["Total amount", money(details.totalAmount)],
+      ["Sales records", details.records.length],
+      ["Approvals", details.approvals.length],
+      ["Messages", details.messages.length],
+      ["Activities", details.activities.length],
+      ["Transactions", details.transactions.length],
+      [],
+      ["Sales Records"],
+      ["Customer", "Order / Quotation", "Amount", "Invoice Status", "Updated"],
+      ...(details.records.length
+        ? details.records.map((row) => [row.values?.[0] || "-", row.values?.[1] || "-", row.values?.[2] || "-", row.values?.[3] || "-", humanDate(row.updatedAt)])
+        : [["No sales records for this period."]]),
+      [],
+      ["Approvals"],
+      ["Title", "Status", "Amount", "Note / Reason", "Updated"],
+      ...(details.approvals.length
+        ? details.approvals.map((row) => [row.title || "Approval", row.status || "pending", row.amount || 0, row.reason || row.note || "", humanDate(row.updatedAt || row.createdAt)])
+        : [["No approvals for this period."]]),
+      [],
+      ["Transactions"],
+      ["Type", "Reference", "Status", "Amount", "Created"],
+      ...(details.transactions.length
+        ? details.transactions.map((row) => [row.type || "", row.ref || row.id || "", row.status || "", row.amount || 0, humanDate(row.createdAt)])
+        : [["No transactions for this period."]]),
+      [],
+      ["Messages"],
+      ["From", "To", "Message", "Created"],
+      ...(details.messages.length
+        ? details.messages.map((row) => [row.from || "", row.to || "", row.body || "", humanDate(row.createdAt)])
+        : [["No messages for this period."]]),
+      [],
+      ["Activity"],
+      ["Action", "Details", "Created"],
+      ...(details.activities.length
+        ? details.activities.map((row) => [row.action || "", row.detail?.message || row.detail?.label || JSON.stringify(row.detail || {}), humanDate(row.at)])
+        : [["No activity for this period."]]),
+    ];
+    const sheetData = rows
+      .map(
+        (row, rowIndex) =>
+          `<row r="${rowIndex + 1}">${row
+            .map((cell) => `<c t="inlineStr"><is><t>${xml(cell)}</t></is></c>`)
+            .join("")}</row>`,
+      )
+      .join("");
+    const worksheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+      <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+        <sheetData>${sheetData}</sheetData>
+      </worksheet>`;
+    const workbook = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+      <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+        <sheets><sheet name="Sales Report" sheetId="1" r:id="rId1"/></sheets>
+      </workbook>`;
+    const workbookRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+      <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+        <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+        <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+      </Relationships>`;
+    const rootRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+      <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+        <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+      </Relationships>`;
+    const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+      <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+        <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+        <Default Extension="xml" ContentType="application/xml"/>
+        <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+        <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+        <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+      </Types>`;
+    const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+      <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+        <fonts count="1"><font><sz val="11"/><name val="Calibri"/></font></fonts>
+        <fills count="1"><fill><patternFill patternType="none"/></fill></fills>
+        <borders count="1"><border/></borders>
+        <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+        <cellXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/></cellXfs>
+      </styleSheet>`;
+    const zipBytes = createStoredZip([
+      { name: "[Content_Types].xml", content: contentTypes },
+      { name: "_rels/.rels", content: rootRels },
+      { name: "xl/workbook.xml", content: workbook },
+      { name: "xl/_rels/workbook.xml.rels", content: workbookRels },
+      { name: "xl/styles.xml", content: styles },
+      { name: "xl/worksheets/sheet1.xml", content: worksheet },
+    ]);
+    const filename = `sales-${details.period}-${details.reportName.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "report"}.xlsx`;
+    downloadBlob(filename, new Blob([zipBytes], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
   };
 
   const setSalesReportStatus = (reportName, period, format) => {
@@ -1956,7 +2141,7 @@
           const period = form?.elements?.namedItem("period")?.value || "monthly";
           const format = salesExport.dataset.salesReportExport || form?.elements?.namedItem("format")?.value || "pdf";
           const generatedAt = setSalesReportStatus(reportName, period, format);
-          if (format === "excel") exportPeriodReport(moduleId, reportName, period);
+          if (format === "excel") exportSalesReportExcel(reportName, period, generatedAt);
           else printSalesReport(reportName, period, generatedAt);
           appendActivity(moduleId, "report.exported", { label: reportName, message: `${period} ${reportName} exported as ${format}.` });
           refreshEnterpriseSections(moduleId);
