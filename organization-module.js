@@ -436,7 +436,8 @@
   const hydrateSharedData = async () => {
     const shared = store();
     if (!shared?.bootstrap) return;
-    await shared.bootstrap([MODULE_DATA_KEY, ACTIVITY_KEY, ERP_STATE_KEY, TRANSACTIONS_KEY, REPORTS_KEY, MODULE_PREFS_KEY]).catch(() => null);
+    const boot = await shared.bootstrap([MODULE_DATA_KEY, ACTIVITY_KEY, ERP_STATE_KEY, TRANSACTIONS_KEY, REPORTS_KEY, MODULE_PREFS_KEY]).catch(() => null);
+    if (boot?.apiState === "ok" || boot?.source === "api" || boot?.source === "cache" || boot?.source === "indexeddb") return;
     const remote = await window.ERPClient?.getState?.().catch(() => null);
     if (remote?.departmentWorkflows) storeSet(ERP_STATE_KEY, remote.departmentWorkflows);
     if (remote?.moduleRecords) storeSet(MODULE_DATA_KEY, remote.moduleRecords);
@@ -447,6 +448,7 @@
 
   const moduleData = () => storeGet(MODULE_DATA_KEY, {});
   const saveModuleData = (data) => storeSet(MODULE_DATA_KEY, data);
+  const syncStore = () => store()?.flush?.().catch(() => null);
   const modulePrefs = () => storeGet(MODULE_PREFS_KEY, {});
   const saveModulePrefs = (data) => storeSet(MODULE_PREFS_KEY, data);
   const erpState = () => storeGet(ERP_STATE_KEY, {});
@@ -2056,8 +2058,7 @@
       await hydrateSharedData();
       if (moduleId === "sales") {
         clearLegacySalesRecords();
-        clearSavedSalesDashboardState();
-        await store()?.flush?.().catch(() => null);
+        syncStore();
       }
       ensurePortalState(moduleId);
       applyModulePreferences(moduleId);
@@ -2127,7 +2128,7 @@
         saveModuleData(data);
         appendActivity(moduleId, "record.deleted", { id: recordId, message: `${row?.values?.[0] || "Record"} deleted.` });
         refreshCurrentModuleView();
-        await store()?.flush?.().catch(() => null);
+        syncStore();
       };
       $("#module-search")?.addEventListener("input", (event) => renderRows(moduleId, workflow, event.currentTarget.value));
       $("#finance-filter")?.addEventListener("change", () => renderRows(moduleId, workflow, $("#module-search")?.value || ""));
@@ -2152,10 +2153,12 @@
         data[moduleId] = rows.slice(0, 500);
         saveModuleData(data);
         appendActivity(moduleId, "record.created", { values, message: values.join(" • ") });
-        await postModuleRecordTransaction(moduleId, row);
         event.currentTarget.reset();
         refreshCurrentModuleView();
-        await store()?.flush?.().catch(() => null);
+        syncStore();
+        postModuleRecordTransaction(moduleId, row)
+          .then(() => syncStore())
+          .catch(() => null);
       });
 
       document.addEventListener("click", (event) => {
@@ -2217,7 +2220,7 @@
           saveModuleData(data);
           appendActivity(moduleId, "records.cleared", { message: `${deleted} ${moduleDef.title} records cleared.` });
           refreshCurrentModuleView();
-          store()?.flush?.().catch(() => null);
+          syncStore();
           return;
         }
         const action = event.target.closest("[data-erp-action]");
