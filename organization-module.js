@@ -13,6 +13,7 @@
   const ERP_STATE_KEY = "enterprise_department_workflows_v1";
   const TRANSACTIONS_KEY = "enterprise_transactions_v1";
   const REPORTS_KEY = "enterprise_reports_v1";
+  const MODULE_PREFS_KEY = "enterprise_module_preferences_v1";
 
   const PORTAL_CATALOG = window.EnterpriseModules?.catalog || [];
   const VALID_PORTAL_IDS = window.EnterpriseModules?.validIds || new Set(PORTAL_CATALOG.map((portal) => portal.id));
@@ -434,7 +435,7 @@
   const hydrateSharedData = async () => {
     const shared = store();
     if (!shared?.bootstrap) return;
-    await shared.bootstrap([MODULE_DATA_KEY, ACTIVITY_KEY, ERP_STATE_KEY, TRANSACTIONS_KEY, REPORTS_KEY]).catch(() => null);
+    await shared.bootstrap([MODULE_DATA_KEY, ACTIVITY_KEY, ERP_STATE_KEY, TRANSACTIONS_KEY, REPORTS_KEY, MODULE_PREFS_KEY]).catch(() => null);
     const remote = await window.ERPClient?.getState?.().catch(() => null);
     if (remote?.departmentWorkflows) storeSet(ERP_STATE_KEY, remote.departmentWorkflows);
     if (remote?.moduleRecords) storeSet(MODULE_DATA_KEY, remote.moduleRecords);
@@ -445,6 +446,8 @@
 
   const moduleData = () => storeGet(MODULE_DATA_KEY, {});
   const saveModuleData = (data) => storeSet(MODULE_DATA_KEY, data);
+  const modulePrefs = () => storeGet(MODULE_PREFS_KEY, {});
+  const saveModulePrefs = (data) => storeSet(MODULE_PREFS_KEY, data);
   const erpState = () => storeGet(ERP_STATE_KEY, {});
   const saveErpState = (data) => storeSet(ERP_STATE_KEY, data);
 
@@ -576,7 +579,49 @@
       products: "Keep products, pricing, and sales items easy to review.",
       customers: "Review customer records and sales history.",
       discounts: "See discounts and promotion requests before they affect revenue.",
+      settings: "Choose how this portal looks and how sales work should be handled.",
     };
+    if (hash === "settings") {
+      const prefs = { theme: "dark", density: "comfortable", defaultReport: "Orders", requireDiscountApproval: true, notifyFinance: true, showRevenue: true, ...(modulePrefs()[moduleId] || {}) };
+      page.innerHTML = `
+        <div class="panel-header">
+          <div>
+            <span class="eyebrow">${escapeHtml(moduleDef.title)}</span>
+            <h2>Settings</h2>
+            <p class="portal-manager-subtitle">Set the portal theme, sales approvals, reporting defaults, and workspace display.</p>
+          </div>
+          <span class="badge">Preferences</span>
+        </div>
+        <div class="module-settings-summary">
+          <article><span>Theme</span><strong data-module-pref-summary="theme">${escapeHtml(prefs.theme === "light" ? "Light" : "Dark")}</strong><small>Portal display</small></article>
+          <article><span>Approvals</span><strong data-module-pref-summary="approvals">${prefs.requireDiscountApproval ? "Required" : "Optional"}</strong><small>Discount workflow</small></article>
+          <article><span>Reports</span><strong data-module-pref-summary="report">${escapeHtml(prefs.defaultReport)}</strong><small>Default report</small></article>
+        </div>
+        <form id="module-settings-form" class="module-settings-form">
+          <fieldset>
+            <legend>Display</legend>
+            <label class="field"><span>Theme</span><select name="theme"><option value="dark" ${prefs.theme === "dark" ? "selected" : ""}>Dark</option><option value="light" ${prefs.theme === "light" ? "selected" : ""}>Light</option></select></label>
+            <label class="field"><span>Table density</span><select name="density"><option value="comfortable" ${prefs.density === "comfortable" ? "selected" : ""}>Comfortable</option><option value="compact" ${prefs.density === "compact" ? "selected" : ""}>Compact</option></select></label>
+          </fieldset>
+          <fieldset>
+            <legend>Sales workflow</legend>
+            <label class="check-chip"><input type="checkbox" name="requireDiscountApproval" ${prefs.requireDiscountApproval ? "checked" : ""} /> <span>Require approval for discounts</span></label>
+            <label class="check-chip"><input type="checkbox" name="notifyFinance" ${prefs.notifyFinance ? "checked" : ""} /> <span>Notify Finance when invoices are created</span></label>
+            <label class="check-chip"><input type="checkbox" name="showRevenue" ${prefs.showRevenue ? "checked" : ""} /> <span>Show revenue cards on dashboard</span></label>
+          </fieldset>
+          <fieldset>
+            <legend>Reports</legend>
+            <label class="field"><span>Default report</span><select name="defaultReport">${SALES_REPORT_TYPES.map((item) => `<option ${prefs.defaultReport === item ? "selected" : ""}>${escapeHtml(item)}</option>`).join("")}</select></label>
+          </fieldset>
+          <div class="module-settings-actions">
+            <button class="btn primary" type="submit">Save Settings</button>
+            <button class="btn" data-module-settings-reset type="button">Reset</button>
+            <span data-module-settings-note class="muted"></span>
+          </div>
+        </form>`;
+      applyModulePreferences(moduleId);
+      return;
+    }
     page.innerHTML = `
       <div class="panel-header">
         <div>
@@ -600,6 +645,21 @@
           <tbody>${rowsHtml}</tbody>
         </table>
       </div>`;
+  };
+
+  const readModuleSettingsForm = (form) => ({
+    theme: form.elements.namedItem("theme")?.value || "dark",
+    density: form.elements.namedItem("density")?.value || "comfortable",
+    defaultReport: form.elements.namedItem("defaultReport")?.value || "Orders",
+    requireDiscountApproval: !!form.elements.namedItem("requireDiscountApproval")?.checked,
+    notifyFinance: !!form.elements.namedItem("notifyFinance")?.checked,
+    showRevenue: !!form.elements.namedItem("showRevenue")?.checked,
+  });
+
+  const applyModulePreferences = (moduleId) => {
+    const prefs = { theme: "dark", density: "comfortable", showRevenue: true, ...(modulePrefs()[moduleId] || {}) };
+    document.documentElement.dataset.moduleTheme = prefs.theme === "light" ? "light" : "dark";
+    document.body.classList.toggle("module-density-compact", prefs.density === "compact");
   };
 
   const activatePortalMenuItem = (link) => {
@@ -1606,6 +1666,7 @@
 
       await hydrateSharedData();
       ensurePortalState(moduleId);
+      applyModulePreferences(moduleId);
 
       renderNav(moduleId, moduleDef);
       renderForm(workflow);
@@ -1637,8 +1698,9 @@
       window.addEventListener("hashchange", () => setActivePortalNav());
       window.addEventListener("popstate", () => setActivePortalNav());
       window.addEventListener("storage", (event) => {
-        if (![ERP_STATE_KEY, MODULE_DATA_KEY, ACTIVITY_KEY, TRANSACTIONS_KEY, REPORTS_KEY].some((key) => event.key?.includes(key))) return;
+        if (![ERP_STATE_KEY, MODULE_DATA_KEY, ACTIVITY_KEY, TRANSACTIONS_KEY, REPORTS_KEY, MODULE_PREFS_KEY].some((key) => event.key?.includes(key))) return;
         renderRows(moduleId, workflow, $("#module-search")?.value || "");
+        applyModulePreferences(moduleId);
         refreshEnterpriseSections(moduleId);
       });
       window.addEventListener("mapphex:background-sync", async () => {
@@ -1727,6 +1789,16 @@
           if (link) activatePortalMenuItem(link);
           return;
         }
+        const settingsReset = event.target.closest("[data-module-settings-reset]");
+        if (settingsReset) {
+          event.preventDefault();
+          const prefs = modulePrefs();
+          prefs[moduleId] = { theme: "dark", density: "comfortable", defaultReport: "Orders", requireDiscountApproval: true, notifyFinance: true, showRevenue: true };
+          saveModulePrefs(prefs);
+          applyModulePreferences(moduleId);
+          renderModuleDetailPage(moduleId, blueprintFor(moduleId), document.querySelector('[data-module-nav="settings"]'));
+          return;
+        }
         const action = event.target.closest("[data-erp-action]");
         if (action) {
           addWorkflowEvent(moduleId, action.dataset.erpAction, action.dataset.erpTarget, action.dataset.erpDetail);
@@ -1809,6 +1881,18 @@
         saveErpState(state);
         appendActivity(moduleId, "message.sent", { message: `Message sent to ${to}` });
         refreshEnterpriseSections(moduleId);
+      });
+      document.addEventListener("submit", async (event) => {
+        if (event.target?.id !== "module-settings-form") return;
+        event.preventDefault();
+        const prefs = modulePrefs();
+        prefs[moduleId] = readModuleSettingsForm(event.target);
+        saveModulePrefs(prefs);
+        applyModulePreferences(moduleId);
+        const note = document.querySelector("[data-module-settings-note]");
+        if (note) note.textContent = "Settings saved.";
+        refreshEnterpriseSections(moduleId);
+        await store()?.flush?.().catch(() => null);
       });
     } catch (err) {
       window.EnterpriseCore?.notify?.("Module", err.message, "error");

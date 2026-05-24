@@ -601,6 +601,111 @@
   font-size: clamp(22px, 2.5vw, 30px);
 }
 
+:root[data-module-theme="light"] body[data-page="organization-module"] {
+  background: #f4f7fb;
+  color: #102033;
+}
+
+:root[data-module-theme="light"] body[data-page="organization-module"] .panel,
+:root[data-module-theme="light"] body[data-page="organization-module"] .module-sidebar,
+:root[data-module-theme="light"] body[data-page="organization-module"] .sales-pipeline-card,
+:root[data-module-theme="light"] body[data-page="organization-module"] .sales-report-generator,
+:root[data-module-theme="light"] body[data-page="organization-module"] .module-settings-form fieldset {
+  border-color: rgba(15, 35, 64, 0.12);
+  background: rgba(255, 255, 255, 0.94);
+  color: #102033;
+}
+
+:root[data-module-theme="light"] body[data-page="organization-module"] .module-nav a,
+:root[data-module-theme="light"] body[data-page="organization-module"] .module-page-summary article,
+:root[data-module-theme="light"] body[data-page="organization-module"] .sales-report-status-grid article {
+  background: rgba(15, 35, 64, 0.04);
+  color: #102033;
+}
+
+:root[data-module-theme="light"] body[data-page="organization-module"] .module-nav a:hover,
+:root[data-module-theme="light"] body[data-page="organization-module"] .module-nav a.active {
+  color: #050914;
+  background: rgba(0, 119, 255, 0.12);
+}
+
+:root[data-module-theme="light"] body[data-page="organization-module"] .module-nav-group > strong,
+:root[data-module-theme="light"] body[data-page="organization-module"] .muted,
+:root[data-module-theme="light"] body[data-page="organization-module"] .portal-manager-subtitle,
+:root[data-module-theme="light"] body[data-page="organization-module"] .kpi-foot {
+  color: rgba(16, 32, 51, 0.68);
+}
+
+:root[data-module-theme="light"] body[data-page="organization-module"] .kpi-value,
+:root[data-module-theme="light"] body[data-page="organization-module"] .module-page-summary strong,
+:root[data-module-theme="light"] body[data-page="organization-module"] .sales-report-status-grid strong {
+  color: #102033;
+}
+
+.module-density-compact .table th,
+.module-density-compact .table td {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.module-settings-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.module-settings-summary article {
+  min-height: 112px;
+  padding: 16px;
+  border: 1px solid rgba(130, 190, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.module-settings-summary span,
+.module-settings-summary small {
+  display: block;
+  color: rgba(218, 232, 255, 0.66);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.module-settings-summary strong {
+  display: block;
+  margin: 8px 0 6px;
+  color: rgba(255, 255, 255, 0.96);
+  font-size: clamp(22px, 2.5vw, 30px);
+}
+
+.module-settings-form {
+  display: grid;
+  gap: 14px;
+}
+
+.module-settings-form fieldset {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid rgba(130, 190, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.module-settings-form legend {
+  padding: 0 6px;
+  color: rgba(255, 255, 255, 0.94);
+  font-weight: 900;
+}
+
+.module-settings-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .sales-dashboard-page {
   display: grid;
   gap: 16px;
@@ -1716,6 +1821,8 @@
 
   .sales-report-status-grid,
   .module-page-summary,
+  .module-settings-summary,
+  .module-settings-form fieldset,
   .sales-metric-grid,
   .sales-work-layout,
   .sales-review-layout,
