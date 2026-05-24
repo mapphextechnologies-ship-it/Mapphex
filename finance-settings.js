@@ -11,7 +11,7 @@
     payrollApproval: true,
     notifyHr: true,
     reportPeriod: "This month",
-    exportFormat: "Excel",
+    exportFormat: "XLSX",
   };
 
   const $ = (selector) => document.querySelector(selector);

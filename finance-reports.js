@@ -146,10 +146,11 @@
       data[section] = normalizeRows(section, await readRows(DATA_KEYS[section]));
     }
     const rows = sections.flatMap((section) => data[section]);
+    const selectedFormat = /excel/i.test(body.format || "") ? "XLSX" : body.format || "PDF";
     const report = {
       reportType,
       period: actualPeriod(body.period),
-      format: body.format || "PDF",
+      format: selectedFormat,
       generatedAt: new Date().toISOString(),
       status: "Generated",
       rows,
@@ -376,7 +377,7 @@
     const settings = window.MapphexFinanceDB?.readSettings?.() || {};
     if (form?.elements.period && settings.reportPeriod) form.elements.period.value = settings.reportPeriod;
     if (form?.elements.format && settings.exportFormat) {
-      form.elements.format.value = settings.exportFormat === "Excel" ? "Excel XLSX" : settings.exportFormat;
+      form.elements.format.value = settings.exportFormat === "Excel" ? "XLSX" : settings.exportFormat;
     }
     form?.addEventListener("submit", async (event) => {
       event.preventDefault();

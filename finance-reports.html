@@ -24,24 +24,24 @@
       <main class="finance-main">
         <header class="finance-topbar"><button class="menu-button" type="button" aria-label="Open menu" data-menu-button><span></span><span></span><span></span></button><div><p>Workspace Portal</p><h1>Reports</h1></div><a class="topbar-link" href="organization-workspace.html" data-finance-back>Back to portal</a></header>
         <section class="hero-panel"><div><p class="eyebrow">Accounting</p><h2>Generate and export reports</h2><p>Create clean finance reports from ledger, payroll, approvals, invoices, and payment records.</p></div><button class="primary-action" type="button" data-generate-report>Generate report</button></section>
-        <section class="summary-grid"><article><span>Report status</span><strong data-report-status>Not generated</strong><small>Ready after generation</small></article><article><span>Report type</span><strong data-report-type>Finance</strong><small>Selected output</small></article><article><span>Export format</span><strong data-report-format>PDF</strong><small>PDF or Excel</small></article><article><span>Last generated</span><strong data-report-date>Never</strong><small>Current session</small></article></section>
+        <section class="summary-grid"><article><span>Report status</span><strong data-report-status>Not generated</strong><small>Ready after generation</small></article><article><span>Report type</span><strong data-report-type>Finance</strong><small>Selected output</small></article><article><span>Export format</span><strong data-report-format>PDF</strong><small>PDF or XLSX</small></article><article><span>Last generated</span><strong data-report-date>Never</strong><small>Current session</small></article></section>
         <section class="content-card">
           <div class="content-head"><div><p class="eyebrow">Reports</p><h2>Report generation</h2><p>Select what Finance should generate, then export the report.</p></div></div>
           <form class="payroll-capture-form report-generator-form" data-report-form>
             <label><span>Report</span><select name="reportType" required><option>Finance summary</option><option>Ledger report</option><option>Payroll report</option><option>Invoices report</option><option>Approvals report</option><option>Payments report</option><option>Suppliers report</option><option>Employee payment report</option></select></label>
             <label><span>Period</span><select name="period" required><option>Today</option><option>This week</option><option>This month</option><option>This year</option><option>Custom period</option></select></label>
-            <label><span>Format</span><select name="format" required><option>PDF</option><option>Excel XLSX</option></select></label>
+            <label><span>Format</span><select name="format" required><option>PDF</option><option>XLSX</option></select></label>
             <button class="primary-action" type="submit">Generate</button>
-            <button class="primary-action secondary-action" type="button" data-print-report disabled>Print</button>
-            <button class="primary-action secondary-action" type="button" data-export-report disabled>Export</button>
+            <button class="primary-action secondary-action" type="button" data-print-report disabled>Export PDF</button>
+            <button class="primary-action secondary-action" type="button" data-export-report disabled>Export XLSX</button>
           </form>
           <div class="report-preview" data-report-preview>No report generated yet.</div>
         </section>
         <footer class="finance-footer">Powered by © Mapphex Technology</footer>
       </main>
     </div>
-    <script src="finance-db.js?v=10"></script>
+    <script src="finance-db.js?v=11"></script>
     <script src="finance-badges.js?v=3"></script>
-    <script src="finance-reports.js?v=10"></script>
+    <script src="finance-reports.js?v=12"></script>
   </body>
 </html>

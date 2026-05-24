@@ -630,7 +630,7 @@
           <p class="portal-manager-subtitle">${escapeHtml(actionCopy[hash] || `Review and manage ${label.toLowerCase()} for this workspace.`)}</p>
         </div>
         <div class="panel-actions">
-          <button class="btn" data-erp-export="csv" type="button">Export Excel</button>
+          <button class="btn" data-erp-export="xlsx" type="button">Export XLSX</button>
           <button class="btn" data-focus-record-form type="button">Add Record</button>
         </div>
       </div>
@@ -732,7 +732,7 @@
     });
     const recordActions = $("#portal-records .panel-header .panel-actions");
     if (recordActions) {
-      recordActions.innerHTML = `<input id="module-search" type="search" placeholder="Search transactions..." /><select id="finance-filter" aria-label="Filter transactions"><option value="all">All</option><option value="money-in">Money In</option><option value="money-out">Money Out</option><option value="sale">Sales</option><option value="payment">Payments</option><option value="expense">Expenses</option></select><button class="btn" data-erp-export="csv" type="button">Export</button><button class="btn" data-erp-export="pdf" type="button">Print</button>`;
+      recordActions.innerHTML = `<input id="module-search" type="search" placeholder="Search transactions..." /><select id="finance-filter" aria-label="Filter transactions"><option value="all">All</option><option value="money-in">Money In</option><option value="money-out">Money Out</option><option value="sale">Sales</option><option value="payment">Payments</option><option value="expense">Expenses</option></select><button class="btn" data-erp-export="xlsx" type="button">Export XLSX</button><button class="btn" data-erp-export="pdf" type="button">Export PDF</button>`;
     }
     const portalKpis = $("#portal-kpis");
     if (portalKpis && !portalKpis.classList.contains("finance-kpis")) {
@@ -848,8 +848,8 @@
         <div class="finance-page-summary"><article><span>Salary runs</span><strong>0</strong></article><article><span>Alert</span><strong>!</strong></article></div>
       </section>
       <section id="finance-export-page" class="panel finance-focus-panel" hidden>
-        <div class="panel-header"><div><h2>Export</h2><p class="portal-manager-subtitle">Download finance records for sharing or filing.</p></div><button class="btn primary" data-erp-export="csv" type="button">Export Excel</button></div>
-        <div class="finance-focus-body"><strong>Export tools</strong><p>Use Export Excel or Print from the records table when you need a copy.</p></div>
+        <div class="panel-header"><div><h2>Export</h2><p class="portal-manager-subtitle">Download finance records for sharing or filing.</p></div><button class="btn primary" data-erp-export="xlsx" type="button">Export XLSX</button></div>
+        <div class="finance-focus-body"><strong>Export tools</strong><p>Use Export XLSX or Export PDF from the records table when you need a copy.</p></div>
       </section>
       <section id="finance-settings" class="panel finance-focus-panel" hidden>
         <div class="panel-header"><h2>Settings</h2></div>
@@ -867,7 +867,7 @@
     if (recordTitle) recordTitle.textContent = "Branch Records";
     const recordActions = $("#portal-records .panel-header .panel-actions");
     if (recordActions) {
-      recordActions.innerHTML = `<input id="module-search" type="search" placeholder="Search branch records..." /><button class="btn" data-erp-export="csv" type="button">Export</button>`;
+      recordActions.innerHTML = `<input id="module-search" type="search" placeholder="Search branch records..." /><button class="btn" data-erp-export="xlsx" type="button">Export XLSX</button>`;
     }
     const portalKpis = $("#portal-kpis");
     if (portalKpis && !portalKpis.classList.contains("branch-management-kpis")) {
@@ -984,7 +984,7 @@
               <p class="portal-manager-subtitle">Track orders, invoices, discounts, customers, and revenue without mixing every task into one page.</p>
             </div>
             <div class="panel-actions">
-              <button class="btn" data-erp-export="csv" type="button">Export Excel</button>
+              <button class="btn" data-erp-export="xlsx" type="button">Export XLSX</button>
               <button class="btn" data-focus-record-form type="button">Add Sale</button>
             </div>
           </div>
@@ -1011,8 +1011,8 @@
           <div class="panel-header">
             <div><h2>${escapeHtml(moduleDef.title)} Dashboard</h2><p class="portal-manager-subtitle">See the latest work, pending items, and the jobs this team handles.</p></div>
             <div class="panel-actions">
-              <button class="btn" data-erp-export="csv" type="button">Export Excel</button>
-              <button class="btn" data-erp-export="pdf" type="button">Print / PDF</button>
+              <button class="btn" data-erp-export="xlsx" type="button">Export XLSX</button>
+              <button class="btn" data-erp-export="pdf" type="button">Export PDF</button>
             </div>
           </div>
           <div id="erp-kpis" class="erp-kpi-grid"></div>
@@ -1054,7 +1054,7 @@
           <div class="sales-report-status-grid">
             <article><span>Report status</span><strong data-sales-report-status>Not generated</strong><small>Ready after generation</small></article>
             <article><span>Report type</span><strong data-sales-report-type>Sales</strong><small>Selected output</small></article>
-            <article><span>Export format</span><strong data-sales-report-format>PDF</strong><small>PDF or Excel</small></article>
+            <article><span>Export format</span><strong data-sales-report-format>PDF</strong><small>PDF or XLSX</small></article>
             <article><span>Last generated</span><strong data-sales-report-time>Never</strong><small>Current session</small></article>
           </div>
           <div class="sales-report-generator">
@@ -1068,10 +1068,10 @@
             <form id="sales-report-form" class="sales-report-form">
               <label class="field"><span>Report</span><select name="report">${SALES_REPORT_TYPES.map((item) => `<option>${escapeHtml(item)}</option>`).join("")}</select></label>
               <label class="field"><span>Period</span><select name="period">${REPORT_PERIODS.map((period) => `<option value="${escapeHtml(period)}">${escapeHtml(period[0].toUpperCase() + period.slice(1))}</option>`).join("")}</select></label>
-              <label class="field"><span>Format</span><select name="format"><option value="pdf">PDF</option><option value="excel">Excel</option></select></label>
+              <label class="field"><span>Format</span><select name="format"><option value="pdf">PDF</option><option value="excel">XLSX</option></select></label>
               <button class="btn primary" type="submit">Generate</button>
-              <button class="btn" data-sales-report-export="pdf" type="button">Print / PDF</button>
-              <button class="btn" data-sales-report-export="excel" type="button">Download Excel</button>
+              <button class="btn" data-sales-report-export="pdf" type="button">Export PDF</button>
+              <button class="btn" data-sales-report-export="excel" type="button">Export XLSX</button>
             </form>
             <div id="sales-report-output" class="report-preview">No report generated yet.</div>
           </div>
@@ -1087,7 +1087,7 @@
             <div id="erp-messages" class="erp-message-list"></div>
           </article>
           <article class="panel">
-            <div class="panel-header"><h2>Reports & Audit</h2><span class="badge">PDF / Excel</span></div>
+            <div class="panel-header"><h2>Reports & Audit</h2><span class="badge">PDF / XLSX</span></div>
             <div id="erp-reports" class="erp-report-grid"></div>
             <div id="erp-activity" class="erp-activity-list"></div>
           </article>
@@ -1245,13 +1245,13 @@
     if (reportGrid) {
       reportGrid.innerHTML =
         moduleId === "finance"
-          ? blueprint.reports.map((item) => `<button class="finance-report-button" data-report-name="${escapeHtml(item)}" data-report-period="monthly" type="button">${escapeHtml(item)}</button>`).join("")
+          ? blueprint.reports.map((item) => `<button class="finance-report-button" data-report-name="${escapeHtml(item)}" data-report-period="monthly" type="button">${escapeHtml(item)} XLSX</button>`).join("")
           : blueprint.reports
               .map(
                 (item) => `<article class="erp-report-card">
           <strong>${escapeHtml(item)}</strong>
           <div class="erp-report-periods">
-            ${REPORT_PERIODS.map((period) => `<button class="btn" data-report-name="${escapeHtml(item)}" data-report-period="${period}" type="button">${period[0].toUpperCase()}${period.slice(1)}</button>`).join("")}
+            ${REPORT_PERIODS.map((period) => `<button class="btn" data-report-name="${escapeHtml(item)}" data-report-period="${period}" type="button">${period[0].toUpperCase()}${period.slice(1)} XLSX</button>`).join("")}
           </div>
         </article>`,
               )
@@ -1435,16 +1435,20 @@
     });
   };
 
-  const exportCsv = (moduleId) => {
+  const exportExcel = (moduleId) => {
     const data = moduleData();
     const rows = Array.isArray(data[moduleId]) ? data[moduleId] : [];
-    const csv = rows.map((row) => row.values.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(",")).join("\n");
-    const blob = new Blob([csv || "No records"], { type: "text/csv" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `${moduleId}-report.csv`;
-    link.click();
-    URL.revokeObjectURL(link.href);
+    const workflow = blueprintFor(moduleId);
+    const labels = Array.isArray(workflow.labels) ? workflow.labels : [];
+    const workbookRows = [
+      [`${workflow.title || moduleId} Export`],
+      ["Generated", new Date().toLocaleString()],
+      ["Records", rows.length],
+      [],
+      [...labels, "Updated"],
+      ...(rows.length ? rows.map((row) => [...(row.values || []), humanDate(row.updatedAt)]) : [["No records yet."]]),
+    ];
+    downloadWorkbook(`${moduleId}-records.xlsx`, `${workflow.title || moduleId} Records`, workbookRows);
   };
 
   const downloadBlob = (filename, blob) => {
@@ -1542,6 +1546,63 @@
     return output;
   };
 
+  const safeSheetName = (value) => String(value || "Report").replace(/[:\\/?*[\]]/g, " ").trim().slice(0, 31) || "Report";
+
+  const downloadWorkbook = (filename, sheetName, rows) => {
+    const xml = (value) => escapeHtml(value ?? "");
+    const sheetData = rows
+      .map(
+        (row, rowIndex) =>
+          `<row r="${rowIndex + 1}">${row
+            .map((cell) => `<c t="inlineStr"><is><t>${xml(cell)}</t></is></c>`)
+            .join("")}</row>`,
+      )
+      .join("");
+    const worksheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+      <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+        <cols><col min="1" max="12" width="24" customWidth="1"/></cols>
+        <sheetData>${sheetData}</sheetData>
+      </worksheet>`;
+    const workbook = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+      <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+        <sheets><sheet name="${xml(safeSheetName(sheetName))}" sheetId="1" r:id="rId1"/></sheets>
+      </workbook>`;
+    const workbookRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+      <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+        <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+        <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+      </Relationships>`;
+    const rootRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+      <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+        <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+      </Relationships>`;
+    const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+      <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+        <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+        <Default Extension="xml" ContentType="application/xml"/>
+        <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+        <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+        <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+      </Types>`;
+    const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+      <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+        <fonts count="1"><font><sz val="11"/><name val="Calibri"/></font></fonts>
+        <fills count="1"><fill><patternFill patternType="none"/></fill></fills>
+        <borders count="1"><border/></borders>
+        <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+        <cellXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/></cellXfs>
+      </styleSheet>`;
+    const zipBytes = createStoredZip([
+      { name: "[Content_Types].xml", content: contentTypes },
+      { name: "_rels/.rels", content: rootRels },
+      { name: "xl/workbook.xml", content: workbook },
+      { name: "xl/_rels/workbook.xml.rels", content: workbookRels },
+      { name: "xl/styles.xml", content: styles },
+      { name: "xl/worksheets/sheet1.xml", content: worksheet },
+    ]);
+    downloadBlob(filename, new Blob([zipBytes], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+  };
+
   const periodStart = (period) => {
     const now = new Date();
     const start = new Date(now);
@@ -1561,8 +1622,6 @@
     return date >= periodStart(period);
   };
 
-  const csvCell = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
-
   const exportPayrollReport = (moduleId, reportName, period = "monthly") => {
     const history = Array.isArray(erpState().payrollHistory) ? erpState().payrollHistory : [];
     const periodHistory = history.filter((row) => inPeriod(row.createdAt, period));
@@ -1580,8 +1639,13 @@
       return true;
     }
     if (/payroll history|approval logs|tax deductions|payroll payments/i.test(reportName)) {
-      const csv = [
-        "Month,Title,Status,Amount,Employees,Reason,Created",
+      const rows = [
+        [`${reportName} Report`],
+        ["Module", moduleId],
+        ["Period", period],
+        ["Generated", new Date().toLocaleString()],
+        [],
+        ["Month", "Title", "Status", "Amount", "Employees", "Reason", "Created"],
         ...periodHistory.map((row) =>
           [
             row.month,
@@ -1590,13 +1654,12 @@
             row.amount,
             (row.employees || []).map((employee) => employee.name).join("; "),
             row.reason,
-            row.createdAt,
-          ]
-            .map((value) => `"${String(value ?? "").replace(/"/g, '""')}"`)
-            .join(","),
+            humanDate(row.createdAt),
+          ],
         ),
-      ].join("\n");
-      downloadText(`${moduleId}-${period}-${reportName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.csv`, csv, "text/csv");
+      ];
+      if (!periodHistory.length) rows.push(["No payroll records for this period."]);
+      downloadWorkbook(`${moduleId}-${period}-${reportName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.xlsx`, reportName, rows);
       return true;
     }
     return false;
@@ -1613,18 +1676,22 @@
     const filteredMessages = (state.messages || []).filter((item) => (item.moduleId === moduleId || item.to === moduleId || item.from === moduleId) && inPeriod(item.createdAt, period));
     const filteredActivities = activities.filter((item) => item.moduleId === moduleId && inPeriod(item.at, period));
     const filteredTransactions = transactions.filter((item) => item.sourceModule === moduleId && inPeriod(item.createdAt, period));
-    const csv = [
-      "Section,Date,Reference,Status,Amount,Details",
+    const reportRows = [
+      [`${reportName || moduleId} Report`],
+      ["Module", moduleId],
+      ["Period", period],
+      ["Generated", new Date().toLocaleString()],
+      [],
+      ["Section", "Date", "Reference", "Status", "Amount", "Details"],
       ...filteredRecords.map((row) => ["Record", row.updatedAt, row.id, "active", "", row.values?.join(" | ")]),
       ...filteredApprovals.map((row) => ["Approval", row.updatedAt || row.createdAt, row.id, row.status, row.amount, `${row.title} - ${row.reason || row.note || ""}`]),
       ...filteredMessages.map((row) => ["Message", row.createdAt, row.id, "sent", "", `${row.from} to ${row.to}: ${row.body}`]),
       ...filteredActivities.map((row) => ["Activity", row.at, row.id, row.action, "", row.detail?.message || row.detail?.label || JSON.stringify(row.detail || {})]),
       ...filteredTransactions.map((row) => ["Transaction", row.createdAt, row.id, row.status, row.amount, `${row.type} ${row.ref || ""}`]),
-    ]
-      .map((row) => row.map(csvCell).join(","))
-      .join("\n");
-    const filename = `${moduleId}-${period}-${reportName.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "report"}.csv`;
-    downloadText(filename, csv, "text/csv");
+    ];
+    if (reportRows.length === 6) reportRows.push(["No report records for this period."]);
+    const filename = `${moduleId}-${period}-${reportName.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "report"}.xlsx`;
+    downloadWorkbook(filename, reportName || `${moduleId} Report`, reportRows);
     return true;
   };
 
@@ -1684,8 +1751,8 @@
       </div>
       <div class="sales-report-notes"><h3>Approval notes</h3><ul>${approvalRows}</ul></div>
       <div class="sales-report-actions">
-        <button class="btn" data-sales-report-export="pdf" type="button">Print / PDF</button>
-        <button class="btn primary" data-sales-report-export="excel" type="button">Download Excel</button>
+        <button class="btn" data-sales-report-export="pdf" type="button">Export PDF</button>
+        <button class="btn primary" data-sales-report-export="excel" type="button">Export XLSX</button>
       </div>
     </div>`;
   };
@@ -1693,7 +1760,6 @@
   const exportSalesReportExcel = (reportName, period, generatedAtText) => {
     const details = salesReportDetails(reportName, period);
     const generatedAt = generatedAtText || document.querySelector("[data-sales-report-time]")?.dataset.salesGeneratedAt || new Date().toLocaleString();
-    const xml = (value) => escapeHtml(value ?? "");
     const rows = [
       ["Sales Report"],
       ["Report", details.reportName],
@@ -1736,64 +1802,15 @@
         ? details.activities.map((row) => [row.action || "", row.detail?.message || row.detail?.label || JSON.stringify(row.detail || {}), humanDate(row.at)])
         : [["No activity for this period."]]),
     ];
-    const sheetData = rows
-      .map(
-        (row, rowIndex) =>
-          `<row r="${rowIndex + 1}">${row
-            .map((cell) => `<c t="inlineStr"><is><t>${xml(cell)}</t></is></c>`)
-            .join("")}</row>`,
-      )
-      .join("");
-    const worksheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-      <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-        <sheetData>${sheetData}</sheetData>
-      </worksheet>`;
-    const workbook = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-      <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-        <sheets><sheet name="Sales Report" sheetId="1" r:id="rId1"/></sheets>
-      </workbook>`;
-    const workbookRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-      <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-        <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
-        <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
-      </Relationships>`;
-    const rootRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-      <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-        <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
-      </Relationships>`;
-    const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-      <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-        <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
-        <Default Extension="xml" ContentType="application/xml"/>
-        <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
-        <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
-        <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
-      </Types>`;
-    const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-      <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-        <fonts count="1"><font><sz val="11"/><name val="Calibri"/></font></fonts>
-        <fills count="1"><fill><patternFill patternType="none"/></fill></fills>
-        <borders count="1"><border/></borders>
-        <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
-        <cellXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/></cellXfs>
-      </styleSheet>`;
-    const zipBytes = createStoredZip([
-      { name: "[Content_Types].xml", content: contentTypes },
-      { name: "_rels/.rels", content: rootRels },
-      { name: "xl/workbook.xml", content: workbook },
-      { name: "xl/_rels/workbook.xml.rels", content: workbookRels },
-      { name: "xl/styles.xml", content: styles },
-      { name: "xl/worksheets/sheet1.xml", content: worksheet },
-    ]);
     const filename = `sales-${details.period}-${details.reportName.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "report"}.xlsx`;
-    downloadBlob(filename, new Blob([zipBytes], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+    downloadWorkbook(filename, "Sales Report", rows);
   };
 
   const setSalesReportStatus = (reportName, period, format) => {
     const report = reportName || "Orders";
     const selectedPeriod = period || "monthly";
     const selectedFormat = format || "pdf";
-    const formatLabel = selectedFormat === "excel" ? "Excel" : "PDF";
+    const formatLabel = selectedFormat === "excel" ? "XLSX" : "PDF";
     const status = document.querySelector("[data-sales-report-status]");
     const type = document.querySelector("[data-sales-report-type]");
     const formatEl = document.querySelector("[data-sales-report-format]");
@@ -2136,7 +2153,7 @@
           return;
         }
         const exportBtn = event.target.closest("[data-erp-export]");
-        if (exportBtn?.dataset.erpExport === "csv") exportCsv(moduleId);
+        if (exportBtn?.dataset.erpExport === "xlsx" || exportBtn?.dataset.erpExport === "csv") exportExcel(moduleId);
         if (exportBtn?.dataset.erpExport === "pdf") window.print();
         const salesExport = event.target.closest("[data-sales-report-export]");
         if (salesExport) {

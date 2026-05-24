@@ -13,7 +13,7 @@
     payrollApproval: true,
     notifyHr: true,
     reportPeriod: "This month",
-    exportFormat: "Excel",
+    exportFormat: "XLSX",
   };
   const ALLOWED_KEYS = new Set([
     "mapphex_finance_employee_payment_reviews_v1",
