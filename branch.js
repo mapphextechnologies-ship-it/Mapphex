@@ -475,6 +475,7 @@
     const taskSaveBtn = $("#task-save-btn");
     const tasksTbody = $("#tasks-tbody");
     const notificationsTbody = $("#notifications-tbody");
+    const activityTbody = $("#activity-tbody");
 
     const chartsPanel = $("#charts-panel");
     const chartsCloseBtn = $("#charts-close-btn");
@@ -558,7 +559,9 @@
     };
 
     const navigateTo = (key) => {
-      const k = String(key || "").trim() || "overview";
+      const requested = String(key || "").trim() || "overview";
+      const exists = Array.from(document.querySelectorAll("[data-section]")).some((el) => el.getAttribute("data-section") === requested);
+      const k = exists ? requested : "overview";
       document.querySelectorAll("[data-section]").forEach((el) => {
         el.style.display = el.getAttribute("data-section") === k ? "" : "none";
       });
@@ -660,6 +663,7 @@
       if (dlQty) dlQty.value = "";
       if (dlNotes) dlNotes.value = "";
       renderDamageLoss();
+      renderActivity();
       renderKPIs();
     };
 
@@ -751,6 +755,7 @@
           branch.updatedAt = isoNow();
           persist().catch(() => null);
           renderInventory();
+          renderActivity();
           renderKPIs();
         });
 
@@ -836,6 +841,7 @@
       await persist();
       clearPhoneForm();
       renderInventory();
+      renderActivity();
       renderKPIs();
       if (ledgerIndicator) {
         ledgerIndicator.textContent = "Stock synced";
@@ -1216,6 +1222,7 @@
       await renderTransactionsSafely();
       renderCustomers();
       renderNotifications();
+      renderActivity();
       renderKPIs();
     };
 
@@ -1403,6 +1410,7 @@
       renderStaff();
       renderCustomers();
       renderNotifications();
+      renderActivity();
       renderKPIs();
       setTxButtonState();
     };
@@ -1522,6 +1530,7 @@
           branch.updatedAt = isoNow();
           persist().catch(() => null);
           renderSuppliers();
+          renderActivity();
         });
         tr.children[5].appendChild(del);
         suppliersTbody.appendChild(tr);
@@ -1553,6 +1562,7 @@
       if (supplierProducts) supplierProducts.value = "";
       if (supplierBalance) supplierBalance.value = "";
       renderSuppliers();
+      renderActivity();
     };
 
     const renderPurchaseOrders = () => {
@@ -1587,6 +1597,7 @@
           persist().catch(() => null);
           renderPurchaseOrders();
           renderNotifications();
+          renderActivity();
         });
         tr.children[5].appendChild(done);
         poTbody.appendChild(tr);
@@ -1616,6 +1627,7 @@
       if (poDate) poDate.value = "";
       renderPurchaseOrders();
       renderNotifications();
+      renderActivity();
     };
 
     const branchUsers = () => {
@@ -1746,6 +1758,7 @@
           persist().catch(() => null);
           renderTasks();
           renderNotifications();
+          renderActivity();
         });
         tr.children[4].appendChild(done);
         tasksTbody.appendChild(tr);
@@ -1772,6 +1785,7 @@
       if (taskDue) taskDue.value = "";
       renderTasks();
       renderNotifications();
+      renderActivity();
     };
 
     const renderNotifications = () => {
@@ -1821,6 +1835,62 @@
       }
     };
 
+    const renderActivity = () => {
+      if (!activityTbody) return;
+      const branch = normalizeBranch(getBranch());
+      if (!branch) return;
+      const rows = [];
+      const add = (at, area, activity, details) => {
+        rows.push({
+          at: at || isoNow(),
+          area: area || "Branch",
+          activity: activity || "",
+          details: details || "",
+        });
+      };
+
+      for (const item of branch.phones || []) {
+        add(item.updatedAt || item.createdAt, "Inventory", item.status === "sold" ? "Item sold" : "Item saved", `${item.serial || ""} ${itemName(item)}`.trim());
+      }
+      for (const loss of branch.damageLoss || []) {
+        add(loss.at, "Damages & loss", String(loss.type || "Record").toUpperCase(), `${loss.model || "Item"} x ${formatInt(loss.qty || 0)}`);
+      }
+      for (const tx of branch.txLog || []) {
+        const type = String(tx.saleType || "sale").toUpperCase();
+        add(tx.at, "Sales", type, `${tx.ref || tx.serial || "Transaction"} KES ${formatInt(tx.amount || 0)}`);
+      }
+      for (const supplier of branch.suppliers || []) {
+        add(supplier.updatedAt || supplier.createdAt, "Suppliers", "Supplier saved", supplier.name || "");
+      }
+      for (const order of branch.purchaseOrders || []) {
+        add(order.updatedAt || order.createdAt, "Purchase orders", order.status || "Order created", `${order.item || "Item"} x ${formatInt(order.qty || 0)}`);
+      }
+      for (const task of branch.tasks || []) {
+        add(task.completedAt || task.createdAt, "Tasks", task.status === "complete" ? "Task completed" : "Task created", task.title || "");
+      }
+
+      activityTbody.textContent = "";
+      if (!rows.length) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td colspan="4" class="muted">No branch activity yet.</td>`;
+        activityTbody.appendChild(tr);
+        return;
+      }
+
+      rows
+        .sort((a, z) => String(z.at || "").localeCompare(String(a.at || "")))
+        .slice(0, 120)
+        .forEach((event) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td></td><td></td><td></td><td></td>`;
+          tr.children[0].textContent = event.at ? new Date(event.at).toLocaleString() : "";
+          tr.children[1].textContent = event.area;
+          tr.children[2].textContent = event.activity;
+          tr.children[3].textContent = event.details;
+          activityTbody.appendChild(tr);
+        });
+    };
+
     const renderOperationsPanels = () => {
       renderSuppliers();
       renderPurchaseOrders();
@@ -1828,6 +1898,7 @@
       renderCustomers();
       renderTasks();
       renderNotifications();
+      renderActivity();
     };
 
     const setReportHtml = (html) => {
@@ -2357,6 +2428,10 @@
         if (!a) return;
         const key = a.getAttribute("data-nav");
         if (!key) return;
+        e.preventDefault();
+        if (String(window.location.hash || "").replace("#", "") !== key) {
+          history.pushState(null, "", `#${key}`);
+        }
         navigateTo(key);
       });
     }

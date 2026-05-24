@@ -56,6 +56,7 @@
           </div>
           <div class="sidebar-nav-group">
             <strong>Insights</strong>
+            <a class="sidebar-link" href="#activity" data-nav="activity" data-icon="A">Activity</a>
             <a class="sidebar-link" href="#reports" data-nav="reports" data-icon="R">Reports</a>
             <a class="sidebar-link" href="#notifications" data-nav="notifications" data-icon="N">Notifications</a>
           </div>
@@ -449,6 +450,19 @@
         </div>
       </section>
 
+      <section class="panel" id="activity" data-section="activity">
+        <div class="panel-header">
+          <h2>Activity</h2>
+          <div class="panel-actions muted">Branch actions, sales, stock, task and supplier events</div>
+        </div>
+        <div class="table-wrap" role="region" aria-label="Branch activity" tabindex="0">
+          <table class="table">
+            <thead><tr><th>Time</th><th>Area</th><th>Activity</th><th>Details</th></tr></thead>
+            <tbody id="activity-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
       <section class="panel" id="reports" data-section="reports">
         <div class="panel-header">
           <h2>Report Center</h2>
@@ -529,7 +543,7 @@
     <script src="enterprise-store.js"></script>
     <script src="erp-client.js"></script>
     <script src="enterprise-platform.js"></script>
-    <script src="branch.js?v=4"></script>
+    <script src="branch.js?v=5"></script>
     <script src="pwa.js"></script>
   </body>
 </html>
