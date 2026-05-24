@@ -330,7 +330,15 @@
     }));
   };
 
-  const PORTAL_VIEW_GROUPS = {
+  const DEFAULT_PORTAL_VIEW_GROUPS = {
+    dashboard: ["portal-dashboard", "portal-kpis", "dashboard"],
+    "portal-records": ["portal-records"],
+    approvals: ["approvals"],
+    reports: ["reports"],
+    logout: [],
+  };
+
+  const FINANCE_PORTAL_VIEW_GROUPS = {
     dashboard: ["finance-dashboard"],
     "portal-records": ["portal-records"],
     approvals: ["approvals"],
@@ -346,17 +354,24 @@
   };
 
   const setPortalView = (target = "dashboard") => {
-    const branchGroups = {
+    const branchViewGroups = {
       dashboard: ["portal-dashboard", "portal-kpis", "branch-management-overview"],
       "portal-records": ["portal-records"],
       approvals: ["approvals"],
       reports: ["reports"],
       logout: [],
     };
-    const group =
+    const viewGroups =
       activeModuleId === "branch"
-        ? branchGroups[target] || branchGroups.dashboard
-        : PORTAL_VIEW_GROUPS[target] || PORTAL_VIEW_GROUPS["portal-records"];
+        ? branchViewGroups
+        : activeModuleId === "finance"
+          ? FINANCE_PORTAL_VIEW_GROUPS
+          : DEFAULT_PORTAL_VIEW_GROUPS;
+    const group =
+      viewGroups[target] ||
+      viewGroups["portal-records"] ||
+      viewGroups.dashboard ||
+      [];
     const visible = new Set(group);
     [
       "portal-dashboard",
