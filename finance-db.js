@@ -119,7 +119,23 @@
     }
   };
 
-  const tenantFromUrl = () => new URLSearchParams(location.search).get("tenant") || "";
+  const cleanTenantId = (value) =>
+    String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 64);
+
+  const tenantFromUrl = () => cleanTenantId(new URLSearchParams(location.search).get("tenant"));
+
+  const tenantFromStorage = () => {
+    try {
+      return cleanTenantId(rawLocalGet.call(localStorage, "enterprise_active_tenant_v1"));
+    } catch {
+      return "";
+    }
+  };
 
   const readRawStorage = (storage, key) => {
     try {
@@ -133,7 +149,7 @@
     const direct =
       safeJsonParse(readRawStorage(sessionStorage, "enterprise_session_meta_v1"), null) ||
       safeJsonParse(readRawStorage(localStorage, "enterprise_session_meta_v1"), null);
-    if (direct?.token) return direct;
+    if (direct?.tenantId) return direct;
 
     for (const storage of [sessionStorage, localStorage]) {
       try {
@@ -141,7 +157,7 @@
           const key = storage.key(idx);
           if (!key || !key.endsWith(":enterprise_session_meta_v1")) continue;
           const session = safeJsonParse(readRawStorage(storage, key), null);
-          if (session?.token) return session;
+          if (session?.tenantId) return session;
         }
       } catch {
         // storage can be blocked by the browser
@@ -150,7 +166,7 @@
     return null;
   };
 
-  const tenantId = () => tenantFromUrl() || activeSession()?.tenantId || "";
+  const tenantId = () => tenantFromUrl() || cleanTenantId(activeSession()?.tenantId) || tenantFromStorage();
 
   const readAnyLocalJson = (key, fallback) => {
     const direct = safeJsonParse(readRawStorage(localStorage, key), null);
@@ -197,6 +213,7 @@
     const href = tenant ? `organization-workspace.html?tenant=${encodeURIComponent(tenant)}` : "organization-workspace.html";
     document.querySelectorAll("[data-finance-back]").forEach((link) => {
       link.setAttribute("href", href);
+      link.removeAttribute("data-auth-target");
     });
   };
 
