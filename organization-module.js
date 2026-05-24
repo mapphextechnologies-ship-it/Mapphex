@@ -1142,18 +1142,24 @@
             <div id="erp-approvals" class="erp-approval-list"></div>
           </article>
         </section>`;
-    const salesReportSection = moduleId === "sales"
+    const usesReportWorkspace = ["sales", "pharmacy"].includes(moduleId);
+    const reportTypes = moduleId === "pharmacy" ? PHARMACY_REPORT_TYPES : SALES_REPORT_TYPES;
+    const reportPortalName = moduleId === "pharmacy" ? "Pharmacy" : "Sales";
+    const reportDescription = moduleId === "pharmacy"
+      ? "Create clean pharmacy reports from medicine stock, expiry alerts, prescriptions, suppliers, sales, and returns."
+      : "Create clean sales reports from orders, quotations, invoices, revenue, discounts, and customer history.";
+    const salesReportSection = usesReportWorkspace
       ? `<section id="reports" class="panel sales-report-workspace">
           <div class="panel-header">
             <div>
               <span class="eyebrow">Accounting</span>
               <h2>Generate and export reports</h2>
-              <p class="portal-manager-subtitle">Create clean sales reports from orders, quotations, invoices, revenue, discounts, and customer history.</p>
+              <p class="portal-manager-subtitle">${escapeHtml(reportDescription)}</p>
             </div>
           </div>
           <div class="sales-report-status-grid">
             <article><span>Report status</span><strong data-sales-report-status>Not generated</strong><small>Ready after generation</small></article>
-            <article><span>Report type</span><strong data-sales-report-type>Sales</strong><small>Selected output</small></article>
+            <article><span>Report type</span><strong data-sales-report-type>${escapeHtml(reportPortalName)}</strong><small>Selected output</small></article>
             <article><span>Export format</span><strong data-sales-report-format>PDF</strong><small>PDF or XLSX</small></article>
             <article><span>Last generated</span><strong data-sales-report-time>Never</strong><small>Current session</small></article>
           </div>
@@ -1162,11 +1168,11 @@
               <div>
                 <p class="eyebrow">Reports</p>
                 <h2>Report generation</h2>
-                <p>Select what Sales should generate, then export the report.</p>
+                <p>Select what ${escapeHtml(reportPortalName)} should generate, then export the report.</p>
               </div>
             </div>
             <form id="sales-report-form" class="sales-report-form">
-              <label class="field"><span>Report</span><select name="report">${SALES_REPORT_TYPES.map((item) => `<option>${escapeHtml(item)}</option>`).join("")}</select></label>
+              <label class="field"><span>Report</span><select name="report">${reportTypes.map((item) => `<option>${escapeHtml(item)}</option>`).join("")}</select></label>
               <label class="field"><span>Period</span><select name="period">${REPORT_PERIODS.map((period) => `<option value="${escapeHtml(period)}">${escapeHtml(period[0].toUpperCase() + period.slice(1))}</option>`).join("")}</select></label>
               <label class="field"><span>Format</span><select name="format"><option value="pdf">PDF</option><option value="excel">XLSX</option></select></label>
               <button class="btn primary" type="submit">Generate</button>
@@ -1905,6 +1911,44 @@
     downloadWorkbook(filename, "Sales Report", rows);
   };
 
+  const moduleReportDetails = (moduleId, reportName, period) => {
+    const workflow = workflowFor(moduleId);
+    const records = Array.isArray(moduleData()[moduleId]) ? moduleData()[moduleId] : [];
+    const totalAmount = records.reduce((sum, row) => sum + (Number(String(row.values?.[3] || "").replace(/[^\d.-]/g, "")) || 0), 0);
+    return {
+      reportName: reportName || workflow.title || "Report",
+      period: period || "daily",
+      labels: workflow.labels,
+      records,
+      totalAmount,
+    };
+  };
+
+  const renderModuleReportPreview = (moduleId, reportName, period, formatLabel, generatedAt) => {
+    const details = moduleReportDetails(moduleId, reportName, period);
+    const tableRows = details.records.length
+      ? details.records
+          .map((row) => `<tr>${details.labels.map((label, idx) => `<td data-label="${escapeHtml(label)}">${escapeHtml(row.values?.[idx] || "-")}</td>`).join("")}<td data-label="Updated">${escapeHtml(humanDate(row.updatedAt))}</td></tr>`)
+          .join("")
+      : `<tr><td colspan="${details.labels.length + 1}" class="muted">No ${escapeHtml(moduleId)} records for this period.</td></tr>`;
+    return `<div class="sales-report-result">
+      <strong>${escapeHtml(details.reportName)} report ready</strong>
+      <span>${escapeHtml(details.period)} - ${escapeHtml(formatLabel)} - ${escapeHtml(generatedAt)}</span>
+      <div class="sales-report-summary">
+        <article><span>Records</span><strong>${details.records.length}</strong></article>
+        <article><span>Total price</span><strong>${escapeHtml(money(details.totalAmount))}</strong></article>
+        <article><span>Report type</span><strong>${escapeHtml(details.reportName)}</strong></article>
+        <article><span>Format</span><strong>${escapeHtml(formatLabel)}</strong></article>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr>${details.labels.map((label) => `<th>${escapeHtml(label)}</th>`).join("")}<th>Updated</th></tr></thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </div>
+    </div>`;
+  };
+
   const setSalesReportStatus = (reportName, period, format) => {
     const report = reportName || "Orders";
     const selectedPeriod = period || "monthly";
@@ -1924,7 +1968,9 @@
       time.textContent = generatedAtText;
     }
     if (output) {
-      output.innerHTML = renderSalesReportPreview(salesReportDetails(report, selectedPeriod), formatLabel, generatedAtText);
+      output.innerHTML = activeModuleId === "sales"
+        ? renderSalesReportPreview(salesReportDetails(report, selectedPeriod), formatLabel, generatedAtText)
+        : renderModuleReportPreview(activeModuleId, report, selectedPeriod, formatLabel, generatedAtText);
     }
     return generatedAtText;
   };
@@ -2300,8 +2346,14 @@
           const period = form?.elements?.namedItem("period")?.value || "monthly";
           const format = salesExport.dataset.salesReportExport || form?.elements?.namedItem("format")?.value || "pdf";
           const generatedAt = setSalesReportStatus(reportName, period, format);
-          if (format === "excel") exportSalesReportExcel(reportName, period, generatedAt);
-          else printSalesReport(reportName, period, generatedAt);
+          if (moduleId === "sales") {
+            if (format === "excel") exportSalesReportExcel(reportName, period, generatedAt);
+            else printSalesReport(reportName, period, generatedAt);
+          } else if (format === "excel") {
+            exportExcel(moduleId);
+          } else {
+            window.print();
+          }
           appendActivity(moduleId, "report.exported", { label: reportName, message: `${period} ${reportName} exported as ${format}.` });
           refreshEnterpriseSections(moduleId);
         }
