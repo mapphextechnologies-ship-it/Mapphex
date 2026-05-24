@@ -35,7 +35,7 @@
     const url = new URL(href, location.origin);
     const targetTenant = tenant || window.EnterpriseCore?.getSession?.()?.tenantId || window.EnterpriseCore?.currentTenantId?.() || "";
     if (targetTenant) url.searchParams.set("tenant", targetTenant);
-    if (portalId && portalId !== "workspace") url.searchParams.set("portal", portalId);
+    if (portalId && portalId !== "workspace" && !href.includes("finance-workflow.html")) url.searchParams.set("portal", portalId);
     return `${url.pathname}${url.search}${url.hash}`;
   };
 

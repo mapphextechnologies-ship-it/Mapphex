@@ -37,7 +37,7 @@
     {
       id: "finance",
       title: "Finance Portal",
-      href: moduleHref,
+      href: "finance-workflow.html",
       category: "Finance",
       componentRole: "Approves payrolls and purchases, monitors transactions, tracks revenue, invoices, receipts, taxes, debt, payments, budgets, and profit.",
       description: "Revenue, payroll approvals, invoices, receipts, expenses, taxes, budgets, debts, payments, and financial reports.",

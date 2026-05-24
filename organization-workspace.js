@@ -53,6 +53,9 @@
 
   const portalUrl = (portal, org) => {
     const tenant = window.EnterpriseCore?.currentTenantId?.() || "";
+    if (portal.id === "finance") {
+      return `finance-workflow.html${tenant ? `?tenant=${encodeURIComponent(tenant)}` : ""}`;
+    }
     try {
       const url = new URL("portal-auth.html", location.origin);
       url.searchParams.set("tenant", tenant);
