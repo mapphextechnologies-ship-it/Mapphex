@@ -171,7 +171,7 @@
     },
     pharmacy: {
       entity: "Pharmacy Record",
-      form: ["Medicine/Item", "Batch", "Expiry/Status", "Amount", "Action"],
+      form: ["Medicine/Item", "Batch", "Expiry/Status", "Price", "Stock/Action"],
       responsibilities: ["Medicine inventory", "Prescriptions", "Customers", "Suppliers", "Sales", "Expiry alerts", "Returns", "Regulated reports"],
       reports: ["Medicine stock", "Expiry alerts", "Prescriptions", "Supplier activity", "Sales", "Returns"],
       workflows: [["Dispense prescription", "finance"], ["Create expiry alert", "inventory"], ["Request medicine stock", "procurement"], ["Submit pharmacy sales", "reporting"]],
@@ -279,7 +279,7 @@
     branch: ["Dashboard", "Branch Accounts", "Branch Records", "Approvals", "Reports", "Activity"],
     finance: ["Dashboard", "Invoices", "Approvals", "Suppliers", "Budgets", "Employees", "Payroll", "Ledger", "Reports", "Export", "Settings"],
     hr: ["Dashboard", "Employees", "Attendance", "Leave Requests", "Payroll", "Recruitment", "Performance", "Schedules", "Reports"],
-    pharmacy: ["Dashboard", "Medicines", "Inventory", "Prescriptions", "Customers", "Suppliers", "Sales", "Expiry Alerts", "Reports"],
+    pharmacy: ["Dashboard", "Medicines", "Inventory", "Prescriptions", "Customers", "Suppliers", "Sales", "Expiry Alerts", "Reports", "Settings"],
     technology: ["Dashboard", "Projects", "Tasks", "Clients", "Developers", "Support Tickets", "Documentation", "Billing", "Analytics"],
     sales: ["Dashboard", "Orders", "Products", "Customers", "Discounts", "Reports", "Revenue", "Settings"],
     inventory: ["Dashboard", "Stock", "Warehouses", "Transfers", "Suppliers", "Alerts", "Reports"],
@@ -296,6 +296,15 @@
   };
 
   const SALES_REPORT_TYPES = ["Orders", "Quotations", "Invoices", "Revenue", "Discounts", "Customer history"];
+  const PHARMACY_REPORT_TYPES = ["Medicine stock", "Expiry alerts", "Prescriptions", "Supplier activity", "Sales", "Returns"];
+  const defaultModulePrefs = (moduleId) => ({
+    theme: "dark",
+    density: "comfortable",
+    defaultReport: moduleId === "pharmacy" ? "Medicine stock" : "Orders",
+    requireDiscountApproval: moduleId === "sales",
+    notifyFinance: true,
+    showRevenue: true,
+  });
 
   const menuItemsFor = (moduleId, moduleDef) => {
     if (moduleId === "branch") {
@@ -637,22 +646,24 @@
       products: "Keep products, pricing, and sales items easy to review.",
       customers: "Review customer records and sales history.",
       discounts: "See discounts and promotion requests before they affect revenue.",
-      settings: "Choose how this portal looks and how sales work should be handled.",
+      settings: moduleId === "pharmacy" ? "Set the Pharmacy theme, stock actions, pricing, and reporting requirements." : "Choose how this portal looks and how sales work should be handled.",
     };
     if (hash === "settings") {
-      const prefs = { theme: "dark", density: "comfortable", defaultReport: "Orders", requireDiscountApproval: true, notifyFinance: true, showRevenue: true, ...(modulePrefs()[moduleId] || {}) };
+      const isPharmacy = moduleId === "pharmacy";
+      const reportTypes = isPharmacy ? PHARMACY_REPORT_TYPES : SALES_REPORT_TYPES;
+      const prefs = { ...defaultModulePrefs(moduleId), ...(modulePrefs()[moduleId] || {}) };
       page.innerHTML = `
         <div class="panel-header">
           <div>
             <span class="eyebrow">${escapeHtml(moduleDef.title)}</span>
             <h2>Settings</h2>
-            <p class="portal-manager-subtitle">Set the portal theme, sales approvals, reporting defaults, and workspace display.</p>
+            <p class="portal-manager-subtitle">${escapeHtml(isPharmacy ? "Set the portal theme, medicine pricing, stock actions, expiry controls, and reporting defaults." : "Set the portal theme, sales approvals, reporting defaults, and workspace display.")}</p>
           </div>
           <span class="badge">Preferences</span>
         </div>
         <div class="module-settings-summary">
-          <article><span>Portal display</span><strong data-module-pref-summary="theme">${escapeHtml(prefs.theme === "light" ? "Light" : "Dark")}</strong><small>Theme used across Sales</small></article>
-          <article><span>Approval workflow</span><strong data-module-pref-summary="approvals">${prefs.requireDiscountApproval ? "Required" : "Optional"}</strong><small>Discount control</small></article>
+          <article><span>Portal display</span><strong data-module-pref-summary="theme">${escapeHtml(prefs.theme === "light" ? "Light" : "Dark")}</strong><small>Theme used across ${escapeHtml(isPharmacy ? "Pharmacy" : "Sales")}</small></article>
+          <article><span>${escapeHtml(isPharmacy ? "Stock workflow" : "Approval workflow")}</span><strong data-module-pref-summary="approvals">${prefs.requireDiscountApproval ? "Required" : "Optional"}</strong><small>${escapeHtml(isPharmacy ? "Expiry and stock control" : "Discount control")}</small></article>
           <article><span>Default report</span><strong data-module-pref-summary="report">${escapeHtml(prefs.defaultReport)}</strong><small>Used when reporting opens</small></article>
         </div>
         <form id="module-settings-form" class="module-settings-form">
@@ -662,14 +673,14 @@
             <label class="field"><span>Table density</span><select name="density"><option value="comfortable" ${prefs.density === "comfortable" ? "selected" : ""}>Comfortable</option><option value="compact" ${prefs.density === "compact" ? "selected" : ""}>Compact</option></select></label>
           </fieldset>
           <fieldset class="settings-fieldset">
-            <legend><span>Sales workflow</span><small>Approvals and Finance notices</small></legend>
-            <label class="check-chip"><input type="checkbox" name="requireDiscountApproval" ${prefs.requireDiscountApproval ? "checked" : ""} /> <span>Require approval for discounts</span></label>
-            <label class="check-chip"><input type="checkbox" name="notifyFinance" ${prefs.notifyFinance ? "checked" : ""} /> <span>Notify Finance when invoices are created</span></label>
-            <label class="check-chip"><input type="checkbox" name="showRevenue" ${prefs.showRevenue ? "checked" : ""} /> <span>Show revenue cards on dashboard</span></label>
+            <legend><span>${escapeHtml(isPharmacy ? "Pharmacy requirements" : "Sales workflow")}</span><small>${escapeHtml(isPharmacy ? "Stock, price, and expiry controls" : "Approvals and Finance notices")}</small></legend>
+            <label class="check-chip"><input type="checkbox" name="requireDiscountApproval" ${prefs.requireDiscountApproval ? "checked" : ""} /> <span>${escapeHtml(isPharmacy ? "Require review for expired or out-of-stock medicine" : "Require approval for discounts")}</span></label>
+            <label class="check-chip"><input type="checkbox" name="notifyFinance" ${prefs.notifyFinance ? "checked" : ""} /> <span>${escapeHtml(isPharmacy ? "Notify Finance when medicine sales are added" : "Notify Finance when invoices are created")}</span></label>
+            <label class="check-chip"><input type="checkbox" name="showRevenue" ${prefs.showRevenue ? "checked" : ""} /> <span>${escapeHtml(isPharmacy ? "Show medicine price totals on dashboard" : "Show revenue cards on dashboard")}</span></label>
           </fieldset>
           <fieldset class="settings-fieldset">
-            <legend><span>Reports</span><small>Default Sales report</small></legend>
-            <label class="field"><span>Default report</span><select name="defaultReport">${SALES_REPORT_TYPES.map((item) => `<option ${prefs.defaultReport === item ? "selected" : ""}>${escapeHtml(item)}</option>`).join("")}</select></label>
+            <legend><span>Reports</span><small>${escapeHtml(isPharmacy ? "Default Pharmacy report" : "Default Sales report")}</small></legend>
+            <label class="field"><span>Default report</span><select name="defaultReport">${reportTypes.map((item) => `<option ${prefs.defaultReport === item ? "selected" : ""}>${escapeHtml(item)}</option>`).join("")}</select></label>
           </fieldset>
           <div class="module-settings-actions">
             <button class="btn primary" type="submit">Save Settings</button>
@@ -756,8 +767,8 @@
         <label class="field"><span>Medicine/Item</span><input name="field0" placeholder="Medicine or item name" required /></label>
         <label class="field"><span>Batch</span><input name="field1" placeholder="Batch number" required /></label>
         <label class="field"><span>Expiry/Status</span><input name="field2" placeholder="Expiry date or status" required /></label>
-        <label class="field"><span>Amount</span><input name="field3" type="number" min="0" step="0.01" placeholder="KES 0" required /></label>
-        <label class="field"><span>Action</span><select name="field4" required><option value="">Select action</option><option>In stock</option><option>Low stock</option><option>Out of stock</option><option>Dispensed</option><option>Returned</option><option>Expired</option><option>Order stock</option><option>Paid</option><option>Pending</option></select></label>
+        <label class="field"><span>Price</span><input name="field3" type="number" min="0" step="0.01" placeholder="KES 0" required /></label>
+        <label class="field"><span>Stock/Action</span><select name="field4" required><option value="">Select action</option><option>In stock</option><option>Low stock</option><option>Out of stock</option><option>Dispensed</option><option>Returned</option><option>Expired</option><option>Order stock</option><option>Paid</option><option>Pending</option></select></label>
         <button class="btn primary" type="submit">Add Record</button>`;
       return;
     }
@@ -2232,7 +2243,7 @@
         if (settingsReset) {
           event.preventDefault();
           const prefs = modulePrefs();
-          prefs[moduleId] = { theme: "dark", density: "comfortable", defaultReport: "Orders", requireDiscountApproval: true, notifyFinance: true, showRevenue: true };
+          prefs[moduleId] = defaultModulePrefs(moduleId);
           saveModulePrefs(prefs);
           applyModulePreferences(moduleId);
           renderModuleDetailPage(moduleId, blueprintFor(moduleId), document.querySelector('[data-module-nav="settings"]'));

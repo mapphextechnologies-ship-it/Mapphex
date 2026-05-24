@@ -288,7 +288,7 @@
     departments: { title: "Department Workflows", labels: ["Department", "Lead", "Workflow", "Approval"] },
     hr: { title: "HR Workforce Records", labels: ["Employee", "Department", "Attendance", "Payroll Status"] },
     finance: { title: "Finance Ledger", labels: ["Transaction", "Source", "Amount", "Approval Status"] },
-    pharmacy: { title: "Pharmacy Stock", labels: ["Medicine", "Batch", "Expiry", "Amount", "Action"] },
+    pharmacy: { title: "Pharmacy Stock", labels: ["Medicine", "Batch", "Expiry", "Price", "Stock/Action"] },
     inventory: { title: "Inventory Control", labels: ["Item", "Warehouse", "Movement", "Quantity"] },
     logistics: { title: "Logistics Flow", labels: ["Shipment", "Driver/Fleet", "Route", "Status"] },
     retail: { title: "Retail Operations", labels: ["Sale/Return", "Register", "Amount", "Stock Impact"] },
