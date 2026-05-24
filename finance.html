@@ -3,17 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="refresh" content="0; url=organization-module.html?portal=finance" />
+    <meta http-equiv="refresh" content="0; url=finance-workflow.html" />
     <title>Opening Finance Portal</title>
   </head>
   <body>
     <script>
-      const target = new URL("organization-module.html", window.location.href);
+      const target = new URL("finance-workflow.html", window.location.href);
       const params = new URLSearchParams(window.location.search);
-      params.set("portal", "finance");
       target.search = params.toString();
       window.location.replace(target.toString());
     </script>
-    <a href="organization-module.html?portal=finance">Open finance portal</a>
+    <a href="finance-workflow.html">Open finance portal</a>
   </body>
 </html>
