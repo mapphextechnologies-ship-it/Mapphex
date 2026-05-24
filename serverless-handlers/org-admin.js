@@ -50,6 +50,24 @@ const readArray = async (store, key) => {
   return Array.isArray(value) ? value : [];
 };
 
+const rolePortalDefaults = (role) => {
+  const clean = String(role || "").toLowerCase();
+  if (clean === "director") return ["director", "reporting", "analytics"];
+  if (clean === "branch") return ["device-branch", "branch", "inventory", "sales"];
+  if (clean === "agent") return ["agent", "sales", "customer"];
+  if (clean === "team-leader" || clean === "team_leader") return ["agent", "sales", "reporting"];
+  return [];
+};
+
+const rolePermissionDefaults = (role, portals = []) => {
+  const clean = String(role || "").toLowerCase();
+  if (clean === "director") return ["director.read", "director.manage", "reporting.read", "analytics.read"];
+  if (clean === "branch") return ["device-branch.read", "device-branch.manage", "inventory.read", "sales.create"];
+  if (clean === "agent") return ["agent.read", "sales.create", "customer.read"];
+  if (clean === "team-leader" || clean === "team_leader") return ["agent.read", "agent.manage", "sales.read", "reporting.read"];
+  return (Array.isArray(portals) ? portals : []).map((id) => `${id}.read`);
+};
+
 module.exports = async (req, res) => {
   try {
     rateLimit(req, { scope: "org-admin", limit: 180, windowMs: 60_000 });
@@ -80,12 +98,12 @@ module.exports = async (req, res) => {
       const activationToken = randomOrganizationToken("invite");
       const role = safeString(body.role || "staff", 80);
       const roleTemplate = (settings.defaultRoles || []).find((item) => item.id === role) || null;
-      const permissions = Array.isArray(body.permissions) && body.permissions.length
-        ? body.permissions.map((p) => safeString(p, 80)).filter(Boolean)
-        : roleTemplate?.permissions || [];
       const portalAccess = Array.isArray(body.portalAccess) && body.portalAccess.length
         ? body.portalAccess.map((p) => safeString(p, 80)).filter(Boolean)
-        : roleTemplate?.portals || [];
+        : roleTemplate?.portals || rolePortalDefaults(role);
+      const permissions = Array.isArray(body.permissions) && body.permissions.length
+        ? body.permissions.map((p) => safeString(p, 80)).filter(Boolean)
+        : roleTemplate?.permissions || rolePermissionDefaults(role, portalAccess);
       const user = {
         id: `user-${Date.now()}-${Math.random().toString(16).slice(2)}`,
         name: safeString(body.name, 120),
@@ -105,7 +123,17 @@ module.exports = async (req, res) => {
         return sendJson(res, 409, { ok: false, error: "User email already exists in this organization" });
       }
       const next = [user, ...(Array.isArray(users) ? users : [])].slice(0, 2000);
-      await store.set(usersKey, next);
+      const installed = mergeUniqueStrings(settings.installedPortals || [], portalAccess).filter((id) => VALID_PORTAL_IDS.has(id));
+      await store.setManyAtomic({
+        [usersKey]: next,
+        [settingsKey]: {
+          ...settings,
+          installedPortals: installed,
+          modules: mergeUniqueStrings(settings.modules || [], installed).filter((id) => VALID_PORTAL_IDS.has(id) || ["dashboard", "orders", "crm", "documents"].includes(id)),
+          navigation: mergeUniqueStrings(settings.navigation || [], portalAccess).filter((id) => VALID_PORTAL_IDS.has(id)),
+          updatedAt: new Date().toISOString(),
+        },
+      });
       await appendEvent(store, tenantId, "org.user.created", { userId: user.id, role: user.role });
       return sendJson(res, 200, { ok: true, user: publicUser(user), activationToken, users: next.map(publicUser) });
     }
@@ -123,7 +151,7 @@ module.exports = async (req, res) => {
         ? body.permissions.map((p) => safeString(p, 80)).filter(Boolean)
         : users[idx].permissions || roleTemplate?.permissions || [];
       const status = safeString(body.status || users[idx].status || "active", 40);
-      if (!["active", "disabled", "invited", "pending"].includes(status)) return sendJson(res, 400, { ok: false, error: "Invalid user status" });
+      if (!["active", "disabled", "invited", "pending", "rejected"].includes(status)) return sendJson(res, 400, { ok: false, error: "Invalid user status" });
       const next = [...users];
       next[idx] = {
         ...next[idx],
@@ -141,13 +169,32 @@ module.exports = async (req, res) => {
     if (body.action === "set-user-status") {
       const userId = safeString(body.userId || body.id, 120);
       const status = safeString(body.status || "active", 40);
-      if (!["active", "disabled", "invited", "pending"].includes(status)) return sendJson(res, 400, { ok: false, error: "Invalid user status" });
+      if (!["active", "disabled", "invited", "pending", "rejected"].includes(status)) return sendJson(res, 400, { ok: false, error: "Invalid user status" });
       const idx = users.findIndex((user) => user.id === userId);
       if (idx < 0) return sendJson(res, 404, { ok: false, error: "User not found" });
       const next = [...users];
-      next[idx] = { ...next[idx], status, updatedAt: new Date().toISOString() };
-      await store.set(usersKey, next);
-      await appendEvent(store, tenantId, "org.user.status.changed", { userId, status });
+      const current = next[idx];
+      const role = safeString(current.role || current.registeredPortalId || "staff", 80);
+      const defaultPortals = rolePortalDefaults(role);
+      const portalAccess = status === "active"
+        ? mergeUniqueStrings(current.portalAccess || [], defaultPortals, current.registeredPortalId ? [current.registeredPortalId] : []).filter((id) => VALID_PORTAL_IDS.has(id))
+        : current.portalAccess || [];
+      const permissions = status === "active"
+        ? mergeUniqueStrings(current.permissions || [], rolePermissionDefaults(role, portalAccess))
+        : current.permissions || [];
+      next[idx] = { ...current, status, portalAccess, permissions, updatedAt: new Date().toISOString() };
+      const installed = mergeUniqueStrings(settings.installedPortals || [], portalAccess).filter((id) => VALID_PORTAL_IDS.has(id));
+      await store.setManyAtomic({
+        [usersKey]: next,
+        [settingsKey]: {
+          ...settings,
+          installedPortals: installed,
+          modules: mergeUniqueStrings(settings.modules || [], installed).filter((id) => VALID_PORTAL_IDS.has(id) || ["dashboard", "orders", "crm", "documents"].includes(id)),
+          navigation: mergeUniqueStrings(settings.navigation || [], portalAccess).filter((id) => VALID_PORTAL_IDS.has(id)),
+          updatedAt: new Date().toISOString(),
+        },
+      });
+      await appendEvent(store, tenantId, "org.user.status.changed", { userId, status, portalAccess });
       return sendJson(res, 200, { ok: true, user: publicUser(next[idx]), users: next.map(publicUser) });
     }
 

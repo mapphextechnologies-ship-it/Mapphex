@@ -9,8 +9,17 @@
   let state = { users: [], settings: {}, organization: null, events: [] };
 
   const csv = (value) => String(value || "").split(",").map((x) => x.trim()).filter(Boolean);
-  const installedPortalIds = () => (state.settings.installedPortals || state.settings.modules || []).filter(Boolean);
+  const installedPortalIds = () => Array.from(new Set(["admin", ...(state.settings.installedPortals || state.settings.modules || [])])).filter(Boolean);
   const portalLabel = (id) => (state.portalCatalog || []).find((portal) => portal.id === id)?.title || id;
+  const roleBucket = (user = {}) => {
+    const role = String(user.role || "").toLowerCase();
+    const portal = String(user.registeredPortalId || "").toLowerCase();
+    if (role === "director" || portal === "director") return "director";
+    if (role === "branch" || portal === "branch" || portal === "device-branch") return "branch";
+    if (["agent", "team-leader", "team_leader"].includes(role) || portal === "agent") return "agent";
+    return "user";
+  };
+  const pendingUsers = (bucket) => state.users.filter((user) => String(user.status || "").toLowerCase() === "pending" && (!bucket || roleBucket(user) === bucket));
   const selectedPortalInputs = (root = document) =>
     [...root.querySelectorAll("[data-user-portal]:checked")].map((input) => input.value).filter(Boolean);
   const downloadText = (filename, text, type = "text/plain") => {
@@ -107,6 +116,7 @@
     $("#org-admin-title").textContent = state.organization?.name || "Organization Admin";
     $("#org-admin-sub").textContent = state.organization?.organizationId || tenantId;
     $("#org-kpi-users").textContent = state.users.length;
+    $("#org-kpi-pending").textContent = pendingUsers().length;
     $("#org-kpi-branches").textContent = (state.settings.branches || []).length;
     $("#org-kpi-modules").textContent = (state.settings.modules || []).length;
     $("#org-kpi-status").textContent = state.organization?.status || "Active";
@@ -117,29 +127,61 @@
       .map((id) => `<label class="check-chip"><input type="checkbox" data-user-portal value="${escapeHtml(id)}" /> <span>${escapeHtml(portalLabel(id))}</span></label>`)
       .join("");
     $("#org-user-portals").innerHTML = portalChecks || `<span class="muted">Install a portal first, then assign access here.</span>`;
-    $("#org-users-table").innerHTML = state.users
-      .map((user) => {
-        const portals = (user.portalAccess || []).map(portalLabel).join(", ") || "Not assigned";
-        const disabled = user.status === "disabled";
-        const pending = user.status === "pending";
-        return `<tr>
-          <td>${escapeHtml(user.name)}</td>
-          <td>${escapeHtml(user.email)}</td>
-          <td><select data-user-role="${escapeHtml(user.id)}"><option ${user.role === "staff" ? "selected" : ""}>staff</option><option ${user.role === "manager" ? "selected" : ""}>manager</option><option ${user.role === "finance" ? "selected" : ""}>finance</option><option ${user.role === "hr" ? "selected" : ""}>hr</option><option ${user.role === "sales" ? "selected" : ""}>sales</option><option ${user.role === "inventory" ? "selected" : ""}>inventory</option><option ${user.role === "procurement" ? "selected" : ""}>procurement</option><option ${user.role === "customer_service" ? "selected" : ""}>customer_service</option><option ${user.role === "org_admin" ? "selected" : ""}>org_admin</option></select></td>
-          <td><span class="muted">${escapeHtml(portals)}</span></td>
-          <td>${escapeHtml(user.status || "active")}</td>
-          <td class="table-actions">
-            <button class="btn" type="button" data-user-save="${escapeHtml(user.id)}">Save</button>
+    const renderUserActions = (user) => {
+      const disabled = user.status === "disabled";
+      const pending = user.status === "pending";
+      const rejected = user.status === "rejected";
+      return `<button class="btn" type="button" data-user-save="${escapeHtml(user.id)}">Save</button>
             <button class="btn" type="button" data-user-portals="${escapeHtml(user.id)}">Portals</button>
             <button class="btn" type="button" data-user-invite="${escapeHtml(user.id)}">Invite</button>
             <button class="btn" type="button" data-user-reset="${escapeHtml(user.id)}">Reset</button>
-            ${pending ? `<button class="btn primary" type="button" data-user-status="${escapeHtml(user.id)}" data-status="active">Approve</button>` : ""}
+            ${pending || rejected ? `<button class="btn primary" type="button" data-user-status="${escapeHtml(user.id)}" data-status="active">Approve</button>` : ""}
+            ${pending ? `<button class="btn danger" type="button" data-user-status="${escapeHtml(user.id)}" data-status="rejected">Reject</button>` : ""}
             <button class="btn ${disabled ? "primary" : "danger"}" type="button" data-user-status="${escapeHtml(user.id)}" data-status="${disabled ? "active" : "disabled"}">${disabled ? "Activate" : "Disable"}</button>
-            <button class="btn danger" type="button" data-user-delete="${escapeHtml(user.id)}">Delete</button>
+            <button class="btn danger" type="button" data-user-delete="${escapeHtml(user.id)}">Delete</button>`;
+    };
+    const renderUserRows = (users, empty, cols = 6) => users.length
+      ? users
+      .map((user) => {
+        const portals = (user.portalAccess || []).map(portalLabel).join(", ") || "Not assigned";
+        return `<tr>
+          <td>${escapeHtml(user.name)}</td>
+          <td>${escapeHtml(user.email)}</td>
+          <td><select data-user-role="${escapeHtml(user.id)}"><option ${user.role === "staff" ? "selected" : ""}>staff</option><option ${user.role === "manager" ? "selected" : ""}>manager</option><option ${user.role === "director" ? "selected" : ""}>director</option><option ${user.role === "branch" ? "selected" : ""}>branch</option><option ${user.role === "team-leader" ? "selected" : ""}>team-leader</option><option ${user.role === "agent" ? "selected" : ""}>agent</option><option ${user.role === "finance" ? "selected" : ""}>finance</option><option ${user.role === "hr" ? "selected" : ""}>hr</option><option ${user.role === "sales" ? "selected" : ""}>sales</option><option ${user.role === "inventory" ? "selected" : ""}>inventory</option><option ${user.role === "procurement" ? "selected" : ""}>procurement</option><option ${user.role === "customer_service" ? "selected" : ""}>customer_service</option><option ${user.role === "org_admin" ? "selected" : ""}>org_admin</option></select></td>
+          <td><span class="muted">${escapeHtml(portals)}</span></td>
+          <td>${escapeHtml(user.status || "active")}</td>
+          <td class="table-actions">
+            ${renderUserActions(user)}
           </td>
         </tr>`;
       })
-      .join("");
+      .join("")
+      : `<tr><td colspan="${cols}" class="muted">${escapeHtml(empty)}</td></tr>`;
+    $("#org-users-table").innerHTML = renderUserRows(state.users, "No users found.");
+    $("#org-directors-table").innerHTML = renderUserRows(state.users.filter((user) => roleBucket(user) === "director"), "No Directors assigned.");
+    $("#org-agents-table").innerHTML = renderUserRows(state.users.filter((user) => roleBucket(user) === "agent"), "No agents or team leaders assigned.");
+    const renderApprovalCard = (user) => `
+      <div class="approval-card">
+        <span>${escapeHtml(portalLabel(user.registeredPortalId || roleBucket(user)))}</span>
+        <strong>${escapeHtml(user.name || user.email)}</strong>
+        <p>${escapeHtml(user.email || "")} - ${escapeHtml(user.role || "staff")}</p>
+        <div class="approval-actions">
+          <button class="btn primary" type="button" data-user-status="${escapeHtml(user.id)}" data-status="active">Approve</button>
+          <button class="btn danger" type="button" data-user-status="${escapeHtml(user.id)}" data-status="rejected">Reject</button>
+          <button class="btn" type="button" data-user-portals="${escapeHtml(user.id)}">Assign portals</button>
+        </div>
+      </div>`;
+    const approvalGroups = [
+      ["director", "#approval-directors", "#approval-director-count", "No pending Directors."],
+      ["branch", "#approval-branches", "#approval-branch-count", "No pending branch accounts."],
+      ["agent", "#approval-agents", "#approval-agent-count", "No pending agents."],
+      ["user", "#approval-users", "#approval-user-count", "No pending staff users."],
+    ];
+    approvalGroups.forEach(([bucket, listSel, countSel, empty]) => {
+      const rows = pendingUsers(bucket);
+      $(countSel).textContent = rows.length;
+      $(listSel).innerHTML = rows.length ? rows.map(renderApprovalCard).join("") : `<div class="empty-state">${escapeHtml(empty)}</div>`;
+    });
     const branches = state.settings.branches || [];
     $("#org-branches-table").innerHTML = branches.length
       ? branches
@@ -209,7 +251,7 @@
       event.currentTarget.reset();
       await load();
     });
-    $("#org-users-table")?.addEventListener("click", async (event) => {
+    const handleUserClick = async (event) => {
       const save = event.target.closest("[data-user-save]");
       const portals = event.target.closest("[data-user-portals]");
       const status = event.target.closest("[data-user-status]");
@@ -255,6 +297,9 @@
       } catch (err) {
         window.EnterpriseCore?.notify?.("User update failed", err.message, "error");
       }
+    };
+    ["#org-users-table", "#org-directors-table", "#org-agents-table", "#approvals"].forEach((selector) => {
+      $(selector)?.addEventListener("click", handleUserClick);
     });
     $("#org-branches-table")?.addEventListener("click", async (event) => {
       const btn = event.target.closest("[data-branch-delete]");

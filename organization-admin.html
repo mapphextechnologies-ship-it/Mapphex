@@ -29,10 +29,13 @@
           <div class="sidebar-nav-group">
             <strong>Main</strong>
             <a class="sidebar-link active" href="#dashboard" data-icon="D">Dashboard</a>
+            <a class="sidebar-link" href="#approvals" data-icon="A">Approvals</a>
           </div>
           <div class="sidebar-nav-group">
             <strong>People</strong>
             <a class="sidebar-link" href="#users" data-icon="U">Users</a>
+            <a class="sidebar-link" href="#directors" data-icon="D">Directors</a>
+            <a class="sidebar-link" href="#agents" data-icon="G">Agents</a>
             <a class="sidebar-link" href="#roles" data-icon="R">Roles</a>
           </div>
           <div class="sidebar-nav-group">
@@ -58,15 +61,38 @@
           <div class="panel-header"><h2>Organization Dashboard</h2><div class="panel-actions"><input id="tenant-input" placeholder="Organization ID" /><button id="load-org" class="btn" type="button">Load</button></div></div>
           <div class="kpis">
             <article class="kpi"><div class="kpi-label">Users</div><div id="org-kpi-users" class="kpi-value">0</div><div class="kpi-foot muted">Staff accounts</div></article>
+            <article class="kpi"><div class="kpi-label">Pending</div><div id="org-kpi-pending" class="kpi-value">0</div><div class="kpi-foot muted">Waiting approval</div></article>
             <article class="kpi"><div class="kpi-label">Branches</div><div id="org-kpi-branches" class="kpi-value">0</div><div class="kpi-foot muted">Locations</div></article>
             <article class="kpi"><div class="kpi-label">Modules</div><div id="org-kpi-modules" class="kpi-value">0</div><div class="kpi-foot muted">Enabled</div></article>
             <article class="kpi"><div class="kpi-label">Status</div><div id="org-kpi-status" class="kpi-value">Active</div><div class="kpi-foot muted">Workspace</div></article>
           </div>
+          <div class="admin-command-grid">
+            <article class="admin-command-card"><span>Organization control</span><strong>This console manages only the current company, its users, branches, modules, announcements, and audit history.</strong></article>
+            <article class="admin-command-card"><span>Approval rule</span><strong>Director, branch, agent, and staff accounts stay blocked until this organization admin approves them.</strong></article>
+            <article class="admin-command-card"><span>Data scope</span><strong>All records remain namespaced to this organization so another company cannot see or change them.</strong></article>
+          </div>
+        </section>
+        <section class="panel" id="approvals">
+          <div class="panel-header"><h2>Approval Center</h2><div class="panel-actions muted">Review accounts before they can open organization portals</div></div>
+          <div class="approval-board">
+            <article class="approval-column"><div class="approval-column-head"><h3>Directors</h3><span id="approval-director-count">0</span></div><div id="approval-directors" class="approval-list"></div></article>
+            <article class="approval-column"><div class="approval-column-head"><h3>Branches</h3><span id="approval-branch-count">0</span></div><div id="approval-branches" class="approval-list"></div></article>
+            <article class="approval-column"><div class="approval-column-head"><h3>Agents & Team Leaders</h3><span id="approval-agent-count">0</span></div><div id="approval-agents" class="approval-list"></div></article>
+            <article class="approval-column"><div class="approval-column-head"><h3>Staff</h3><span id="approval-user-count">0</span></div><div id="approval-users" class="approval-list"></div></article>
+          </div>
         </section>
         <section class="panel" id="users">
           <div class="panel-header"><h2>Users & Roles</h2><div class="panel-actions muted">Organization scoped only</div></div>
-          <form id="org-user-form" class="super-form"><label class="field"><span>Name</span><input name="name" required /></label><label class="field"><span>Email</span><input name="email" type="email" required /></label><label class="field"><span>Password</span><input name="password" type="password" minlength="6" required /></label><label class="field"><span>Role</span><select name="role"><option>staff</option><option>manager</option><option>finance</option><option>hr</option><option>procurement</option><option>inventory</option><option>pharmacy</option><option>sales</option><option>customer_service</option><option>academic</option><option>hospital</option><option>restaurant</option><option>real_estate</option><option>org_admin</option></select></label><div id="org-user-portals" class="module-checkbox-list"></div><button class="btn primary" type="submit">Add user</button></form>
+          <form id="org-user-form" class="super-form"><label class="field"><span>Name</span><input name="name" required /></label><label class="field"><span>Email</span><input name="email" type="email" required /></label><label class="field"><span>Password</span><input name="password" type="password" minlength="6" required /></label><label class="field"><span>Role</span><select name="role"><option>staff</option><option>manager</option><option>director</option><option>branch</option><option>team-leader</option><option>agent</option><option>finance</option><option>hr</option><option>procurement</option><option>inventory</option><option>pharmacy</option><option>sales</option><option>customer_service</option><option>academic</option><option>hospital</option><option>restaurant</option><option>real_estate</option><option>org_admin</option></select></label><div id="org-user-portals" class="module-checkbox-list"></div><button class="btn primary" type="submit">Add user</button></form>
           <div class="table-wrap"><table class="table"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Portals</th><th>Status</th><th>Actions</th></tr></thead><tbody id="org-users-table"></tbody></table></div>
+        </section>
+        <section class="panel" id="directors">
+          <div class="panel-header"><h2>Directors</h2><div class="panel-actions muted">Executive access assigned inside this organization</div></div>
+          <div class="table-wrap"><table class="table"><thead><tr><th>Director</th><th>Email</th><th>Role</th><th>Portal Access</th><th>Status</th><th>Actions</th></tr></thead><tbody id="org-directors-table"></tbody></table></div>
+        </section>
+        <section class="panel" id="agents">
+          <div class="panel-header"><h2>Agents & Team Leaders</h2><div class="panel-actions muted">Field and sales users assigned by this organization</div></div>
+          <div class="table-wrap"><table class="table"><thead><tr><th>User</th><th>Email</th><th>Role</th><th>Portal Access</th><th>Status</th><th>Actions</th></tr></thead><tbody id="org-agents-table"></tbody></table></div>
         </section>
         <section class="panel" id="tenant-controls">
           <div class="panel-header"><h2>Organization Controls</h2><div class="panel-actions"><button id="clear-org-messages" class="btn danger" type="button">Clear Messages</button><button id="clear-org-reports" class="btn danger" type="button">Clear Reports</button><button id="export-admin-audit" class="btn" type="button">Export Audit</button><button id="send-global-announcement" class="btn primary" type="button">Send Announcement</button></div></div>
@@ -136,6 +162,6 @@
     <script src="enterprise-platform.js"></script>
     <script src="ui-menu.js?v=2"></script>
     <script src="pwa.js"></script>
-    <script src="organization-admin.js?v=8"></script>
+    <script src="organization-admin.js?v=9"></script>
   </body>
 </html>
