@@ -16,15 +16,6 @@ const ANNOUNCEMENTS_KEY = "enterprise_announcements_v1";
 const NOTIFICATIONS_KEY = "enterprise_notifications_v1";
 const PLATFORM_SETTINGS_KEY = "platform_settings_v1";
 
-const ROLE_PORTAL_MAP = {
-  director: ["director"],
-  branch: ["device-branch", "branch"],
-  "team-leader": ["agent", "sales", "reporting"],
-  team_leader: ["agent", "sales", "reporting"],
-  agent: ["agent", "sales"],
-  staff: ["staff"],
-};
-
 const publicOrg = (org) => {
   const { adminPasswordHash, ...safe } = org || {};
   return safe;
@@ -33,124 +24,6 @@ const publicOrg = (org) => {
 const readArray = async (store, key) => {
   const value = (await store.get(key)) || [];
   return Array.isArray(value) ? value : [];
-};
-
-const roleBucket = (user = {}) => {
-  const role = String(user.role || "").trim().toLowerCase();
-  const portalId = String(user.registeredPortalId || user.portalId || "").trim().toLowerCase();
-  if (role === "director" || portalId === "director") return "directors";
-  if (role === "branch" || portalId === "device-branch" || portalId === "branch") return "branches";
-  if (role === "agent" || role === "team-leader" || role === "team_leader" || portalId === "agent") return "agents";
-  return "users";
-};
-
-const publicUser = (user = {}) => {
-  const { activationToken, password, passwordHash, passwordResetToken, passwordSetupToken, salt, secretB64, ...safe } = user;
-  return safe;
-};
-
-const approvalQueuesFor = (tenantSummaries) => {
-  const queues = {
-    organizations: [],
-    directors: [],
-    branches: [],
-    agents: [],
-    users: [],
-  };
-  tenantSummaries.forEach((row) => {
-    const org = row.organization || {};
-    if (["pending", "rejected"].includes(String(org.status || "").toLowerCase())) queues.organizations.push(org);
-    (row.users || []).forEach((user) => {
-      if (String(user.status || "").toLowerCase() !== "pending") return;
-      queues[roleBucket(user)].push({
-        ...user,
-        organizationName: org.name,
-        tenantId: org.id,
-        organizationId: org.organizationId,
-      });
-    });
-  });
-  return queues;
-};
-
-const permissionsForRole = (role, portals) => {
-  const cleanRole = String(role || "staff").trim().toLowerCase();
-  const portalIds = Array.from(new Set((Array.isArray(portals) ? portals : []).map((id) => String(id || "").trim()).filter(Boolean)));
-  if (cleanRole === "director") return ["director.read", "director.manage", "reporting.read", "branch.read"];
-  if (cleanRole === "branch") return ["device-branch.read", "device-branch.manage", "branch.read", "sales.create", "inventory.read"];
-  if (cleanRole === "agent") return ["agent.read", "sales.create", "customer.read"];
-  if (cleanRole === "team-leader" || cleanRole === "team_leader") return ["agent.read", "agent.manage", "sales.read", "reporting.read"];
-  return portalIds.map((id) => `${id}.read`);
-};
-
-const reviewTenantUser = async (store, organizations, body, actor) => {
-  const tenantId = safeString(body.tenantId, 80);
-  const userId = safeString(body.userId || body.id, 180);
-  const decision = safeString(body.decision || body.status || "active", 40).toLowerCase();
-  const org = organizations.find((row) => row.id === tenantId);
-  if (!org) return { status: 404, body: { ok: false, error: "Organization not found" } };
-  if (!userId) return { status: 400, body: { ok: false, error: "User id is required" } };
-  if (!["approved", "active", "rejected", "disabled"].includes(decision)) {
-    return { status: 400, body: { ok: false, error: "Invalid review decision" } };
-  }
-
-  const usersKey = scopeTenantKey(tenantId, USERS_KEY);
-  const settingsKey = scopeTenantKey(tenantId, SETTINGS_KEY);
-  const [users, settingsRaw] = await Promise.all([readArray(store, usersKey), store.get(settingsKey)]);
-  const idx = users.findIndex((user) => String(user.id || "") === userId);
-  if (idx < 0) return { status: 404, body: { ok: false, error: "User not found" } };
-
-  const user = users[idx];
-  const requestedRole = safeString(body.role || user.role || "staff", 60).toLowerCase();
-  const role = requestedRole === "team_leader" ? "team-leader" : requestedRole;
-  if (role === "director") {
-    const alreadyHasDirector = users.some((candidate, candidateIdx) =>
-      candidateIdx !== idx &&
-      String(candidate.role || "").toLowerCase() === "director" &&
-      String(candidate.status || "").toLowerCase() === "active",
-    );
-    if (decision === "approved" || decision === "active") {
-      if (alreadyHasDirector) return { status: 409, body: { ok: false, error: "This organization already has an active Director" } };
-    }
-  }
-
-  const registeredPortal = String(user.registeredPortalId || "").trim().toLowerCase();
-  const defaultPortals = ROLE_PORTAL_MAP[role] || (registeredPortal ? [registeredPortal] : ["staff"]);
-  const portalAccess = Array.from(new Set([
-    ...defaultPortals,
-    ...(Array.isArray(body.portalAccess) ? body.portalAccess : []),
-  ].map((id) => String(id || "").trim()).filter(Boolean)));
-  const settings = settingsRaw && typeof settingsRaw === "object" ? settingsRaw : {};
-  const installedPortals = Array.from(new Set([...(settings.installedPortals || []), ...portalAccess].filter(Boolean)));
-  const status = decision === "rejected" ? "rejected" : decision === "disabled" ? "disabled" : "active";
-  const reviewedAt = new Date().toISOString();
-  const nextUser = {
-    ...user,
-    role,
-    status,
-    portalAccess: status === "active" ? portalAccess : user.portalAccess || [],
-    permissions: status === "active" ? Array.from(new Set([...(user.permissions || []), ...permissionsForRole(role, portalAccess)])) : user.permissions || [],
-    assignedBranchId: safeString(body.branchId || user.assignedBranchId || user.branchId || "", 80),
-    teamLeaderId: safeString(body.teamLeaderId || user.teamLeaderId || "", 80),
-    reviewReason: safeString(body.reason || "", 500),
-    reviewedAt,
-    reviewedBy: actor,
-  };
-  const nextUsers = [...users];
-  nextUsers[idx] = nextUser;
-  await store.setManyAtomic({
-    [usersKey]: nextUsers,
-    [settingsKey]: {
-      ...settings,
-      installedPortals,
-      modules: Array.from(new Set([...(settings.modules || []), ...installedPortals])),
-      navigation: Array.from(new Set([...(settings.navigation || []), ...installedPortals])),
-      updatedAt: reviewedAt,
-    },
-  });
-  await appendEvent(store, "platform", "platform.user.reviewed", { tenantId, userId, role, status, actor });
-  await appendEvent(store, tenantId, "org.user.reviewed", { userId, role, status });
-  return { status: 200, body: { ok: true, user: publicUser(nextUser) } };
 };
 
 const normalizeOrganizationRows = (value) => {
@@ -178,7 +51,7 @@ const summarizeTenant = async (store, org) => {
     (org.status === "suspended" ? 1 : 0);
   return {
     organization: publicOrg(org),
-    users: users.map(publicUser),
+    users: users.map(({ activationToken, password, passwordHash, passwordResetToken, passwordSetupToken, ...user }) => user),
     settings,
     metrics: {
       users: users.length,
@@ -292,10 +165,6 @@ module.exports = async (req, res) => {
         await appendEvent(store, "platform", `platform.${body.action}`, { tenantId, id, actor: superSession.sub });
         return sendJson(res, 200, { ok: true });
       }
-      if (body.action === "review-user") {
-        const result = await reviewTenantUser(store, organizations, body, superSession.sub);
-        return sendJson(res, result.status, result.body);
-      }
       if (body.action === "backup-organization") {
         const org = organizations.find((row) => row.id === safeString(body.tenantId || body.id, 80));
         if (!org) return sendJson(res, 404, { ok: false, error: "Organization not found" });
@@ -390,8 +259,6 @@ module.exports = async (req, res) => {
 
     const platformSettings = (await store.get(PLATFORM_SETTINGS_KEY)) || {};
 
-    const approvalQueues = approvalQueuesFor(tenantSummaries);
-
     return sendJson(res, 200, {
       ok: true,
       totals,
@@ -399,7 +266,6 @@ module.exports = async (req, res) => {
       activity,
       globalSearch,
       heatmap,
-      approvalQueues,
       platformSettings,
       health: {
         database: "online",

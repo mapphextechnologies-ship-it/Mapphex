@@ -237,7 +237,7 @@ const createOrganization = async (req, res, body) => {
     portalPricing,
     contact: { email: orgEmail, phone, location },
     companySize,
-    status: "pending",
+    status: "active",
     subscriptionStatus: "trial",
     admin: { name: adminName, email: adminEmail, username: adminUsername, role: "org_admin", passwordSetupRequired: false },
     metrics: { users: 1, branches: branchCount, inventoryItems: 0, orders: 0, revenue: 0 },
@@ -291,7 +291,7 @@ const createOrganization = async (req, res, body) => {
     createdAt: now,
   });
   await saveOrganizations(store, [org, ...rows]);
-  await appendEvent(store, "platform", "organization.registered", { organizationId: org.organizationId, name, tenantId, status: "pending" });
+  await appendEvent(store, "platform", "organization.registered", { organizationId: org.organizationId, name, tenantId });
   await appendEvent(store, tenantId, "organization.workspace.created", { organizationId: org.organizationId, name });
   return sendJson(res, 201, {
     ok: true,
@@ -300,7 +300,6 @@ const createOrganization = async (req, res, body) => {
     organizationId: org.organizationId,
     adminAccount: { email: adminEmail, username: adminUsername, passwordSetupToken },
     installedPortals,
-    pendingApproval: true,
   });
 };
 
@@ -348,7 +347,7 @@ module.exports = async (req, res) => {
 
     if (body.action === "set-status") {
       const status = safeString(body.status, 40);
-      if (!["active", "suspended", "restricted", "verified", "pending", "rejected"].includes(status)) return sendJson(res, 400, { ok: false, error: "Invalid status" });
+      if (!["active", "suspended", "restricted", "verified"].includes(status)) return sendJson(res, 400, { ok: false, error: "Invalid status" });
       rows[idx] = { ...rows[idx], status, updatedAt: new Date().toISOString() };
       await saveOrganizations(store, rows);
       await appendEvent(store, "platform", "organization.status.changed", { organizationId: rows[idx].organizationId, status, actor: superSession.sub });

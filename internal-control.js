@@ -6,8 +6,8 @@
     String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
 
   let state = { organizations: [], events: [], totals: {}, activity: [], health: {} };
-  let monitoring = { organizations: [], totals: {}, activity: [], health: {}, approvalQueues: {} };
-  const loginUrl = () => (["localhost", "127.0.0.1", ""].includes(location.hostname) ? "/_internal/mapphex-control" : "/admin-portal.html");
+  let monitoring = { organizations: [], totals: {}, activity: [], health: {} };
+  const loginUrl = () => (["localhost", "127.0.0.1", ""].includes(location.hostname) ? "/_internal/mapphex-control" : "/super-admin-login.html");
 
   const notify = (title, body) => {
     const message = body ? `${title}: ${body}` : title;
@@ -39,43 +39,28 @@
     });
     return [...byId.values()];
   };
-  const allUsers = () =>
-    monitoringRows().flatMap((row) =>
-      (row.users || []).map((user) => ({ ...user, organization: row.organization?.name, tenantId: row.organization?.id, organizationId: row.organization?.organizationId })),
-    );
-  const bucketUser = (user = {}) => {
-    const role = String(user.role || "").toLowerCase();
-    const portal = String(user.registeredPortalId || "").toLowerCase();
-    if (role === "director" || portal === "director") return "director";
-    if (role === "branch" || portal === "device-branch" || portal === "branch") return "branch";
-    if (["agent", "team-leader", "team_leader"].includes(role) || portal === "agent") return "agent";
-    return "user";
-  };
-  const queue = (name) => Array.isArray(monitoring.approvalQueues?.[name]) ? monitoring.approvalQueues[name] : [];
 
   const renderKpis = async () => {
     const totals = monitoring.totals || state.totals || {};
     const rows = orgRows();
-    const pendingTotal = queue("organizations").length + queue("directors").length + queue("branches").length + queue("agents").length + queue("users").length;
     $("#kpi-orgs").textContent = num(Math.max(Number(totals.organizations || 0), rows.length));
-    $("#kpi-pending").textContent = num(pendingTotal);
-    $("#kpi-branches").textContent = num(totals.branches || allUsers().filter((user) => bucketUser(user) === "branch").length);
+    $("#kpi-active").textContent = num(Math.max(Number(totals.active || 0), rows.filter((org) => String(org.status || "").toLowerCase() === "active").length));
     $("#kpi-users").textContent = num(Math.max(Number(totals.users || 0), rows.reduce((sum, org) => sum + Number(org.metrics?.users || 0), 0)));
     $("#kpi-revenue").textContent = num(Math.max(Number(totals.revenue || 0), rows.reduce((sum, org) => sum + Number(org.metrics?.revenue || 0), 0)));
-    if ($("#kpi-alerts")) $("#kpi-alerts").textContent = num(totals.securityAlerts || totals.suspended);
-    if ($("#mon-active-users")) $("#mon-active-users").textContent = num(totals.activeUsers);
-    if ($("#mon-branches")) $("#mon-branches").textContent = num(totals.branches);
-    if ($("#mon-queue")) $("#mon-queue").textContent = num(totals.queuedTasks);
-    if ($("#mon-files")) $("#mon-files").textContent = num(totals.files);
-    if ($("#mon-audit")) $("#mon-audit").textContent = num(totals.auditEvents);
-    if ($("#mon-modules")) $("#mon-modules").textContent = num(totals.modules);
-    if ($("#mon-suspended")) $("#mon-suspended").textContent = num(totals.suspended);
+    $("#kpi-alerts").textContent = num(totals.securityAlerts || totals.suspended);
+    $("#mon-active-users").textContent = num(totals.activeUsers);
+    $("#mon-branches").textContent = num(totals.branches);
+    $("#mon-queue").textContent = num(totals.queuedTasks);
+    $("#mon-files").textContent = num(totals.files);
+    $("#mon-audit").textContent = num(totals.auditEvents);
+    $("#mon-modules").textContent = num(totals.modules);
+    $("#mon-suspended").textContent = num(totals.suspended);
     try {
       const health = await fetchJson("/api/health");
-      if ($("#kpi-sessions")) $("#kpi-sessions").textContent = num(health.realtimeClients);
-      if ($("#kpi-health")) $("#kpi-health").textContent = monitoring.health?.api === "online" ? "Online" : "Online";
+      $("#kpi-sessions").textContent = num(health.realtimeClients);
+      $("#kpi-health").textContent = monitoring.health?.api === "online" ? "Online" : "Online";
     } catch {
-      if ($("#kpi-health")) $("#kpi-health").textContent = "Degraded";
+      $("#kpi-health").textContent = "Degraded";
     }
   };
 
@@ -98,7 +83,6 @@
             <td>${escapeHtml(org.subscriptionStatus || "trial")}</td>
             <td class="report-buttons">
               <button class="btn" data-action="active" data-id="${escapeHtml(org.id)}" type="button">Activate</button>
-              <button class="btn danger" data-action="rejected" data-id="${escapeHtml(org.id)}" type="button">Reject</button>
               <button class="btn" data-action="verified" data-id="${escapeHtml(org.id)}" type="button">Verify</button>
               <button class="btn" data-action="restricted" data-id="${escapeHtml(org.id)}" type="button">Restrict</button>
               <button class="btn danger" data-action="suspended" data-id="${escapeHtml(org.id)}" type="button">Suspend</button>
@@ -111,53 +95,10 @@
       .join("");
   };
 
-  const actionButtons = (user) => {
-    const role = bucketUser(user);
-    const label = role === "director" ? "Approve Director" : role === "branch" ? "Approve Branch" : role === "agent" ? "Approve Agent" : "Approve";
-    return `
-      <button class="btn primary" type="button" data-review-user="${escapeHtml(user.id)}" data-tenant="${escapeHtml(user.tenantId)}" data-role="${escapeHtml(user.role || role)}" data-decision="approved">${label}</button>
-      <button class="btn danger" type="button" data-review-user="${escapeHtml(user.id)}" data-tenant="${escapeHtml(user.tenantId)}" data-role="${escapeHtml(user.role || role)}" data-decision="rejected">Reject</button>`;
-  };
-
-  const renderApprovalCard = (item, type) => {
-    if (type === "organization") {
-      return `
-        <div class="approval-card">
-          <span>${escapeHtml(item.organizationId || item.referenceCode || "New organization")}</span>
-          <strong>${escapeHtml(item.name || "Unnamed organization")}</strong>
-          <p>${escapeHtml(item.businessType || "business")} - ${escapeHtml(item.contact?.email || item.admin?.email || "No contact")}</p>
-          <div class="approval-actions">
-            <button class="btn primary" data-action="active" data-id="${escapeHtml(item.id)}" type="button">Approve</button>
-            <button class="btn danger" data-action="rejected" data-id="${escapeHtml(item.id)}" type="button">Reject</button>
-          </div>
-        </div>`;
-    }
-    return `
-      <div class="approval-card">
-        <span>${escapeHtml(item.organizationName || item.organizationId || "Organization")}</span>
-        <strong>${escapeHtml(item.name || item.username || item.email)}</strong>
-        <p>${escapeHtml(item.email || "")} - ${escapeHtml(item.registeredPortalId || item.role || type)}</p>
-        <div class="approval-actions">${actionButtons(item)}</div>
-      </div>`;
-  };
-
-  const renderApprovals = () => {
-    const orgs = queue("organizations");
-    const directors = queue("directors");
-    const branches = queue("branches");
-    const agents = [...queue("agents"), ...queue("users").filter((user) => bucketUser(user) === "agent")];
-    if ($("#approval-org-count")) $("#approval-org-count").textContent = num(orgs.length);
-    if ($("#approval-director-count")) $("#approval-director-count").textContent = num(directors.length);
-    if ($("#approval-branch-count")) $("#approval-branch-count").textContent = num(branches.length);
-    if ($("#approval-agent-count")) $("#approval-agent-count").textContent = num(agents.length);
-    if ($("#approval-orgs")) $("#approval-orgs").innerHTML = orgs.length ? orgs.map((item) => renderApprovalCard(item, "organization")).join("") : `<div class="empty-state">No pending organizations.</div>`;
-    if ($("#approval-directors")) $("#approval-directors").innerHTML = directors.length ? directors.map((item) => renderApprovalCard(item, "director")).join("") : `<div class="empty-state">No pending Directors.</div>`;
-    if ($("#approval-branches")) $("#approval-branches").innerHTML = branches.length ? branches.map((item) => renderApprovalCard(item, "branch")).join("") : `<div class="empty-state">No pending branches.</div>`;
-    if ($("#approval-agents")) $("#approval-agents").innerHTML = agents.length ? agents.map((item) => renderApprovalCard(item, "agent")).join("") : `<div class="empty-state">No pending agents.</div>`;
-  };
-
   const renderUsers = () => {
-    const users = allUsers();
+    const users = monitoringRows().flatMap((row) =>
+      (row.users || []).map((user) => ({ ...user, organization: row.organization?.name, tenantId: row.organization?.id })),
+    );
     $("#global-users-table").innerHTML = users
       .map(
         (user) => `
@@ -171,47 +112,6 @@
           </tr>`,
       )
       .join("");
-  };
-
-  const renderRoleTable = (selector, filter, emptyMessage) => {
-    const rows = allUsers().filter(filter);
-    const target = $(selector);
-    if (!target) return;
-    target.innerHTML = rows.length
-      ? rows.map((user) => `
-          <tr>
-            <td><strong>${escapeHtml(user.name || user.username || user.email)}</strong><div class="muted">${escapeHtml(user.email || "")}</div></td>
-            <td>${escapeHtml(user.organization || "")}<div class="muted">${escapeHtml(user.organizationId || user.tenantId || "")}</div></td>
-            <td>${escapeHtml(user.branchId || user.assignedBranchId || user.area || user.registeredPortalId || "Unassigned")}</td>
-            <td><span class="pill status-${escapeHtml(user.status || "active")}">${escapeHtml(user.status || "active")}</span></td>
-            <td class="report-buttons">${actionButtons(user)}</td>
-          </tr>`).join("")
-      : `<tr><td colspan="5" class="muted">${escapeHtml(emptyMessage)}</td></tr>`;
-  };
-
-  const renderRolePanels = () => {
-    renderRoleTable("#directors-table", (user) => bucketUser(user) === "director", "No Director accounts found.");
-    renderRoleTable("#branches-table", (user) => bucketUser(user) === "branch", "No branch manager accounts found.");
-    renderRoleTable("#agents-table", (user) => bucketUser(user) === "agent", "No agent or team leader accounts found.");
-  };
-
-  const renderModules = () => {
-    const target = $("#modules-grid");
-    if (!target) return;
-    const rows = orgRows();
-    target.innerHTML = rows.length
-      ? rows.map((org) => {
-          const summary = monitoringRows().find((row) => row.organization?.id === org.id);
-          const installed = summary?.settings?.installedPortals || org.modules || [];
-          return `
-            <article class="admin-module-card">
-              <span>${escapeHtml(org.organizationId || org.referenceCode || org.id)}</span>
-              <strong>${escapeHtml(org.name)}</strong>
-              <p>${installed.length ? installed.map(escapeHtml).join(", ") : "No modules approved yet"}</p>
-              <button class="btn" data-action="modules-core" data-id="${escapeHtml(org.id)}" type="button">Enable core modules</button>
-            </article>`;
-        }).join("")
-      : `<div class="empty-state">No organizations registered yet.</div>`;
   };
 
   const renderActivity = () => {
@@ -281,10 +181,7 @@
     state = orgs;
     monitoring = monitor;
     renderOrgs();
-    renderApprovals();
     renderUsers();
-    renderRolePanels();
-    renderModules();
     renderActivity();
     renderSearch();
     renderHeatmap();
@@ -299,15 +196,6 @@
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "set-status", id, status }),
-    });
-    await load();
-  };
-
-  const reviewUser = async (tenantId, userId, role, decision) => {
-    await fetchJson("/api/platform-monitoring", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "review-user", tenantId, userId, role, decision }),
     });
     await load();
   };
@@ -405,21 +293,6 @@
       if (btn.dataset.action === "backup") return backupOrganization(btn.dataset.id).catch((err) => notify("Backup failed", err.message));
       if (btn.dataset.action === "modules-core") return setCoreModules(btn.dataset.id).catch((err) => notify("Module update failed", err.message));
       setStatus(btn.dataset.id, btn.dataset.action).catch((err) => notify("Organization update failed", err.message));
-    });
-    $("#modules-grid")?.addEventListener("click", (event) => {
-      const btn = event.target.closest("button[data-action='modules-core']");
-      if (!btn) return;
-      setCoreModules(btn.dataset.id).catch((err) => notify("Module update failed", err.message));
-    });
-    document.addEventListener("click", (event) => {
-      const orgBtn = event.target.closest("#approval-orgs button[data-action]");
-      if (orgBtn) {
-        setStatus(orgBtn.dataset.id, orgBtn.dataset.action).catch((err) => notify("Organization review failed", err.message));
-        return;
-      }
-      const userBtn = event.target.closest("button[data-review-user]");
-      if (!userBtn) return;
-      reviewUser(userBtn.dataset.tenant, userBtn.dataset.reviewUser, userBtn.dataset.role, userBtn.dataset.decision).catch((err) => notify("User review failed", err.message));
     });
     $("#global-users-table")?.addEventListener("click", (event) => {
       const btn = event.target.closest("[data-delete-user]");

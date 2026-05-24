@@ -4,7 +4,7 @@
   const form = () => document.querySelector("#super-admin-login-form");
   const errorEl = () => document.querySelector("#super-admin-login-error");
   const isLocal = () => ["localhost", "127.0.0.1", ""].includes(location.hostname);
-  const dashboardUrl = () => (isLocal() ? "/_internal/mapphex-control/dashboard" : "/admin-dashboard.html");
+  const dashboardUrl = () => (isLocal() ? "/_internal/mapphex-control/dashboard" : "/super-admin.html");
 
   document.addEventListener("DOMContentLoaded", async () => {
     if (window.SuperAdminSession?.readSession?.()) {
