@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Driver Portal - MAPPHEX</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/images/enterprise-icon-192.png" type="image/png" />
+    <link rel="stylesheet" href="director.css" />
+    <link rel="stylesheet" href="branch.css" />
+    <link rel="stylesheet" href="enterprise-platform.css" />
+  </head>
+  <body data-department-portal="driver" data-portal-title="Driver Portal">
+    <header class="topbar">
+      <div class="brand"><img class="logo-img" src="/images/enterprise-logo.png" alt="" /><div><div id="portal-title" class="brand-title">Driver Portal</div><div id="portal-subtitle" class="brand-subtitle muted">My deliveries</div></div></div>
+      <div class="topbar-actions"><a id="workspace-link" class="btn" href="organization-workspace.html">Workspace</a><a class="btn" href="index.html?logout=1">Logout</a></div>
+    </header>
+    <main class="layout" style="max-width: 980px;">
+      <section class="panel" data-section="overview" id="overview">
+        <div class="panel-header"><h2>My Performance</h2><div class="panel-actions"><a class="btn" href="#orders" data-nav="orders">My deliveries</a></div></div>
+        <div class="kpis">
+          <article class="kpi"><div class="kpi-label">Orders today</div><div id="log-kpi-orders" class="kpi-value">0</div><div class="kpi-foot muted">Assigned view</div></article>
+          <article class="kpi"><div class="kpi-label">In transit</div><div id="log-kpi-transit" class="kpi-value">0</div><div class="kpi-foot muted">Moving now</div></article>
+          <article class="kpi"><div class="kpi-label">Delivered today</div><div id="log-kpi-delivered" class="kpi-value">0</div><div class="kpi-foot muted">Completed</div></article>
+          <article class="kpi"><div class="kpi-label">Cash / revenue</div><div id="log-kpi-revenue" class="kpi-value">KES 0</div><div class="kpi-foot muted">Assigned orders</div></article>
+        </div>
+      </section>
+      <section class="panel" data-section="orders" id="orders">
+        <div class="panel-header"><h2>My Deliveries</h2><div class="panel-actions muted">Update every order as it moves</div></div>
+        <div class="table-wrap"><table class="table"><thead><tr><th>Ref</th><th>Customer</th><th>Pickup</th><th>Address</th><th>Driver</th><th>Status</th><th class="num">Amount</th><th>Action</th></tr></thead><tbody id="orders-tbody"></tbody></table></div>
+      </section>
+      <section hidden><table><tbody id="drivers-tbody"></tbody><tbody id="zones-tbody"></tbody><tbody id="movements-tbody"></tbody></table><div id="finance-summary"></div></section>
+    </main>
+    <script src="enterprise-core.js?v=2"></script><script src="auth-guard.js?v=2"></script><script src="kv-client.js"></script><script src="enterprise-store.js"></script><script src="department-portals.js?v=1"></script>
+  </body>
+</html>
