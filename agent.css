@@ -4,6 +4,11 @@
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);
   min-height: calc(100vh - 72px);
+  transition: grid-template-columns 180ms ease;
+}
+
+body.portal-sidebar-collapsed .agent-shell {
+  grid-template-columns: 82px minmax(0, 1fr);
 }
 
 .agent-sidebar {
@@ -15,6 +20,29 @@
   backdrop-filter: blur(18px);
   padding: 22px;
   overflow: auto;
+}
+
+body.portal-sidebar-collapsed .agent-sidebar {
+  padding-inline: 10px;
+}
+
+body.portal-sidebar-collapsed .sidebar-title,
+body.portal-sidebar-collapsed .sidebar-link,
+body.portal-sidebar-collapsed .sidebar-nav-group > strong {
+  font-size: 0;
+}
+
+body.portal-sidebar-collapsed .sidebar-link::before {
+  content: attr(data-icon);
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  background: rgba(0, 119, 255, 0.16);
+  color: #66dcff;
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .sidebar-header {
@@ -36,8 +64,29 @@
   padding: 6px 0;
 }
 
+.sidebar-nav-group {
+  display: grid;
+  gap: 7px;
+  padding-top: 8px;
+}
+
+.sidebar-nav-group + .sidebar-nav-group {
+  margin-top: 10px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.sidebar-nav-group > strong {
+  padding: 0 4px;
+  color: rgba(218, 232, 255, 0.68);
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
 .sidebar-link {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   padding: 12px 14px;
   border-radius: 10px;
@@ -50,7 +99,7 @@
 
 .sidebar-link:hover,
 .sidebar-link.active {
-  color: #050914;
+  color: #ffffff;
   background: rgba(0, 119, 255, 0.16);
   box-shadow: inset 3px 0 0 #5bd6ff;
   transform: translateX(2px);
@@ -172,6 +221,20 @@ body.menu-open {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  body.portal-sidebar-collapsed .agent-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body.portal-sidebar-collapsed .sidebar-title,
+  body.portal-sidebar-collapsed .sidebar-link,
+  body.portal-sidebar-collapsed .sidebar-nav-group > strong {
+    font-size: inherit;
+  }
+
+  body.portal-sidebar-collapsed .sidebar-link::before {
+    content: none;
+  }
+
   .agent-sidebar {
     position: fixed;
     top: 0;
@@ -182,6 +245,7 @@ body.menu-open {
     transition: transform 160ms ease;
     z-index: 40;
     border-right: 1px solid rgba(255, 255, 255, 0.16);
+    padding-top: max(14px, env(safe-area-inset-top));
   }
 
   .menu-backdrop {

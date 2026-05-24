@@ -39,12 +39,24 @@
           </button>
         </div>
         <nav class="sidebar-nav">
-          <a class="sidebar-link active" href="#overview" data-nav="overview">Overview</a>
-          <a class="sidebar-link" href="#onboarding" data-nav="onboarding">Organization onboarding</a>
-          <a class="sidebar-link" href="#sell" data-nav="sell">Products & services</a>
-          <a class="sidebar-link" href="#credit-payments" data-nav="credit-payments">Credit repayment</a>
-          <a class="sidebar-link" href="#history" data-nav="history">Client activity</a>
-          <a class="sidebar-link" href="#inventory" data-nav="inventory">Catalog (view)</a>
+          <div class="sidebar-nav-group">
+            <strong>Main</strong>
+            <a class="sidebar-link active" href="#overview" data-nav="overview" data-icon="O">Overview</a>
+          </div>
+          <div class="sidebar-nav-group">
+            <strong>Operations</strong>
+            <a class="sidebar-link" href="#onboarding" data-nav="onboarding" data-icon="O">Organization onboarding</a>
+            <a class="sidebar-link" href="#sell" data-nav="sell" data-icon="P">Products & services</a>
+            <a class="sidebar-link" href="#inventory" data-nav="inventory" data-icon="C">Catalog (view)</a>
+          </div>
+          <div class="sidebar-nav-group">
+            <strong>Finance</strong>
+            <a class="sidebar-link" href="#credit-payments" data-nav="credit-payments" data-icon="C">Credit repayment</a>
+          </div>
+          <div class="sidebar-nav-group">
+            <strong>People</strong>
+            <a class="sidebar-link" href="#history" data-nav="history" data-icon="H">Client activity</a>
+          </div>
         </nav>
         <div class="sidebar-foot muted">
           Agents onboard organizations, support clients, track subscriptions, and coordinate branch or service operations.

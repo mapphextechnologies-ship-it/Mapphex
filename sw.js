@@ -1,4 +1,4 @@
-const CACHE_NAME = "mapphex-erp-v146";
+const CACHE_NAME = "mapphex-erp-v147";
 const APP_SHELL = [
   "./",
   "./manifest.webmanifest",
@@ -29,6 +29,7 @@ const APP_SHELL = [
   "./Agent.html",
   "./Branch.html",
   "./Director.html",
+  "./super-admin.html",
   "./TeamLeader.html",
   "./director.css",
   "./enterprise-platform.css",

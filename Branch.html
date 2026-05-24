@@ -39,11 +39,20 @@
           </button>
         </div>
         <nav class="sidebar-nav">
-          <a class="sidebar-link active" href="#overview" data-nav="overview">Realtime overview</a>
-          <a class="sidebar-link" href="#inventory" data-nav="inventory">Inventory entry</a>
-          <a class="sidebar-link" href="#damages" data-nav="damages">Damages &amp; loss</a>
-          <a class="sidebar-link" href="#transactions" data-nav="transactions">Sales completed</a>
-          <a class="sidebar-link" href="#reports" data-nav="reports">Reports</a>
+          <div class="sidebar-nav-group">
+            <strong>Main</strong>
+            <a class="sidebar-link active" href="#overview" data-nav="overview" data-icon="O">Realtime overview</a>
+          </div>
+          <div class="sidebar-nav-group">
+            <strong>Operations</strong>
+            <a class="sidebar-link" href="#inventory" data-nav="inventory" data-icon="I">Inventory entry</a>
+            <a class="sidebar-link" href="#damages" data-nav="damages" data-icon="D">Damages &amp; loss</a>
+            <a class="sidebar-link" href="#transactions" data-nav="transactions" data-icon="S">Sales completed</a>
+          </div>
+          <div class="sidebar-nav-group">
+            <strong>Insights</strong>
+            <a class="sidebar-link" href="#reports" data-nav="reports" data-icon="R">Reports</a>
+          </div>
         </nav>
         <div class="sidebar-foot muted">
           Inventory is managed here. Sales transactions are completed by Agents.

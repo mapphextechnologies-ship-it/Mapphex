@@ -29,7 +29,8 @@ body.portal-sidebar-collapsed .portal-sidebar {
 }
 
 body.portal-sidebar-collapsed .sidebar-title,
-body.portal-sidebar-collapsed .sidebar-link {
+body.portal-sidebar-collapsed .sidebar-link,
+body.portal-sidebar-collapsed .sidebar-nav-group > strong {
   font-size: 0;
 }
 
@@ -68,6 +69,26 @@ body.portal-sidebar-collapsed .sidebar-link::before {
   display: grid;
   gap: 8px;
   padding: 6px 0;
+}
+
+.sidebar-nav-group {
+  display: grid;
+  gap: 7px;
+  padding-top: 8px;
+}
+
+.sidebar-nav-group + .sidebar-nav-group {
+  margin-top: 10px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.sidebar-nav-group > strong {
+  padding: 0 4px;
+  color: rgba(218, 232, 255, 0.68);
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
 }
 
 .sidebar-link {
@@ -207,7 +228,8 @@ body.menu-open {
   }
 
   body.portal-sidebar-collapsed .sidebar-title,
-  body.portal-sidebar-collapsed .sidebar-link {
+  body.portal-sidebar-collapsed .sidebar-link,
+  body.portal-sidebar-collapsed .sidebar-nav-group > strong {
     font-size: inherit;
   }
 

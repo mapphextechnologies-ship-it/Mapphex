@@ -26,15 +26,30 @@
       <aside id="portal-sidebar" class="portal-sidebar" aria-label="Organization menu">
         <div class="sidebar-header"><div class="sidebar-title">Organization</div><button id="menu-close" class="icon-btn" type="button" aria-label="Close menu"><span class="icon-close" aria-hidden="true"></span></button></div>
         <nav class="sidebar-nav">
-          <a class="sidebar-link active" href="#dashboard" data-icon="D">Dashboard</a>
-          <a class="sidebar-link" href="#users" data-icon="U">Users</a>
-          <a class="sidebar-link" href="#roles" data-icon="R">Roles</a>
-          <a class="sidebar-link" href="#branches" data-icon="B">Branches</a>
-          <a class="sidebar-link" href="#modules" data-icon="M">Modules</a>
-          <a class="sidebar-link" href="#tenant-controls" data-icon="S">Settings</a>
-          <a class="sidebar-link" href="#announcements" data-icon="A">Announcements</a>
-          <a class="sidebar-link" href="#notifications" data-icon="N">Notifications</a>
-          <a class="sidebar-link" href="#activity" data-icon="L">Audit Logs</a>
+          <div class="sidebar-nav-group">
+            <strong>Main</strong>
+            <a class="sidebar-link active" href="#dashboard" data-icon="D">Dashboard</a>
+          </div>
+          <div class="sidebar-nav-group">
+            <strong>People</strong>
+            <a class="sidebar-link" href="#users" data-icon="U">Users</a>
+            <a class="sidebar-link" href="#roles" data-icon="R">Roles</a>
+          </div>
+          <div class="sidebar-nav-group">
+            <strong>Operations</strong>
+            <a class="sidebar-link" href="#branches" data-icon="B">Branches</a>
+            <a class="sidebar-link" href="#modules" data-icon="M">Modules</a>
+          </div>
+          <div class="sidebar-nav-group">
+            <strong>Workflow</strong>
+            <a class="sidebar-link" href="#announcements" data-icon="A">Announcements</a>
+            <a class="sidebar-link" href="#notifications" data-icon="N">Notifications</a>
+          </div>
+          <div class="sidebar-nav-group">
+            <strong>Tools</strong>
+            <a class="sidebar-link" href="#tenant-controls" data-icon="S">Settings</a>
+            <a class="sidebar-link" href="#activity" data-icon="L">Audit Logs</a>
+          </div>
         </nav>
       </aside>
       <div id="menu-backdrop" class="menu-backdrop" aria-hidden="true"></div>
