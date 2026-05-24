@@ -136,7 +136,7 @@
     },
     sales: {
       entity: "Sales Order",
-      form: ["Customer", "Order/Quotation", "Amount", "Invoice Status"],
+      form: ["Customer", "Item / Service", "Purpose / Delivery", "Amount", "Invoice Status"],
       responsibilities: ["Orders", "Customers", "Quotations", "Product sales", "Discounts", "Invoices", "Revenue tracking", "Sales reports", "Customer history"],
       reports: ["Orders", "Quotations", "Invoices", "Revenue", "Discounts", "Customer history"],
       workflows: [["Create order", "inventory"], ["Send invoice", "finance"], ["Request discount approval", "finance"], ["Submit sales report", "reporting"]],
@@ -247,7 +247,7 @@
     const pending = (state.approvals || []).filter((item) => (item.target === moduleId || item.moduleId === moduleId) && item.status === "pending").length;
     const moduleTransactions = (Array.isArray(transactions) ? transactions : []).filter((tx) => tx.sourceModule === moduleId).length;
     const revenue = moduleId === "sales"
-      ? salesRows.reduce((sum, row) => sum + ((row.values || []).map((value) => Number(String(value).replace(/[^\d.-]/g, ""))).find((value) => Number.isFinite(value) && value > 0) || 0), 0)
+      ? salesRows.reduce((sum, row) => sum + (Number(String(row.values?.[3] || "").replace(/[^\d.-]/g, "")) || 0), 0)
       : Number(reports?.[moduleId]?.revenue || 0);
     return {
       kpis: [
@@ -454,6 +454,25 @@
   const erpState = () => storeGet(ERP_STATE_KEY, {});
   const saveErpState = (data) => storeSet(ERP_STATE_KEY, data);
 
+  const resetSalesRecordsOnce = (tenantId) => {
+    const key = `sales_records_reset_v2:${tenantId || "default"}`;
+    try {
+      if (localStorage.getItem(key) === "done") return;
+    } catch {
+      // Storage can be blocked; still clear stale in-memory records for this session.
+    }
+    const data = moduleData();
+    if (Array.isArray(data.sales) && data.sales.length) {
+      data.sales = [];
+      saveModuleData(data);
+    }
+    try {
+      localStorage.setItem(key, "done");
+    } catch {
+      // Ignore blocked storage.
+    }
+  };
+
   const appendActivity = (moduleId, action, detail = {}) => {
     const rows = Array.isArray(storeGet(ACTIVITY_KEY, [])) ? storeGet(ACTIVITY_KEY, []) : [];
     const entry = { id: `act-${Date.now()}-${Math.random().toString(16).slice(2)}`, moduleId, action, detail, at: nowIso() };
@@ -578,7 +597,7 @@
           .join("")
       : `<tr><td colspan="${workflow.labels.length + 1}" class="muted">No ${escapeHtml(label.toLowerCase())} records yet.</td></tr>`;
     const actionCopy = {
-      orders: "Track customer orders, status, and fulfilment.",
+      orders: "Track who ordered, what they are buying, where it is going, amount, and invoice status.",
       products: "Keep products, pricing, and sales items easy to review.",
       customers: "Review customer records and sales history.",
       discounts: "See discounts and promotion requests before they affect revenue.",
@@ -641,7 +660,7 @@
       <div class="module-page-summary">
         <article><span>Records</span><strong>${displayRows.length}</strong><small>${escapeHtml(label)} in view</small></article>
         <article><span>Workspace</span><strong>Ready</strong><small>Uses shared organization data</small></article>
-        <article><span>${moduleId === "sales" ? "Total revenue" : "Next action"}</span><strong>${moduleId === "sales" ? escapeHtml(money(rows.reduce((sum, row) => sum + ((row.values || []).map((value) => Number(String(value).replace(/[^\d.-]/g, ""))).find((amount) => Number.isFinite(amount) && amount > 0) || 0), 0))) : "Add"}</strong><small>${moduleId === "sales" ? "From saved sales records" : `Create a new ${escapeHtml(label.toLowerCase())} record`}</small></article>
+        <article><span>${moduleId === "sales" ? "Total revenue" : "Next action"}</span><strong>${moduleId === "sales" ? escapeHtml(money(rows.reduce((sum, row) => sum + (Number(String(row.values?.[3] || "").replace(/[^\d.-]/g, "")) || 0), 0))) : "Add"}</strong><small>${moduleId === "sales" ? "From saved sales records" : `Create a new ${escapeHtml(label.toLowerCase())} record`}</small></article>
       </div>
       <div class="table-wrap">
         <table class="table">
@@ -689,9 +708,10 @@
     if (moduleId === "sales") {
       $("#module-record-form").innerHTML = `
         <label class="field"><span>Customer</span><input name="field0" placeholder="Customer name" required /></label>
-        <label class="field"><span>Order / Quotation</span><input name="field1" placeholder="Order number or quotation title" required /></label>
-        <label class="field"><span>Amount</span><input name="field2" type="number" min="0" step="0.01" placeholder="KES 0" required /></label>
-        <label class="field"><span>Invoice Status</span><select name="field3" required><option value="">Select status</option><option>Pending</option><option>Paid</option><option>Unpaid</option><option>Draft</option><option>Rejected</option></select></label>
+        <label class="field"><span>Item / Service</span><input name="field1" placeholder="What the customer is buying" required /></label>
+        <label class="field"><span>Purpose / Delivery</span><input name="field2" placeholder="What it is for or where it is going" required /></label>
+        <label class="field"><span>Amount</span><input name="field3" type="number" min="0" step="0.01" placeholder="KES 0" required /></label>
+        <label class="field"><span>Invoice Status</span><select name="field4" required><option value="">Select status</option><option>Pending</option><option>Paid</option><option>Unpaid</option><option>Draft</option><option>Rejected</option></select></label>
         <button class="btn primary" type="submit">Add Sale</button>`;
       return;
     }
@@ -1152,7 +1172,7 @@
       const textFor = (row) => (row.values || []).join(" ").toLowerCase();
       const countBy = (pattern) => rows.filter((row) => pattern.test(textFor(row))).length;
       const revenue = rows.reduce((sum, row) => {
-        const amount = (row.values || []).map((value) => Number(String(value).replace(/[^\d.-]/g, ""))).find((value) => Number.isFinite(value) && value > 0) || 0;
+        const amount = Number(String(row.values?.[3] || "").replace(/[^\d.-]/g, "")) || 0;
         return sum + amount;
       }, 0);
       document.querySelector('[data-sales-pipeline="orders"]')?.replaceChildren(document.createTextNode(String(countBy(/order|invoice|sale/) || rows.length)));
@@ -1730,7 +1750,7 @@
     const filteredActivities = activities.filter((item) => item.moduleId === "sales" && inPeriod(item.at, period));
     const filteredTransactions = transactions.filter((item) => item.sourceModule === "sales" && inPeriod(item.createdAt, period));
     const totalAmount = filteredRecords.reduce((sum, row) => {
-      const amount = (row.values || []).map((value) => Number(String(value).replace(/[^\d.-]/g, ""))).find((value) => Number.isFinite(value) && value > 0) || 0;
+      const amount = Number(String(row.values?.[3] || "").replace(/[^\d.-]/g, "")) || 0;
       return sum + amount;
     }, 0);
     return {
@@ -1749,9 +1769,9 @@
     const recordRows = details.records.length
       ? details.records
           .slice(0, 8)
-          .map((row) => `<tr><td>${escapeHtml(row.values?.[0] || "-")}</td><td>${escapeHtml(row.values?.[1] || "-")}</td><td>${escapeHtml(row.values?.[2] || "-")}</td><td>${escapeHtml(row.values?.[3] || "-")}</td><td>${escapeHtml(humanDate(row.updatedAt))}</td></tr>`)
+          .map((row) => `<tr><td>${escapeHtml(row.values?.[0] || "-")}</td><td>${escapeHtml(row.values?.[1] || "-")}</td><td>${escapeHtml(row.values?.[2] || "-")}</td><td>${escapeHtml(row.values?.[3] || "-")}</td><td>${escapeHtml(row.values?.[4] || "-")}</td><td>${escapeHtml(humanDate(row.updatedAt))}</td></tr>`)
           .join("")
-      : `<tr><td colspan="5" class="muted">No sales records for this period.</td></tr>`;
+      : `<tr><td colspan="6" class="muted">No sales records for this period.</td></tr>`;
     const approvalRows = details.approvals.length
       ? details.approvals
           .slice(0, 6)
@@ -1769,7 +1789,7 @@
       </div>
       <div class="table-wrap">
         <table class="table">
-          <thead><tr><th>Customer</th><th>Order / Quotation</th><th>Amount</th><th>Invoice Status</th><th>Updated</th></tr></thead>
+          <thead><tr><th>Customer</th><th>Item / Service</th><th>Purpose / Delivery</th><th>Amount</th><th>Invoice Status</th><th>Updated</th></tr></thead>
           <tbody>${recordRows}</tbody>
         </table>
       </div>
@@ -1797,9 +1817,9 @@
       ["Transactions", details.transactions.length],
       [],
       ["Sales Records"],
-      ["Customer", "Order / Quotation", "Amount", "Invoice Status", "Updated"],
+      ["Customer", "Item / Service", "Purpose / Delivery", "Amount", "Invoice Status", "Updated"],
       ...(details.records.length
-        ? details.records.map((row) => [row.values?.[0] || "-", row.values?.[1] || "-", row.values?.[2] || "-", row.values?.[3] || "-", humanDate(row.updatedAt)])
+        ? details.records.map((row) => [row.values?.[0] || "-", row.values?.[1] || "-", row.values?.[2] || "-", row.values?.[3] || "-", row.values?.[4] || "-", humanDate(row.updatedAt)])
         : [["No sales records for this period."]]),
       [],
       ["Approvals"],
@@ -1860,9 +1880,9 @@
     const details = salesReportDetails(reportName, period);
     const recordRows = details.records.length
       ? details.records
-          .map((row) => `<tr><td>${escapeHtml(row.values?.[0] || "-")}</td><td>${escapeHtml(row.values?.[1] || "-")}</td><td>${escapeHtml(row.values?.[2] || "-")}</td><td>${escapeHtml(row.values?.[3] || "-")}</td><td>${escapeHtml(humanDate(row.updatedAt))}</td></tr>`)
+          .map((row) => `<tr><td>${escapeHtml(row.values?.[0] || "-")}</td><td>${escapeHtml(row.values?.[1] || "-")}</td><td>${escapeHtml(row.values?.[2] || "-")}</td><td>${escapeHtml(row.values?.[3] || "-")}</td><td>${escapeHtml(row.values?.[4] || "-")}</td><td>${escapeHtml(humanDate(row.updatedAt))}</td></tr>`)
           .join("")
-      : `<tr><td colspan="5">No sales records for this period.</td></tr>`;
+      : `<tr><td colspan="6">No sales records for this period.</td></tr>`;
     const approvalRows = details.approvals.length
       ? details.approvals.map((row) => `<tr><td>${escapeHtml(row.title || "Approval")}</td><td>${escapeHtml(row.status || "pending")}</td><td>${escapeHtml(row.reason || row.note || "")}</td><td>${escapeHtml(humanDate(row.updatedAt || row.createdAt))}</td></tr>`).join("")
       : `<tr><td colspan="4">No approval records for this period.</td></tr>`;
@@ -1899,7 +1919,7 @@
           </div>
           <h2>Sales records</h2>
           <table>
-            <thead><tr><th>Customer</th><th>Order / Quotation</th><th>Amount</th><th>Invoice Status</th><th>Updated</th></tr></thead>
+            <thead><tr><th>Customer</th><th>Item / Service</th><th>Purpose / Delivery</th><th>Amount</th><th>Invoice Status</th><th>Updated</th></tr></thead>
             <tbody>${recordRows}</tbody>
           </table>
           <h2>Approval review</h2>
@@ -1915,9 +1935,11 @@
   };
 
   const postModuleRecordTransaction = async (moduleId, row) => {
-    const amount = row.values
-      .map((value) => Number(String(value).replace(/[^\d.-]/g, "")))
-      .find((value) => Number.isFinite(value) && value > 0) || 0;
+    const amount = moduleId === "sales"
+      ? Number(String(row.values?.[3] || "").replace(/[^\d.-]/g, "")) || 0
+      : row.values
+          .map((value) => Number(String(value).replace(/[^\d.-]/g, "")))
+          .find((value) => Number.isFinite(value) && value > 0) || 0;
     const transactionTypes = {
       sales: "sale",
       retail: "sale",
@@ -1935,7 +1957,7 @@
       type: transactionTypes[moduleId] || "module_record",
       amount,
       quantity: 1,
-      itemId: row.values[0] || row.id,
+      itemId: moduleId === "sales" ? row.values?.[1] || row.id : row.values[0] || row.id,
       ref: row.id,
       payload: { values: row.values },
     }).catch(() => null);
@@ -2013,6 +2035,10 @@
       if ($("#module-activity-note")) $("#module-activity-note").textContent = moduleDef.componentRole || "Actions are recorded in the workspace activity stream.";
 
       await hydrateSharedData();
+      if (moduleId === "sales") {
+        resetSalesRecordsOnce(session.tenantId);
+        await store()?.flush?.().catch(() => null);
+      }
       ensurePortalState(moduleId);
       applyModulePreferences(moduleId);
 
