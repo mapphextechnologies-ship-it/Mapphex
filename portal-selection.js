@@ -97,7 +97,7 @@
     };
   };
 
-  const relevantPortalIds = () => {
+  const recommendedPortalIds = () => {
     const ids = settings.allowedPortals?.length ? settings.allowedPortals : settings.recommendedPortals?.length ? settings.recommendedPortals : settings.installedPortals || [];
     const serviceKey = String(settings.businessType || settings.serviceTitle || "").toLowerCase();
     if (serviceKey === "technology-devices" || serviceKey === "technology devices" || serviceKey === "technology-services") {
@@ -142,10 +142,11 @@
     }
     if (!admin.ok) throw new Error(admin.error || "Unable to load portals");
     settings = admin.settings || {};
-    const relevant = relevantPortalIds();
+    const recommended = recommendedPortalIds();
     catalog = (admin.portalCatalog || [])
       .map(enrichPortal)
-      .filter((portal) => !relevant.size || relevant.has(portal.id));
+      .filter((portal) => VALID_PORTAL_IDS.has(portal.id))
+      .map((portal) => ({ ...portal, recommended: recommended.has(portal.id) }));
     org = mine?.organization || null;
     if (settings.agreementAccepted !== true) {
       location.href = `organization-agreement.html?tenant=${encodeURIComponent(window.EnterpriseCore?.currentTenantId?.() || "")}`;
@@ -160,8 +161,8 @@
     const subtitle = $(".portal-manager-subtitle");
     if (subtitle) {
       subtitle.textContent = settings.serviceTitle
-        ? `Only portals that match ${settings.serviceTitle} are available for this organization.`
-        : "Only portals that match this organization's selected service are available.";
+        ? `All portals are available. ${settings.serviceTitle} recommendations are marked for this organization.`
+        : "All portals are available. Choose the modules your organization needs.";
     }
     render();
   };
@@ -185,7 +186,7 @@
               ${
                 isInstalled
                   ? `<span class="portal-status">Installed</span>`
-                  : `<label class="portal-select-control">
+                  : `${portal.recommended ? `<span class="portal-status">Recommended</span>` : ""}<label class="portal-select-control">
                       <input type="checkbox" data-portal-check="${escapeHtml(portal.id)}" ${isSelected ? "checked" : ""} />
                       Select
                     </label>`
@@ -343,7 +344,7 @@
   const normalizePageCopy = () => {
     const subtitle = $(".portal-manager-subtitle");
     const helpText = $("#pwa-install-help-text");
-    if (subtitle) subtitle.textContent = "Only portals that match the registered service are shown here.";
+    if (subtitle) subtitle.textContent = "All portals are available. Recommended portals are marked for this organization.";
     if (helpText) {
       helpText.textContent =
         "After a portal is enabled, open that portal and install it from your browser menu if the install prompt does not appear.";
