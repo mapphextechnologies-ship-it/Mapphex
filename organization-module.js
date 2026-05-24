@@ -1070,8 +1070,8 @@
               <label class="field"><span>Period</span><select name="period">${REPORT_PERIODS.map((period) => `<option value="${escapeHtml(period)}">${escapeHtml(period[0].toUpperCase() + period.slice(1))}</option>`).join("")}</select></label>
               <label class="field"><span>Format</span><select name="format"><option value="pdf">PDF</option><option value="excel">Excel</option></select></label>
               <button class="btn primary" type="submit">Generate</button>
-              <button class="btn" data-sales-report-export="pdf" type="button">PDF</button>
-              <button class="btn" data-sales-report-export="excel" type="button">Excel</button>
+              <button class="btn" data-sales-report-export="pdf" type="button">Print / PDF</button>
+              <button class="btn" data-sales-report-export="excel" type="button">Download Excel</button>
             </form>
             <div id="sales-report-output" class="report-preview">No report generated yet.</div>
           </div>
@@ -1683,6 +1683,10 @@
         </table>
       </div>
       <div class="sales-report-notes"><h3>Approval notes</h3><ul>${approvalRows}</ul></div>
+      <div class="sales-report-actions">
+        <button class="btn" data-sales-report-export="pdf" type="button">Print / PDF</button>
+        <button class="btn primary" data-sales-report-export="excel" type="button">Download Excel</button>
+      </div>
     </div>`;
   };
 

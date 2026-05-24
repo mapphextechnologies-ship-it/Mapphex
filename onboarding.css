@@ -871,10 +871,15 @@
 
 .sales-report-form {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) minmax(150px, 0.8fr) minmax(140px, 0.7fr) auto auto auto;
+  grid-template-columns: minmax(180px, 1fr) minmax(150px, 0.8fr) minmax(140px, 0.7fr) minmax(112px, auto) minmax(120px, auto) minmax(150px, auto);
   gap: 12px;
   padding: 16px 18px;
   align-items: end;
+}
+
+.sales-report-form .btn,
+.sales-report-actions .btn {
+  white-space: nowrap;
 }
 
 .report-preview {
@@ -902,6 +907,12 @@
 .sales-report-result {
   display: grid;
   gap: 14px;
+}
+
+.sales-report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .sales-report-summary {
