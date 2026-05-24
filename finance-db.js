@@ -137,6 +137,14 @@
     });
   };
 
+  const applyPortalBackLinks = () => {
+    const tenant = tenantId();
+    const href = tenant ? `organization-workspace.html?tenant=${encodeURIComponent(tenant)}` : "organization-workspace.html";
+    document.querySelectorAll("[data-finance-back]").forEach((link) => {
+      link.setAttribute("href", href);
+    });
+  };
+
   const headers = (extra = {}) => {
     const out = { ...extra };
     const session = activeSession();
@@ -256,6 +264,7 @@
     tenantId,
     organizationName,
     applyOrganizationName,
+    applyPortalBackLinks,
     applyTheme,
     applyPreferences,
     apiHeaders,
@@ -266,6 +275,8 @@
   document.addEventListener("DOMContentLoaded", () => {
     applyPreferences();
     applyOrganizationName();
+    applyPortalBackLinks();
     setTimeout(applyOrganizationName, 0);
+    setTimeout(applyPortalBackLinks, 0);
   });
 })();
