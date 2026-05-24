@@ -783,15 +783,16 @@
 }
 
 .sales-focus-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  display: grid;
+  gap: 8px;
 }
 
 .sales-focus-list span {
-  padding: 9px 11px;
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
   border: 1px solid rgba(130, 190, 255, 0.14);
-  border-radius: 999px;
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.05);
   color: rgba(255, 255, 255, 0.86);
   font-size: 13px;
