@@ -243,15 +243,18 @@
     const reports = storeGet(REPORTS_KEY, {});
     const transactions = storeGet(TRANSACTIONS_KEY, []);
     const rows = countRows(moduleId);
+    const salesRows = Array.isArray(moduleData().sales) ? moduleData().sales : [];
     const pending = (state.approvals || []).filter((item) => (item.target === moduleId || item.moduleId === moduleId) && item.status === "pending").length;
     const moduleTransactions = (Array.isArray(transactions) ? transactions : []).filter((tx) => tx.sourceModule === moduleId).length;
-    const revenue = Number(reports?.[moduleId]?.revenue || 0);
+    const revenue = moduleId === "sales"
+      ? salesRows.reduce((sum, row) => sum + ((row.values || []).map((value) => Number(String(value).replace(/[^\d.-]/g, ""))).find((value) => Number.isFinite(value) && value > 0) || 0), 0)
+      : Number(reports?.[moduleId]?.revenue || 0);
     return {
       kpis: [
         [moduleId === "finance" ? "Activity" : standard.entity === "Finance Record" ? "Transactions" : `${standard.entity}s`, rows],
         [moduleId === "finance" ? "Pending Payments" : "Pending approvals", pending],
         [moduleId === "finance" ? "Payments" : "Posted transactions", moduleTransactions],
-        [revenue > 0 ? "Revenue" : "Reports", revenue > 0 ? revenue : standard.reports.length],
+        [moduleId === "sales" ? "Total revenue" : revenue > 0 ? "Revenue" : "Reports", moduleId === "sales" || revenue > 0 ? revenue : standard.reports.length],
       ],
       chart: [24, 36, 48, 60, 72, Math.min(96, 72 + rows + pending + moduleTransactions)],
       actions: standard.workflows.map(([label, target]) => [label, target, `${moduleId} requested ${label.toLowerCase()} for ${orgContext.businessType || "general"} operations.`]),
@@ -593,24 +596,24 @@
           <span class="badge">Preferences</span>
         </div>
         <div class="module-settings-summary">
-          <article><span>Theme</span><strong data-module-pref-summary="theme">${escapeHtml(prefs.theme === "light" ? "Light" : "Dark")}</strong><small>Portal display</small></article>
-          <article><span>Approvals</span><strong data-module-pref-summary="approvals">${prefs.requireDiscountApproval ? "Required" : "Optional"}</strong><small>Discount workflow</small></article>
-          <article><span>Reports</span><strong data-module-pref-summary="report">${escapeHtml(prefs.defaultReport)}</strong><small>Default report</small></article>
+          <article><span>Portal display</span><strong data-module-pref-summary="theme">${escapeHtml(prefs.theme === "light" ? "Light" : "Dark")}</strong><small>Theme used across Sales</small></article>
+          <article><span>Approval workflow</span><strong data-module-pref-summary="approvals">${prefs.requireDiscountApproval ? "Required" : "Optional"}</strong><small>Discount control</small></article>
+          <article><span>Default report</span><strong data-module-pref-summary="report">${escapeHtml(prefs.defaultReport)}</strong><small>Used when reporting opens</small></article>
         </div>
         <form id="module-settings-form" class="module-settings-form">
-          <fieldset>
-            <legend>Display</legend>
+          <fieldset class="settings-fieldset">
+            <legend><span>Display</span><small>Theme and table spacing</small></legend>
             <label class="field"><span>Theme</span><select name="theme"><option value="dark" ${prefs.theme === "dark" ? "selected" : ""}>Dark</option><option value="light" ${prefs.theme === "light" ? "selected" : ""}>Light</option></select></label>
             <label class="field"><span>Table density</span><select name="density"><option value="comfortable" ${prefs.density === "comfortable" ? "selected" : ""}>Comfortable</option><option value="compact" ${prefs.density === "compact" ? "selected" : ""}>Compact</option></select></label>
           </fieldset>
-          <fieldset>
-            <legend>Sales workflow</legend>
+          <fieldset class="settings-fieldset">
+            <legend><span>Sales workflow</span><small>Approvals and Finance notices</small></legend>
             <label class="check-chip"><input type="checkbox" name="requireDiscountApproval" ${prefs.requireDiscountApproval ? "checked" : ""} /> <span>Require approval for discounts</span></label>
             <label class="check-chip"><input type="checkbox" name="notifyFinance" ${prefs.notifyFinance ? "checked" : ""} /> <span>Notify Finance when invoices are created</span></label>
             <label class="check-chip"><input type="checkbox" name="showRevenue" ${prefs.showRevenue ? "checked" : ""} /> <span>Show revenue cards on dashboard</span></label>
           </fieldset>
-          <fieldset>
-            <legend>Reports</legend>
+          <fieldset class="settings-fieldset">
+            <legend><span>Reports</span><small>Default Sales report</small></legend>
             <label class="field"><span>Default report</span><select name="defaultReport">${SALES_REPORT_TYPES.map((item) => `<option ${prefs.defaultReport === item ? "selected" : ""}>${escapeHtml(item)}</option>`).join("")}</select></label>
           </fieldset>
           <div class="module-settings-actions">
@@ -632,12 +635,13 @@
         <div class="panel-actions">
           <button class="btn" data-erp-export="xlsx" type="button">Export XLSX</button>
           <button class="btn" data-focus-record-form type="button">Add Record</button>
+          ${moduleId === "sales" ? `<button class="btn danger" data-clear-module-records type="button">Clear All</button>` : ""}
         </div>
       </div>
       <div class="module-page-summary">
         <article><span>Records</span><strong>${displayRows.length}</strong><small>${escapeHtml(label)} in view</small></article>
         <article><span>Workspace</span><strong>Ready</strong><small>Uses shared organization data</small></article>
-        <article><span>Next action</span><strong>Add</strong><small>Create a new ${escapeHtml(label.toLowerCase())} record</small></article>
+        <article><span>${moduleId === "sales" ? "Total revenue" : "Next action"}</span><strong>${moduleId === "sales" ? escapeHtml(money(rows.reduce((sum, row) => sum + ((row.values || []).map((value) => Number(String(value).replace(/[^\d.-]/g, ""))).find((amount) => Number.isFinite(amount) && amount > 0) || 0), 0))) : "Add"}</strong><small>${moduleId === "sales" ? "From saved sales records" : `Create a new ${escapeHtml(label.toLowerCase())} record`}</small></article>
       </div>
       <div class="table-wrap">
         <table class="table">
@@ -681,10 +685,19 @@
     if (String(target).startsWith("module-page:")) renderModuleDetailPage(activeModuleId, blueprintFor(activeModuleId), link);
   };
 
-  const renderForm = (workflow) => {
+  const renderForm = (moduleId, workflow) => {
+    if (moduleId === "sales") {
+      $("#module-record-form").innerHTML = `
+        <label class="field"><span>Customer</span><input name="field0" placeholder="Customer name" required /></label>
+        <label class="field"><span>Order / Quotation</span><input name="field1" placeholder="Order number or quotation title" required /></label>
+        <label class="field"><span>Amount</span><input name="field2" type="number" min="0" step="0.01" placeholder="KES 0" required /></label>
+        <label class="field"><span>Invoice Status</span><select name="field3" required><option value="">Select status</option><option>Pending</option><option>Paid</option><option>Unpaid</option><option>Draft</option><option>Rejected</option></select></label>
+        <button class="btn primary" type="submit">Add Sale</button>`;
+      return;
+    }
     $("#module-record-form").innerHTML =
       workflow.labels
-        .map((label, idx) => `<label class="field"><span>${escapeHtml(label)}</span><input name="field${idx}" required /></label>`)
+        .map((label, idx) => `<label class="field"><span>${escapeHtml(label)}</span><input name="field${idx}" placeholder="${escapeHtml(label)}" required /></label>`)
         .join("") + `<button class="btn primary" type="submit">Add Record</button>`;
   };
 
@@ -705,8 +718,8 @@
     if ($("#module-empty")) $("#module-empty").textContent = moduleId === "finance" ? "No transactions yet. Record the first sale when it is ready." : "No records here yet.";
     $("#module-table-head").innerHTML = [...workflow.labels, "Updated", "Actions"].map((label) => `<th>${escapeHtml(label)}</th>`).join("");
     $("#module-table-body").innerHTML = visible
-      .map((row) => `<tr>${row.values.map((value) => `<td>${escapeHtml(value)}</td>`).join("")}<td>${escapeHtml(humanDate(row.updatedAt))}</td><td><button class="btn danger" type="button" data-record-delete="${escapeHtml(row.id)}">Delete</button></td></tr>`)
-      .join("");
+      .map((row) => `<tr>${workflow.labels.map((label, idx) => `<td data-label="${escapeHtml(label)}">${escapeHtml(row.values?.[idx] || "-")}</td>`).join("")}<td data-label="Updated">${escapeHtml(humanDate(row.updatedAt))}</td><td data-label="Actions"><button class="btn danger" type="button" data-record-delete="${escapeHtml(row.id)}">Delete</button></td></tr>`)
+      .join("") || `<tr><td colspan="${workflow.labels.length + 2}" class="muted">No records yet.</td></tr>`;
     $("#module-kpi-a").textContent = rows.length;
   };
 
@@ -973,6 +986,12 @@
     }
     document.body.classList.remove("finance-simple-page");
     document.body.classList.remove("branch-management-page");
+    if (moduleId === "sales") {
+      const recordActions = $("#portal-records .panel-header .panel-actions");
+      if (recordActions) {
+        recordActions.innerHTML = `<input id="module-search" type="search" placeholder="Search sales records..." /><button class="btn danger" data-clear-module-records type="button">Clear All</button>`;
+      }
+    }
     if ($("#erp-sections")) return;
     const blueprint = blueprintFor(moduleId);
     const salesDashboardSection = moduleId === "sales"
@@ -1140,6 +1159,11 @@
       document.querySelector('[data-sales-pipeline="customers"]')?.replaceChildren(document.createTextNode(String(countBy(/customer|client/) || 0)));
       document.querySelector('[data-sales-pipeline="discounts"]')?.replaceChildren(document.createTextNode(String(countBy(/discount|promotion/) || approvals.filter((item) => /discount/i.test(`${item.title} ${item.note}`)).length)));
       document.querySelector('[data-sales-pipeline="revenue"]')?.replaceChildren(document.createTextNode(money(revenue)));
+      $("#module-kpi-a-label") && ($("#module-kpi-a-label").textContent = "Sales orders");
+      $("#module-kpi-a") && ($("#module-kpi-a").textContent = rows.length);
+      $("#module-kpi-a-foot") && ($("#module-kpi-a-foot").textContent = "Saved sales records");
+      $("#module-kpi-b-label") && ($("#module-kpi-b-label").textContent = "Total revenue");
+      $("#module-kpi-users") && ($("#module-kpi-users").textContent = money(revenue));
     }
 
     if (moduleId === "finance") {
@@ -1993,7 +2017,7 @@
       applyModulePreferences(moduleId);
 
       renderNav(moduleId, moduleDef);
-      renderForm(workflow);
+      renderForm(moduleId, workflow);
       renderRows(moduleId, workflow);
       renderEnterpriseSections(moduleId, moduleDef);
       $("#module-kpi-users").textContent = Array.isArray(admin.users) ? admin.users.length : 0;
@@ -2074,6 +2098,7 @@
         saveModuleData(data);
         appendActivity(moduleId, "record.created", { values, message: values.join(" • ") });
         await postModuleRecordTransaction(moduleId, row);
+        event.currentTarget.reset();
         renderRows(moduleId, workflow, $("#module-search")?.value || "");
         refreshEnterpriseSections(moduleId);
         await store()?.flush?.().catch(() => null);
@@ -2121,6 +2146,23 @@
           saveModulePrefs(prefs);
           applyModulePreferences(moduleId);
           renderModuleDetailPage(moduleId, blueprintFor(moduleId), document.querySelector('[data-module-nav="settings"]'));
+          return;
+        }
+        const clearRecords = event.target.closest("[data-clear-module-records]");
+        if (clearRecords) {
+          if (!window.confirm(`Delete all ${moduleDef.title} records?`)) return;
+          const data = moduleData();
+          const deleted = Array.isArray(data[moduleId]) ? data[moduleId].length : 0;
+          data[moduleId] = [];
+          saveModuleData(data);
+          appendActivity(moduleId, "records.cleared", { message: `${deleted} ${moduleDef.title} records cleared.` });
+          renderRows(moduleId, workflow, $("#module-search")?.value || "");
+          refreshEnterpriseSections(moduleId);
+          if (String(moduleViewFromUrl()).startsWith("module-page:")) {
+            const activeLink = document.querySelector("[data-module-nav].active");
+            renderModuleDetailPage(moduleId, blueprintFor(moduleId), activeLink);
+          }
+          store()?.flush?.().catch(() => null);
           return;
         }
         const action = event.target.closest("[data-erp-action]");
@@ -2213,6 +2255,13 @@
         prefs[moduleId] = readModuleSettingsForm(event.target);
         saveModulePrefs(prefs);
         applyModulePreferences(moduleId);
+        const saved = prefs[moduleId];
+        const themeSummary = document.querySelector('[data-module-pref-summary="theme"]');
+        const approvalsSummary = document.querySelector('[data-module-pref-summary="approvals"]');
+        const reportSummary = document.querySelector('[data-module-pref-summary="report"]');
+        if (themeSummary) themeSummary.textContent = saved.theme === "light" ? "Light" : "Dark";
+        if (approvalsSummary) approvalsSummary.textContent = saved.requireDiscountApproval ? "Required" : "Optional";
+        if (reportSummary) reportSummary.textContent = saved.defaultReport || "Orders";
         const note = document.querySelector("[data-module-settings-note]");
         if (note) note.textContent = "Settings saved.";
         refreshEnterpriseSections(moduleId);

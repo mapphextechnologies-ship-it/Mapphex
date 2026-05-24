@@ -610,7 +610,8 @@
 :root[data-module-theme="light"] body[data-page="organization-module"] .module-sidebar,
 :root[data-module-theme="light"] body[data-page="organization-module"] .sales-pipeline-card,
 :root[data-module-theme="light"] body[data-page="organization-module"] .sales-report-generator,
-:root[data-module-theme="light"] body[data-page="organization-module"] .module-settings-form fieldset {
+:root[data-module-theme="light"] body[data-page="organization-module"] .module-settings-form fieldset,
+:root[data-module-theme="light"] body[data-page="organization-module"] .module-settings-summary article {
   border-color: rgba(15, 35, 64, 0.12);
   background: rgba(255, 255, 255, 0.94);
   color: #102033;
@@ -618,7 +619,10 @@
 
 :root[data-module-theme="light"] body[data-page="organization-module"] .module-nav a,
 :root[data-module-theme="light"] body[data-page="organization-module"] .module-page-summary article,
-:root[data-module-theme="light"] body[data-page="organization-module"] .sales-report-status-grid article {
+:root[data-module-theme="light"] body[data-page="organization-module"] .sales-report-status-grid article,
+:root[data-module-theme="light"] body[data-page="organization-module"] .sales-focus-list span,
+:root[data-module-theme="light"] body[data-page="organization-module"] .sales-report-summary article,
+:root[data-module-theme="light"] body[data-page="organization-module"] .sales-report-notes li {
   background: rgba(15, 35, 64, 0.04);
   color: #102033;
 }
@@ -632,14 +636,56 @@
 :root[data-module-theme="light"] body[data-page="organization-module"] .module-nav-group > strong,
 :root[data-module-theme="light"] body[data-page="organization-module"] .muted,
 :root[data-module-theme="light"] body[data-page="organization-module"] .portal-manager-subtitle,
-:root[data-module-theme="light"] body[data-page="organization-module"] .kpi-foot {
+:root[data-module-theme="light"] body[data-page="organization-module"] .kpi-foot,
+:root[data-module-theme="light"] body[data-page="organization-module"] .module-settings-summary span,
+:root[data-module-theme="light"] body[data-page="organization-module"] .module-settings-summary small,
+:root[data-module-theme="light"] body[data-page="organization-module"] .module-page-summary span,
+:root[data-module-theme="light"] body[data-page="organization-module"] .module-page-summary small,
+:root[data-module-theme="light"] body[data-page="organization-module"] .sales-card-head span,
+:root[data-module-theme="light"] body[data-page="organization-module"] .sales-report-status-grid span,
+:root[data-module-theme="light"] body[data-page="organization-module"] .sales-report-status-grid small,
+:root[data-module-theme="light"] body[data-page="organization-module"] .sales-report-summary span,
+:root[data-module-theme="light"] body[data-page="organization-module"] .sales-report-notes span {
   color: rgba(16, 32, 51, 0.68);
 }
 
 :root[data-module-theme="light"] body[data-page="organization-module"] .kpi-value,
 :root[data-module-theme="light"] body[data-page="organization-module"] .module-page-summary strong,
-:root[data-module-theme="light"] body[data-page="organization-module"] .sales-report-status-grid strong {
+:root[data-module-theme="light"] body[data-page="organization-module"] .module-settings-summary strong,
+:root[data-module-theme="light"] body[data-page="organization-module"] .sales-card-head strong,
+:root[data-module-theme="light"] body[data-page="organization-module"] .sales-report-status-grid strong,
+:root[data-module-theme="light"] body[data-page="organization-module"] .report-preview strong {
   color: #102033;
+}
+
+:root[data-module-theme="light"] body[data-page="organization-module"] .module-content .field input,
+:root[data-module-theme="light"] body[data-page="organization-module"] .module-content .field select,
+:root[data-module-theme="light"] body[data-page="organization-module"] .module-content .field textarea,
+:root[data-module-theme="light"] body[data-page="organization-module"] .erp-message-form input,
+:root[data-module-theme="light"] body[data-page="organization-module"] .erp-message-form select,
+:root[data-module-theme="light"] body[data-page="organization-module"] .erp-message-form textarea {
+  border-color: rgba(15, 35, 64, 0.16);
+  background: #ffffff;
+  color: #102033;
+  color-scheme: light;
+  box-shadow: none;
+}
+
+:root[data-module-theme="light"] body[data-page="organization-module"] .module-content .field input::placeholder,
+:root[data-module-theme="light"] body[data-page="organization-module"] .module-content .field textarea::placeholder,
+:root[data-module-theme="light"] body[data-page="organization-module"] .erp-message-form input::placeholder,
+:root[data-module-theme="light"] body[data-page="organization-module"] .erp-message-form textarea::placeholder {
+  color: rgba(16, 32, 51, 0.42);
+}
+
+:root[data-module-theme="light"] body[data-page="organization-module"] .table th,
+:root[data-module-theme="light"] body[data-page="organization-module"] .table td {
+  color: #102033;
+  border-color: rgba(15, 35, 64, 0.12);
+}
+
+:root[data-module-theme="light"] body[data-page="organization-module"] .site-powered-footer {
+  color: rgba(16, 32, 51, 0.72);
 }
 
 .module-density-compact .table th,
@@ -697,6 +743,26 @@
   padding: 0 6px;
   color: rgba(255, 255, 255, 0.94);
   font-weight: 900;
+}
+
+.module-settings-form legend span,
+.module-settings-form legend small {
+  display: block;
+}
+
+.module-settings-form legend small {
+  margin-top: 2px;
+  color: rgba(218, 232, 255, 0.62);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+:root[data-module-theme="light"] body[data-page="organization-module"] .module-settings-form legend {
+  color: #102033;
+}
+
+:root[data-module-theme="light"] body[data-page="organization-module"] .module-settings-form legend small {
+  color: rgba(16, 32, 51, 0.58);
 }
 
 .module-settings-actions {
