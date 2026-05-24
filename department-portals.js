@@ -240,6 +240,7 @@
       });
       save(data);
       form.reset();
+      refreshEmployeeSelects();
       render();
     });
 
