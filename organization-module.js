@@ -1562,6 +1562,41 @@
     }
   };
 
+  const printSalesReport = (reportName, period) => {
+    const title = `${reportName || "Orders"} report`;
+    const generatedAt = new Date().toLocaleString();
+    const reportWindow = window.open("", "_blank", "width=900,height=700");
+    if (!reportWindow) {
+      window.print();
+      return;
+    }
+    reportWindow.document.write(`<!doctype html>
+      <html>
+        <head>
+          <title>${escapeHtml(title)}</title>
+          <style>
+            body { margin: 32px; color: #111827; font-family: Arial, sans-serif; }
+            h1 { margin: 0 0 8px; font-size: 24px; }
+            p { margin: 0 0 18px; color: #4b5563; }
+            table { width: 100%; border-collapse: collapse; margin-top: 18px; }
+            th, td { padding: 12px; border: 1px solid #d1d5db; text-align: left; }
+            th { background: #f3f4f6; }
+          </style>
+        </head>
+        <body>
+          <h1>${escapeHtml(title)}</h1>
+          <p>${escapeHtml(period || "daily")} - PDF - ${escapeHtml(generatedAt)}</p>
+          <table>
+            <thead><tr><th>Report</th><th>Period</th><th>Generated</th></tr></thead>
+            <tbody><tr><td>${escapeHtml(reportName || "Orders")}</td><td>${escapeHtml(period || "daily")}</td><td>${escapeHtml(generatedAt)}</td></tr></tbody>
+          </table>
+        </body>
+      </html>`);
+    reportWindow.document.close();
+    reportWindow.focus();
+    reportWindow.print();
+  };
+
   const postModuleRecordTransaction = async (moduleId, row) => {
     const amount = row.values
       .map((value) => Number(String(value).replace(/[^\d.-]/g, "")))
@@ -1835,7 +1870,7 @@
           const format = salesExport.dataset.salesReportExport || form?.elements?.namedItem("format")?.value || "pdf";
           setSalesReportStatus(reportName, period, format);
           if (format === "excel") exportPeriodReport(moduleId, reportName, period);
-          else window.print();
+          else printSalesReport(reportName, period);
           appendActivity(moduleId, "report.exported", { label: reportName, message: `${period} ${reportName} exported as ${format}.` });
           refreshEnterpriseSections(moduleId);
         }
