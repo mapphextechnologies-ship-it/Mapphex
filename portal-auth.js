@@ -45,13 +45,7 @@
   };
 
   const roleCanOpen = (session) => {
-    const role = String(session?.role || "").toLowerCase();
-    if (["org_admin", "admin", "director"].includes(role)) return true;
-    if (Array.isArray(session?.portalAccess) && session.portalAccess.includes(portalId)) return true;
-    return (
-      window.EnterpriseCore?.hasPermission?.(`${portalId}.read`, session) ||
-      window.EnterpriseCore?.hasPermission?.(`${portalId}.manage`, session)
-    );
+    return window.EnterpriseCore?.canOpenPortal?.(portalId, session);
   };
 
   const ensureAllowed = async (session) => {
@@ -59,16 +53,11 @@
     if (data.settings?.agreementAccepted !== true) {
       throw new Error("Organization setup is not complete. Ask the organization admin to accept the agreement first.");
     }
-    const available = new Set(
-      [
-        ...(data.settings?.installedPortals || []),
-        ...(data.settings?.selectedComponents || []),
-        ...(data.settings?.allowedPortals || []),
-        ...(data.settings?.recommendedPortals || []),
-      ].map(String),
-    );
-    if (portalId !== "workspace" && !available.has(portalId)) throw new Error("This portal is not available for your organization");
-    if (portalId !== "workspace" && !roleCanOpen(session)) throw new Error("Access denied for this portal");
+    const installed = data.settings?.installedPortals || [];
+    if (portalId !== "workspace" && !installed.map(String).includes(portalId)) throw new Error("This portal is not approved by your organization admin yet");
+    if (portalId !== "workspace" && !window.EnterpriseCore?.canOpenPortal?.(portalId, session, { installedPortals: installed })) {
+      throw new Error("Your organization admin has not assigned this portal to you yet");
+    }
   };
 
   const organizationNameFor = (body) => body.organizationName || organizationContext?.name || "";

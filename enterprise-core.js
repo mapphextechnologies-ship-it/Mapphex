@@ -172,6 +172,18 @@
     return permissions.has("*") || permissions.has(permission);
   };
 
+  const canOpenPortal = (portalId, session = getSession(), options = {}) => {
+    const portal = cleanId(portalId);
+    if (!portal || portal === "workspace") return Boolean(session?.tenantId);
+    const installed = Array.isArray(options.installedPortals) ? options.installedPortals.map(cleanId) : null;
+    if (installed && !installed.includes(portal)) return false;
+    const role = String(session?.role || "").toLowerCase();
+    const adminRoles = new Set(options.adminRoles || ["org_admin", "admin", "director"]);
+    if (adminRoles.has(role)) return true;
+    const portalAccess = Array.isArray(session?.portalAccess) ? session.portalAccess.map(cleanId) : [];
+    return portalAccess.includes(portal) || hasPermission(`${portal}.read`, session) || hasPermission(`${portal}.manage`, session);
+  };
+
   const requireOrganizationSession = (expectedTenant = "") => {
     const session = getSession();
     const tenant = cleanId(expectedTenant) || currentTenantId();
@@ -359,6 +371,7 @@
     clearSession,
     requireOrganizationSession,
     hasPermission,
+    canOpenPortal,
     audit,
     enqueue,
     notify,

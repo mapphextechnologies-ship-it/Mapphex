@@ -171,6 +171,23 @@
 
   if (!enforceFinanceAccess()) return;
 
+  const verifyFinanceInstallation = async () => {
+    try {
+      const res = await fetch("/api/org-admin", { headers: headers() });
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.ok) {
+        if (!(data.settings?.installedPortals || []).includes("finance")) location.replace("access-denied.html");
+        return;
+      }
+    } catch {
+      // Local fallback below.
+    }
+    const localSettings = readAnyLocalJson("enterprise_org_settings_v1", {});
+    if (Array.isArray(localSettings.installedPortals) && !localSettings.installedPortals.includes("finance")) {
+      location.replace("access-denied.html");
+    }
+  };
+
   const readAnyLocalJson = (key, fallback) => {
     const direct = safeJsonParse(readRawStorage(localStorage, key), null);
     if (direct !== null) return direct;
@@ -228,6 +245,8 @@
     if (tenant) out["X-Tenant-ID"] = tenant;
     return out;
   };
+
+  verifyFinanceInstallation();
 
   const assertAllowedKey = (key) => {
     if (!ALLOWED_KEYS.has(String(key || ""))) throw new Error("Finance DB key is not allowed");

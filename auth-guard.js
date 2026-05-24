@@ -158,11 +158,7 @@
     }
 
     if (page === "organization-module" && portal) {
-      const readPerm = `${portal}.read`;
-      const managePerm = `${portal}.manage`;
-      const role = String(session.role || "").toLowerCase();
-      const portalAccess = Array.isArray(session.portalAccess) ? session.portalAccess : [];
-      if (!["org_admin", "admin", "director"].includes(role) && !portalAccess.includes(portal) && !core.hasPermission?.(readPerm, session) && !core.hasPermission?.(managePerm, session)) {
+      if (!core.canOpenPortal?.(portal, session)) {
         deny();
       }
     }
