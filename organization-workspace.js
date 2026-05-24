@@ -59,6 +59,9 @@
     if (portal.id === "finance") {
       return `finance-workflow.html${tenant ? `?tenant=${encodeURIComponent(tenant)}` : ""}`;
     }
+    if (portal.href && !String(portal.href).includes("organization-module.html")) {
+      return `${portal.href}${tenant ? `?tenant=${encodeURIComponent(tenant)}` : ""}`;
+    }
     try {
       const url = new URL("portal-auth.html", location.origin);
       url.searchParams.set("tenant", tenant);

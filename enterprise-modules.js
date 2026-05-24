@@ -27,7 +27,7 @@
     {
       id: "hr",
       title: "HR Portal",
-      href: moduleHref,
+      href: "hr-portal.html",
       category: "People",
       componentRole: "Owns employee records, attendance, leave, payroll preparation, schedules, contracts, and HR announcements.",
       description: "Employees, attendance, leave, payroll preparation, contracts, schedules, and performance reviews.",
@@ -67,12 +67,22 @@
     {
       id: "logistics",
       title: "Logistics Module",
-      href: moduleHref,
+      href: "logistics-portal.html",
       category: "Operations",
       componentRole: "Coordinates delivery, dispatch, fleet, and tracking workflows.",
       description: "Dispatch, delivery, fleet, and tracking workflows.",
       features: ["Dispatch", "Tracking", "Delivery status"],
       sharedResources: ["Orders", "Branches", "Activity"],
+    },
+    {
+      id: "driver",
+      title: "Driver Portal",
+      href: "driver-portal.html",
+      category: "Operations",
+      componentRole: "Gives drivers a mobile-first view of assigned deliveries, status updates, and cash collection.",
+      description: "Mobile delivery status, assigned orders, and driver performance.",
+      features: ["My deliveries", "Status updates", "Cash collected"],
+      sharedResources: ["Logistics", "Dispatch", "Customers"],
     },
     {
       id: "retail",
