@@ -855,16 +855,48 @@
   overflow: hidden;
 }
 
+.sales-report-generator .content-head {
+  padding: 18px 18px 0;
+}
+
+.sales-report-generator .content-head h2 {
+  margin: 4px 0 6px;
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.sales-report-generator .content-head p:last-child {
+  margin: 0;
+  color: rgba(218, 232, 255, 0.72);
+}
+
 .sales-report-form {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) minmax(150px, 0.8fr) minmax(140px, 0.7fr) auto;
+  grid-template-columns: minmax(180px, 1fr) minmax(150px, 0.8fr) minmax(140px, 0.7fr) auto auto auto;
   gap: 12px;
   padding: 16px 18px;
   align-items: end;
 }
 
-.sales-report-table {
-  padding: 0 18px 18px;
+.report-preview {
+  margin: 0 18px 18px;
+  min-height: 86px;
+  display: grid;
+  align-content: center;
+  gap: 6px;
+  padding: 18px;
+  border: 1px dashed rgba(130, 190, 255, 0.22);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+  color: rgba(218, 232, 255, 0.74);
+}
+
+.report-preview strong,
+.report-preview span {
+  display: block;
+}
+
+.report-preview strong {
+  color: rgba(255, 255, 255, 0.94);
 }
 
 .module-record-form .btn {

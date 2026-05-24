@@ -1044,40 +1044,23 @@
         </section>`;
     const salesReportSection = moduleId === "sales"
       ? `<section id="reports" class="panel sales-report-workspace">
-          <div class="panel-header">
-            <div>
-              <span class="eyebrow">Accounting</span>
-              <h2>Generate and export reports</h2>
-              <p class="portal-manager-subtitle">Create clean sales reports from orders, quotations, invoices, revenue, discounts, and customer history.</p>
-            </div>
-            <span class="badge">Reports</span>
-          </div>
-          <div class="sales-report-status-grid">
-            <article><span>Report status</span><strong data-sales-report-status>Not generated</strong><small>Ready after generation</small></article>
-            <article><span>Report type</span><strong data-sales-report-type>Sales</strong><small>What will be created</small></article>
-            <article><span>Export format</span><strong data-sales-report-format>PDF</strong><small>PDF or Excel</small></article>
-            <article><span>Last generated</span><strong data-sales-report-time>Never</strong><small>Latest report time</small></article>
-          </div>
           <div class="sales-report-generator">
-            <div class="panel-header">
-              <div><h2>Reports</h2><p class="portal-manager-subtitle">Select what Sales should generate, then export the report.</p></div>
-              <div class="panel-actions">
-                <button class="btn" data-sales-report-export="pdf" type="button">Export PDF</button>
-                <button class="btn" data-sales-report-export="excel" type="button">Export Excel</button>
+            <div class="content-head">
+              <div>
+                <p class="eyebrow">Reports</p>
+                <h2>Report generation</h2>
+                <p>Select what Sales should generate, then export the report.</p>
               </div>
             </div>
             <form id="sales-report-form" class="sales-report-form">
               <label class="field"><span>Report</span><select name="report">${SALES_REPORT_TYPES.map((item) => `<option>${escapeHtml(item)}</option>`).join("")}</select></label>
               <label class="field"><span>Period</span><select name="period">${REPORT_PERIODS.map((period) => `<option value="${escapeHtml(period)}">${escapeHtml(period[0].toUpperCase() + period.slice(1))}</option>`).join("")}</select></label>
               <label class="field"><span>Format</span><select name="format"><option value="pdf">PDF</option><option value="excel">Excel</option></select></label>
-              <button class="btn primary" type="submit">Generate Report</button>
+              <button class="btn primary" type="submit">Generate</button>
+              <button class="btn" data-sales-report-export="pdf" type="button">PDF</button>
+              <button class="btn" data-sales-report-export="excel" type="button">Excel</button>
             </form>
-            <div class="table-wrap sales-report-table">
-              <table class="table">
-                <thead><tr><th>Report</th><th>Period</th><th>Format</th><th>Generated</th></tr></thead>
-                <tbody id="sales-report-output"><tr><td colspan="4" class="muted">Choose a report and generate it when you are ready.</td></tr></tbody>
-              </table>
-            </div>
+            <div id="sales-report-output" class="report-preview">No report generated yet.</div>
           </div>
         </section>`
       : `<section id="reports" class="erp-work-grid">
@@ -1562,7 +1545,7 @@
     if (formatEl) formatEl.textContent = formatLabel;
     if (time) time.textContent = generatedAt.toLocaleString();
     if (output) {
-      output.innerHTML = `<tr><td>${escapeHtml(report)}</td><td>${escapeHtml(selectedPeriod)}</td><td>${escapeHtml(formatLabel)}</td><td>${escapeHtml(generatedAt.toLocaleString())}</td></tr>`;
+      output.innerHTML = `<strong>${escapeHtml(report)} report ready</strong><span>${escapeHtml(selectedPeriod)} - ${escapeHtml(formatLabel)} - ${escapeHtml(generatedAt.toLocaleString())}</span>`;
     }
   };
 
