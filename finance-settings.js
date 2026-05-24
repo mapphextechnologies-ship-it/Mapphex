@@ -18,7 +18,7 @@
 
   const readSettings = () => {
     try {
-      const stored = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null");
+      const stored = window.MapphexFinanceDB?.readMemory?.(SETTINGS_KEY, null);
       return { ...DEFAULTS, ...(stored && typeof stored === "object" ? stored : {}) };
     } catch {
       return { ...DEFAULTS };
@@ -26,7 +26,8 @@
   };
 
   const writeSettings = (settings) => {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    window.MapphexFinanceDB?.writeMemory?.(SETTINGS_KEY, settings);
+    window.MapphexFinanceDB?.write?.(SETTINGS_KEY, settings);
   };
 
   const setControlValue = (control, value) => {

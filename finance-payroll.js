@@ -16,7 +16,7 @@
   const readRows = () => {
     if (Array.isArray(window.__financePayrollRows)) return window.__financePayrollRows;
     try {
-      const rows = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      const rows = window.MapphexFinanceDB?.readMemory?.(STORAGE_KEY, []);
       return Array.isArray(rows) ? rows : [];
     } catch {
       return [];
@@ -25,13 +25,13 @@
 
   const writeRows = (rows) => {
     window.__financePayrollRows = rows;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(rows));
+    window.MapphexFinanceDB?.writeMemory?.(STORAGE_KEY, rows);
     window.MapphexFinanceDB?.write?.(STORAGE_KEY, rows);
   };
 
   const readJson = (key, fallback) => {
     try {
-      const value = JSON.parse(localStorage.getItem(key) || "null");
+      const value = window.MapphexFinanceDB?.readMemory?.(key, null);
       return value ?? fallback;
     } catch {
       return fallback;
@@ -39,7 +39,7 @@
   };
 
   const writeJson = (key, value) => {
-    localStorage.setItem(key, JSON.stringify(value));
+    window.MapphexFinanceDB?.writeMemory?.(key, value);
     window.MapphexFinanceDB?.write?.(key, value);
   };
 

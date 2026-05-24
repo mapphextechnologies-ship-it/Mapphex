@@ -108,7 +108,7 @@ function readState() {
   try {
     const params = new URLSearchParams(location.search);
     const org = params.get("org") || params.get("organization") || params.get("tenant") || "";
-    const records = JSON.parse(localStorage.getItem("mapphex_finance_records") || "[]");
+    const records = window.MapphexFinanceDB?.readMemory?.("mapphex_finance_records", []) || [];
     return { org, records: Array.isArray(records) ? records : [] };
   } catch {
     return { org: "", records: [] };

@@ -23,7 +23,7 @@
 
   const readJson = (key, fallback) => {
     try {
-      const value = JSON.parse(localStorage.getItem(key) || "null");
+      const value = window.MapphexFinanceDB?.readMemory?.(key, null);
       return value ?? fallback;
     } catch {
       return fallback;
@@ -31,7 +31,7 @@
   };
 
   const writeReport = (report) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(report));
+    window.MapphexFinanceDB?.writeMemory?.(STORAGE_KEY, report);
   };
 
   const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({

@@ -26,15 +26,70 @@
     "mapphex_finance_approvals_archive_v1",
     "mapphex_finance_payment_transactions_v1",
     "mapphex_finance_suppliers_v1",
+    SETTINGS_KEY,
   ]);
   const RESET_ONLY_KEYS = [
     "mapphex_finance_generated_report_v1",
     "mapphex_finance_records",
   ];
+  const memoryStore = new Map();
+  const rawLocalGet = Storage.prototype.getItem;
+  const rawLocalSet = Storage.prototype.setItem;
+  const rawLocalRemove = Storage.prototype.removeItem;
+
+  const isFinanceStorageKey = (key) => {
+    const value = String(key || "");
+    const normalized = value.startsWith("tenant:") ? value.split(":").pop() : value;
+    return (
+      normalized === RESET_MARKER ||
+      normalized === SETTINGS_KEY ||
+      normalized === "mapphex_hr_payment_notifications_v1" ||
+      normalized === "mapphex_finance_records" ||
+      normalized.startsWith("mapphex_finance_") ||
+      normalized.startsWith(LOCAL_PREFIX)
+    );
+  };
+
+  const clearPersistedFinanceStorage = () => {
+    try {
+      const keys = [];
+      for (let index = 0; index < localStorage.length; index += 1) {
+        const key = localStorage.key(index);
+        if (isFinanceStorageKey(key)) keys.push(key);
+      }
+      keys.forEach((key) => rawLocalRemove.call(localStorage, key));
+    } catch {
+      // storage can be blocked by the browser
+    }
+  };
+
+  Storage.prototype.getItem = function financeGetItem(key) {
+    if (this === localStorage && isFinanceStorageKey(key)) return memoryStore.has(String(key)) ? memoryStore.get(String(key)) : null;
+    return rawLocalGet.call(this, key);
+  };
+
+  Storage.prototype.setItem = function financeSetItem(key, value) {
+    if (this === localStorage && isFinanceStorageKey(key)) {
+      memoryStore.set(String(key), String(value));
+      return undefined;
+    }
+    return rawLocalSet.call(this, key, value);
+  };
+
+  Storage.prototype.removeItem = function financeRemoveItem(key) {
+    if (this === localStorage && isFinanceStorageKey(key)) {
+      memoryStore.delete(String(key));
+      return undefined;
+    }
+    return rawLocalRemove.call(this, key);
+  };
+
+  clearPersistedFinanceStorage();
 
   const readSettings = () => {
     try {
-      const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null");
+      const raw = memoryStore.get(SETTINGS_KEY);
+      const settings = raw ? JSON.parse(raw) : null;
       return { ...DEFAULT_SETTINGS, ...(settings && typeof settings === "object" ? settings : {}) };
     } catch {
       return { ...DEFAULT_SETTINGS };
@@ -160,52 +215,42 @@
 
   const localKey = (key) => `${LOCAL_PREFIX}${tenantId() || "preview"}_${key}`;
 
-  const localRead = (key, fallback) => safeJsonParse(readRawStorage(localStorage, localKey(key)), fallback);
+  const localRead = (key, fallback) => safeJsonParse(memoryStore.get(localKey(key)) || null, fallback);
 
   const localWrite = (key, value) => {
     try {
-      localStorage.setItem(localKey(key), JSON.stringify(value ?? null));
+      const serialized = JSON.stringify(value ?? null);
+      memoryStore.set(localKey(key), serialized);
+      memoryStore.set(String(key), serialized);
     } catch {
       // preview storage unavailable
     }
   };
 
+  const readMemory = (key, fallback) => localRead(key, fallback);
+
+  const writeMemory = (key, value) => {
+    localWrite(key, value);
+    return value;
+  };
+
   const clearDirectLocalKey = (key) => {
     try {
-      localStorage.removeItem(key);
+      rawLocalRemove.call(localStorage, key);
       const tenant = tenantId();
-      if (tenant) localStorage.removeItem(`tenant:${tenant}:${key}`);
-      localStorage.removeItem(localKey(key));
+      if (tenant) rawLocalRemove.call(localStorage, `tenant:${tenant}:${key}`);
+      rawLocalRemove.call(localStorage, localKey(key));
+      memoryStore.delete(String(key));
+      if (tenant) memoryStore.delete(`tenant:${tenant}:${key}`);
+      memoryStore.delete(localKey(key));
     } catch {
       // storage can be blocked by the browser
     }
   };
 
-  const clearRemoteKey = async (key) => {
-    const tenant = tenantId();
-    if (!tenant) return;
-    try {
-      await fetch("/api/kv", {
-        method: "POST",
-        headers: headers({
-          "Content-Type": "application/json",
-          "Idempotency-Key": `finance-reset-${key}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-        }),
-        credentials: "same-origin",
-        body: JSON.stringify({ key, value: [], tenantId: tenant }),
-      });
-    } catch {
-      // API can be unavailable in preview mode
-    }
-  };
-
   const resetFinanceDataOnce = async () => {
     try {
-      if (localStorage.getItem(RESET_MARKER) === "done") return;
       [...ALLOWED_KEYS, ...RESET_ONLY_KEYS].forEach(clearDirectLocalKey);
-      [...ALLOWED_KEYS].forEach((key) => localWrite(key, []));
-      localStorage.setItem(RESET_MARKER, "done");
-      await Promise.all([...ALLOWED_KEYS].map(clearRemoteKey));
     } catch {
       // If reset cannot run, normal page behavior should continue.
     }
@@ -269,6 +314,8 @@
     applyPreferences,
     apiHeaders,
     readSettings,
+    readMemory,
+    writeMemory,
     mode: () => (tenantId() ? "api-first" : "preview"),
   });
 

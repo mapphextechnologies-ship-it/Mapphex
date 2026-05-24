@@ -13,7 +13,7 @@
   const readRows = () => {
     if (Array.isArray(window.__financeLedgerRows)) return window.__financeLedgerRows;
     try {
-      const rows = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      const rows = window.MapphexFinanceDB?.readMemory?.(STORAGE_KEY, []);
       return Array.isArray(rows) ? rows : [];
     } catch {
       return [];
@@ -22,7 +22,7 @@
 
   const writeRows = (rows) => {
     window.__financeLedgerRows = rows;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(rows));
+    window.MapphexFinanceDB?.writeMemory?.(STORAGE_KEY, rows);
     window.MapphexFinanceDB?.write?.(STORAGE_KEY, rows);
   };
   const typeClass = (type) => (String(type).toLowerCase() === "debit" ? "status pending" : "status");

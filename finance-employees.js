@@ -9,7 +9,7 @@
 
   const readJson = (key, fallback) => {
     try {
-      const value = JSON.parse(localStorage.getItem(key) || "null");
+      const value = window.MapphexFinanceDB?.readMemory?.(key, null);
       return value ?? fallback;
     } catch {
       return fallback;
@@ -17,7 +17,7 @@
   };
 
   const writeJson = (key, value) => {
-    localStorage.setItem(key, JSON.stringify(value));
+    window.MapphexFinanceDB?.writeMemory?.(key, value);
   };
 
   const readRows = () => {
