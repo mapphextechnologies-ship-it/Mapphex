@@ -1640,8 +1640,8 @@
 }
 
 .erp-row-actions .danger {
-  color: #7f1d1d;
-  border-color: rgba(220, 38, 38, 0.24);
+  color: #dff6ff;
+  border-color: rgba(91, 214, 255, 0.28);
 }
 
 .erp-message-form {
@@ -1963,7 +1963,7 @@
     opacity: 0;
     pointer-events: none;
     transition: opacity 180ms ease;
-    background: rgba(63, 42, 29, 0.34);
+    background: rgba(5, 17, 36, 0.46);
     backdrop-filter: blur(3px);
   }
 

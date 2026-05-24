@@ -462,25 +462,34 @@
     }
   };
 
-  const clearSavedSalesApprovals = () => {
-    const cutoff = new Date("2026-05-24T15:30:00.000Z").getTime();
+  const clearSavedSalesDashboardState = () => {
     const state = erpState();
     const approvals = Array.isArray(state.approvals) ? state.approvals : [];
     const workflow = Array.isArray(state.workflow) ? state.workflow : [];
     const messages = Array.isArray(state.messages) ? state.messages : [];
-    const isSalesItem = (item) => item?.moduleId === "sales" || item?.source === "sales" || item?.from === "sales";
-    const isOldItem = (item) => {
-      const time = new Date(item?.updatedAt || item?.createdAt || item?.at || 0).getTime();
-      return !Number.isFinite(time) || time < cutoff;
-    };
-    const nextApprovals = approvals.filter((item) => !(isSalesItem(item) && isOldItem(item)));
-    const nextWorkflow = workflow.filter((item) => !(isSalesItem(item) && isOldItem(item)));
-    const nextMessages = messages.filter((item) => !(isSalesItem(item) && isOldItem(item)));
-    if (nextApprovals.length === approvals.length && nextWorkflow.length === workflow.length && nextMessages.length === messages.length) return;
+    const transactions = Array.isArray(storeGet(TRANSACTIONS_KEY, [])) ? storeGet(TRANSACTIONS_KEY, []) : [];
+    const activities = Array.isArray(storeGet(ACTIVITY_KEY, [])) ? storeGet(ACTIVITY_KEY, []) : [];
+    const isSalesItem = (item) => item?.moduleId === "sales" || item?.source === "sales" || item?.target === "sales" || item?.from === "sales" || item?.to === "sales" || item?.sourceModule === "sales";
+    const nextApprovals = approvals.filter((item) => !isSalesItem(item));
+    const nextWorkflow = workflow.filter((item) => !isSalesItem(item));
+    const nextMessages = messages.filter((item) => !isSalesItem(item));
+    const nextTransactions = transactions.filter((item) => !isSalesItem(item));
+    const nextActivities = activities.filter((item) => !isSalesItem(item));
+    if (
+      nextApprovals.length === approvals.length &&
+      nextWorkflow.length === workflow.length &&
+      nextMessages.length === messages.length &&
+      nextTransactions.length === transactions.length &&
+      nextActivities.length === activities.length
+    ) {
+      return;
+    }
     state.approvals = nextApprovals;
     state.workflow = nextWorkflow;
     state.messages = nextMessages;
     saveErpState(state);
+    if (nextTransactions.length !== transactions.length) storeSet(TRANSACTIONS_KEY, nextTransactions);
+    if (nextActivities.length !== activities.length) storeSet(ACTIVITY_KEY, nextActivities);
   };
 
   const appendActivity = (moduleId, action, detail = {}) => {
@@ -2045,7 +2054,7 @@
       await hydrateSharedData();
       if (moduleId === "sales") {
         clearLegacySalesRecords();
-        clearSavedSalesApprovals();
+        clearSavedSalesDashboardState();
         await store()?.flush?.().catch(() => null);
       }
       ensurePortalState(moduleId);
