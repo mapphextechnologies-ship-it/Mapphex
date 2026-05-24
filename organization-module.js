@@ -327,18 +327,21 @@
       return "Operations";
     };
     return base.map((label, idx) => {
+      const hash = idx === 0 ? "dashboard" : label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "records";
       const target = idx === 0
         ? "dashboard"
         : /approval|payroll/i.test(label)
           ? "approvals"
+          : moduleId === "sales" && /revenue/i.test(label)
+            ? `module-page:${hash}`
           : /report|tax|analytic|revenue|budget|expense|transaction|billing|cost/i.test(label)
             ? "reports"
-            : "portal-records";
+            : `module-page:${hash}`;
       return {
         group: groupFor(label, idx),
         label,
         target,
-        hash: idx === 0 ? "dashboard" : label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "records",
+        hash,
         icon: (label || moduleDef?.title || "M").slice(0, 1).toUpperCase(),
       };
     });
@@ -349,6 +352,7 @@
     "portal-records": ["portal-records"],
     approvals: ["approvals"],
     reports: ["reports"],
+    "module-page": ["module-detail-page"],
     logout: [],
   };
 
@@ -381,8 +385,9 @@
         : activeModuleId === "finance"
           ? FINANCE_PORTAL_VIEW_GROUPS
           : DEFAULT_PORTAL_VIEW_GROUPS;
+    const normalizedTarget = String(target || "dashboard").startsWith("module-page:") ? "module-page" : target;
     const group =
-      viewGroups[target] ||
+      viewGroups[normalizedTarget] ||
       viewGroups["portal-records"] ||
       viewGroups.dashboard ||
       [];
@@ -396,6 +401,7 @@
       "finance-actions-panel",
       "approvals",
       "reports",
+      "module-detail-page",
       "finance-guide",
       "finance-dashboard",
       "finance-invoices-page",
@@ -454,15 +460,18 @@
     $("#module-sidebar-title").textContent = `${moduleDef.title} Menu`;
     const groups = items.reduce((list, item) => {
       const label = item.group || "Menu";
-      const last = list[list.length - 1];
-      if (!last || last.label !== label) list.push({ label, items: [] });
-      list[list.length - 1].items.push(item);
+      let group = list.find((entry) => entry.label === label);
+      if (!group) {
+        group = { label, items: [] };
+        list.push(group);
+      }
+      group.items.push(item);
       return list;
     }, []);
     $("#module-nav").innerHTML = groups
       .map(
         (group) => `<div class="module-nav-group"><strong>${escapeHtml(group.label)}</strong>${group.items
-          .map((item) => `<a class="${item.hash === "dashboard" ? "active" : ""}" href="#${escapeHtml(item.hash)}" data-module-nav="${escapeHtml(item.hash)}" data-module-target="${escapeHtml(item.target)}"><span><b aria-hidden="true">${escapeHtml(item.icon)}</b>${escapeHtml(item.label)}</span>${item.badge ? `<small class="nav-badge">${escapeHtml(item.badge)}</small>` : `<small>View</small>`}</a>`)
+          .map((item) => `<a class="${item.hash === "dashboard" ? "active" : ""}" href="#${escapeHtml(item.hash)}" data-module-nav="${escapeHtml(item.hash)}" data-module-target="${escapeHtml(item.target)}" data-module-label="${escapeHtml(item.label)}"><span><b aria-hidden="true">${escapeHtml(item.icon)}</b>${escapeHtml(item.label)}</span>${item.badge ? `<small class="nav-badge">${escapeHtml(item.badge)}</small>` : `<small>View</small>`}</a>`)
           .join("")}</div>`,
       )
       .join("");
@@ -494,17 +503,72 @@
   const setActivePortalNav = (hash = location.hash) => {
     const current = String(hash || "#dashboard").replace(/^#/, "");
     let target = "dashboard";
+    let activeLink = null;
     document.querySelectorAll("[data-module-nav]").forEach((link) => {
       const active = link.dataset.moduleNav === current || (!hash && link.dataset.moduleNav === "dashboard");
       link.classList.toggle("active", active);
       if (active) {
         target = link.dataset.moduleTarget || "dashboard";
+        activeLink = link;
         link.setAttribute("aria-current", "page");
       } else {
         link.removeAttribute("aria-current");
       }
     });
     setPortalView(target);
+    if (String(target).startsWith("module-page:")) renderModuleDetailPage(activeModuleId, blueprintFor(activeModuleId), activeLink);
+  };
+
+  const renderModuleDetailPage = (moduleId, moduleDef, link) => {
+    const page = $("#module-detail-page");
+    if (!page || !link) return;
+    const label = link.dataset.moduleLabel || "Records";
+    const hash = link.dataset.moduleNav || label.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    const workflow = workflowFor(moduleId);
+    const rows = Array.isArray(moduleData()[moduleId]) ? moduleData()[moduleId] : [];
+    const matchingRows = rows.filter((row) => {
+      const text = (row.values || []).join(" ").toLowerCase();
+      return text.includes(label.toLowerCase()) || text.includes(hash.replace(/-/g, " "));
+    });
+    const displayRows = (matchingRows.length ? matchingRows : rows).slice(0, 8);
+    const rowsHtml = displayRows.length
+      ? displayRows
+          .map(
+            (row) => `<tr>${workflow.labels
+              .map((field, idx) => `<td data-label="${escapeHtml(field)}">${escapeHtml(row.values?.[idx] || "-")}</td>`)
+              .join("")}<td data-label="Updated">${escapeHtml(humanDate(row.updatedAt))}</td></tr>`,
+          )
+          .join("")
+      : `<tr><td colspan="${workflow.labels.length + 1}" class="muted">No ${escapeHtml(label.toLowerCase())} records yet.</td></tr>`;
+    const actionCopy = {
+      orders: "Track customer orders, status, and fulfilment.",
+      products: "Keep products, pricing, and sales items easy to review.",
+      customers: "Review customer records and sales history.",
+      discounts: "See discounts and promotion requests before they affect revenue.",
+    };
+    page.innerHTML = `
+      <div class="panel-header">
+        <div>
+          <span class="eyebrow">${escapeHtml(moduleDef.title)}</span>
+          <h2>${escapeHtml(label)}</h2>
+          <p class="portal-manager-subtitle">${escapeHtml(actionCopy[hash] || `Review and manage ${label.toLowerCase()} for this workspace.`)}</p>
+        </div>
+        <div class="panel-actions">
+          <button class="btn" data-erp-export="csv" type="button">Export Excel</button>
+          <button class="btn" data-focus-record-form type="button">Add Record</button>
+        </div>
+      </div>
+      <div class="module-page-summary">
+        <article><span>Records</span><strong>${displayRows.length}</strong><small>${escapeHtml(label)} in view</small></article>
+        <article><span>Workspace</span><strong>Ready</strong><small>Uses shared organization data</small></article>
+        <article><span>Next action</span><strong>Add</strong><small>Create a new ${escapeHtml(label.toLowerCase())} record</small></article>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr>${workflow.labels.map((field) => `<th>${escapeHtml(field)}</th>`).join("")}<th>Updated</th></tr></thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>`;
   };
 
   const activatePortalMenuItem = (link) => {
@@ -523,6 +587,7 @@
     });
     history.replaceState(null, "", `#${nav}`);
     setPortalView(target);
+    if (String(target).startsWith("module-page:")) renderModuleDetailPage(activeModuleId, blueprintFor(activeModuleId), link);
   };
 
   const renderForm = (workflow) => {
@@ -890,6 +955,7 @@
             <article class="erp-card"><strong>Responsibilities</strong><ul>${blueprint.responsibilities.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></article>
           </div>
         </section>
+        <section id="module-detail-page" class="panel module-detail-page" hidden></section>
         <section id="approvals" class="erp-work-grid">
           <article class="panel">
             <div class="panel-header"><h2>Department Actions</h2><span class="badge">Workflow</span></div>
@@ -1537,6 +1603,16 @@
         const focusFinanceForm = event.target.closest("[data-focus-finance-form]");
         if (focusFinanceForm) {
           event.preventDefault();
+          document.getElementById("portal-records")?.scrollIntoView({ behavior: "smooth", block: "start" });
+          document.querySelector("#module-record-form input, #module-record-form select, #module-record-form textarea")?.focus();
+          return;
+        }
+        const focusRecordForm = event.target.closest("[data-focus-record-form]");
+        if (focusRecordForm) {
+          event.preventDefault();
+          const recordsLink = Array.from(document.querySelectorAll("[data-module-nav]")).find((item) => item.dataset.moduleTarget === "portal-records");
+          if (recordsLink) activatePortalMenuItem(recordsLink);
+          else setPortalView("portal-records");
           document.getElementById("portal-records")?.scrollIntoView({ behavior: "smooth", block: "start" });
           document.querySelector("#module-record-form input, #module-record-form select, #module-record-form textarea")?.focus();
           return;

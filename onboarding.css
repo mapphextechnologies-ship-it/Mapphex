@@ -293,10 +293,14 @@
 .module-sidebar {
   position: sticky;
   top: 92px;
+  align-self: start;
+  max-height: calc(100dvh - 110px);
   padding: 22px;
   border-color: rgba(130, 190, 255, 0.16);
   background: rgba(2, 8, 18, 0.78);
   backdrop-filter: blur(18px);
+  overflow: auto;
+  overscroll-behavior: contain;
   transition: width 180ms ease, transform 180ms ease, padding 180ms ease;
 }
 
@@ -526,6 +530,44 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   align-items: end;
+}
+
+.module-detail-page {
+  display: grid;
+  gap: 16px;
+}
+
+.module-detail-page[hidden] {
+  display: none;
+}
+
+.module-page-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.module-page-summary article {
+  min-height: 108px;
+  padding: 16px;
+  border: 1px solid rgba(130, 190, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.module-page-summary span,
+.module-page-summary small {
+  display: block;
+  color: rgba(218, 232, 255, 0.66);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.module-page-summary strong {
+  display: block;
+  margin: 8px 0 6px;
+  color: rgba(255, 255, 255, 0.96);
+  font-size: clamp(22px, 2.5vw, 30px);
 }
 
 .sales-report-workspace {
@@ -1535,6 +1577,7 @@
   }
 
   .sales-report-status-grid,
+  .module-page-summary,
   .sales-report-form {
     grid-template-columns: 1fr;
   }
