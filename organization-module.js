@@ -741,6 +741,15 @@
         <button class="btn primary" type="submit">Add Sale</button>`;
       return;
     }
+    if (moduleId === "pharmacy") {
+      $("#module-record-form").innerHTML = `
+        <label class="field"><span>Medicine/Item</span><input name="field0" placeholder="Medicine or item name" required /></label>
+        <label class="field"><span>Batch</span><input name="field1" placeholder="Batch number" required /></label>
+        <label class="field"><span>Expiry/Status</span><input name="field2" placeholder="Expiry date or status" required /></label>
+        <label class="field"><span>Stock/Action</span><select name="field3" required><option value="">Select action</option><option>In stock</option><option>Low stock</option><option>Out of stock</option><option>Dispensed</option><option>Returned</option><option>Expired</option><option>Order stock</option></select></label>
+        <button class="btn primary" type="submit">Add Record</button>`;
+      return;
+    }
     $("#module-record-form").innerHTML =
       workflow.labels
         .map((label, idx) => `<label class="field"><span>${escapeHtml(label)}</span><input name="field${idx}" placeholder="${escapeHtml(label)}" required /></label>`)
