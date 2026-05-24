@@ -496,6 +496,7 @@
     const items = menuItemsFor(moduleId, moduleDef);
     $("#module-sidebar-title").textContent = `${moduleDef.title} Menu`;
     const navCount = (item) => {
+      if (moduleId === "sales") return "";
       if (item.badge) return item.badge;
       const state = ensurePortalState(moduleId);
       const records = Array.isArray(moduleData()[moduleId]) ? moduleData()[moduleId] : [];
@@ -527,7 +528,10 @@
     $("#module-nav").innerHTML = groups
       .map(
         (group) => `<div class="module-nav-group"><strong>${escapeHtml(group.label)}</strong>${group.items
-          .map((item) => `<a class="${item.hash === "dashboard" ? "active" : ""}" href="${escapeHtml(moduleViewUrl(item.hash))}" data-module-nav="${escapeHtml(item.hash)}" data-module-target="${escapeHtml(item.target)}" data-module-label="${escapeHtml(item.label)}"><span><b aria-hidden="true">${escapeHtml(item.icon)}</b>${escapeHtml(item.label)}</span><small${item.badge ? ` class="nav-badge"` : ""}>${escapeHtml(navCount(item))}</small></a>`)
+          .map((item) => {
+            const count = navCount(item);
+            return `<a class="${item.hash === "dashboard" ? "active" : ""}" href="${escapeHtml(moduleViewUrl(item.hash))}" data-module-nav="${escapeHtml(item.hash)}" data-module-target="${escapeHtml(item.target)}" data-module-label="${escapeHtml(item.label)}"><span><b aria-hidden="true">${escapeHtml(item.icon)}</b>${escapeHtml(item.label)}</span>${count !== "" ? `<small${item.badge ? ` class="nav-badge"` : ""}>${escapeHtml(count)}</small>` : ""}</a>`;
+          })
           .join("")}</div>`,
       )
       .join("");
@@ -592,10 +596,10 @@
           .map(
             (row) => `<tr>${workflow.labels
               .map((field, idx) => `<td data-label="${escapeHtml(field)}">${escapeHtml(row.values?.[idx] || "-")}</td>`)
-              .join("")}<td data-label="Updated">${escapeHtml(humanDate(row.updatedAt))}</td></tr>`,
+              .join("")}<td data-label="Updated">${escapeHtml(humanDate(row.updatedAt))}</td>${moduleId === "sales" ? `<td data-label="Actions"><button class="btn danger" type="button" data-record-delete="${escapeHtml(row.id)}">Delete</button></td>` : ""}</tr>`,
           )
           .join("")
-      : `<tr><td colspan="${workflow.labels.length + 1}" class="muted">No ${escapeHtml(label.toLowerCase())} records yet.</td></tr>`;
+      : `<tr><td colspan="${workflow.labels.length + (moduleId === "sales" ? 2 : 1)}" class="muted">No ${escapeHtml(label.toLowerCase())} records yet.</td></tr>`;
     const actionCopy = {
       orders: "Track who ordered, what they are buying, where it is going, amount, and invoice status.",
       products: "Keep products, pricing, and sales items easy to review.",
@@ -664,7 +668,7 @@
       </div>
       <div class="table-wrap">
         <table class="table">
-          <thead><tr>${workflow.labels.map((field) => `<th>${escapeHtml(field)}</th>`).join("")}<th>Updated</th></tr></thead>
+          <thead><tr>${workflow.labels.map((field) => `<th>${escapeHtml(field)}</th>`).join("")}<th>Updated</th>${moduleId === "sales" ? "<th>Actions</th>" : ""}</tr></thead>
           <tbody>${rowsHtml}</tbody>
         </table>
       </div>`;
@@ -2091,21 +2095,30 @@
         }
       });
       setActivePortalNav();
+      const refreshCurrentModuleView = () => {
+        renderRows(moduleId, workflow, $("#module-search")?.value || "");
+        refreshEnterpriseSections(moduleId);
+        if (String(moduleViewFromUrl()).startsWith("module-page:")) {
+          renderModuleDetailPage(moduleId, blueprintFor(moduleId), document.querySelector("[data-module-nav].active"));
+        }
+      };
+      const deleteModuleRecord = async (recordId) => {
+        if (!recordId || !window.confirm("Delete this module record?")) return;
+        const data = moduleData();
+        const rows = Array.isArray(data[moduleId]) ? data[moduleId] : [];
+        const row = rows.find((item) => item.id === recordId);
+        data[moduleId] = rows.filter((item) => item.id !== recordId);
+        saveModuleData(data);
+        appendActivity(moduleId, "record.deleted", { id: recordId, message: `${row?.values?.[0] || "Record"} deleted.` });
+        refreshCurrentModuleView();
+        await store()?.flush?.().catch(() => null);
+      };
       $("#module-search")?.addEventListener("input", (event) => renderRows(moduleId, workflow, event.currentTarget.value));
       $("#finance-filter")?.addEventListener("change", () => renderRows(moduleId, workflow, $("#module-search")?.value || ""));
       $("#module-table-body")?.addEventListener("click", async (event) => {
         const btn = event.target.closest("[data-record-delete]");
         if (!btn) return;
-        if (!window.confirm("Delete this module record?")) return;
-        const data = moduleData();
-        const rows = Array.isArray(data[moduleId]) ? data[moduleId] : [];
-        const row = rows.find((item) => item.id === btn.dataset.recordDelete);
-        data[moduleId] = rows.filter((item) => item.id !== btn.dataset.recordDelete);
-        saveModuleData(data);
-        appendActivity(moduleId, "record.deleted", { id: btn.dataset.recordDelete, message: `${row?.values?.[0] || "Record"} deleted.` });
-        renderRows(moduleId, workflow, $("#module-search")?.value || "");
-        refreshEnterpriseSections(moduleId);
-        await store()?.flush?.().catch(() => null);
+        await deleteModuleRecord(btn.dataset.recordDelete);
       });
       $("#module-record-form")?.addEventListener("submit", async (event) => {
         event.preventDefault();
@@ -2125,12 +2138,17 @@
         appendActivity(moduleId, "record.created", { values, message: values.join(" • ") });
         await postModuleRecordTransaction(moduleId, row);
         event.currentTarget.reset();
-        renderRows(moduleId, workflow, $("#module-search")?.value || "");
-        refreshEnterpriseSections(moduleId);
+        refreshCurrentModuleView();
         await store()?.flush?.().catch(() => null);
       });
 
       document.addEventListener("click", (event) => {
+        const detailDelete = event.target.closest("[data-record-delete]");
+        if (detailDelete && !detailDelete.closest("#module-table-body")) {
+          event.preventDefault();
+          deleteModuleRecord(detailDelete.dataset.recordDelete);
+          return;
+        }
         const financeJump = event.target.closest("[data-finance-jump]");
         if (financeJump) {
           event.preventDefault();
@@ -2182,12 +2200,7 @@
           data[moduleId] = [];
           saveModuleData(data);
           appendActivity(moduleId, "records.cleared", { message: `${deleted} ${moduleDef.title} records cleared.` });
-          renderRows(moduleId, workflow, $("#module-search")?.value || "");
-          refreshEnterpriseSections(moduleId);
-          if (String(moduleViewFromUrl()).startsWith("module-page:")) {
-            const activeLink = document.querySelector("[data-module-nav].active");
-            renderModuleDetailPage(moduleId, blueprintFor(moduleId), activeLink);
-          }
+          refreshCurrentModuleView();
           store()?.flush?.().catch(() => null);
           return;
         }
