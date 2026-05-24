@@ -99,6 +99,13 @@
   const enrichPortal = (portal) => ({ ...(window.EnterpriseModules?.get?.(portal?.id) || {}), ...(portal || {}) });
 
   const STANDARD_MODULES = {
+    branch: {
+      entity: "Branch Record",
+      form: ["Branch", "Manager", "Region", "Status"],
+      responsibilities: ["Approve branch accounts", "Maintain branch records", "Track local teams", "Review branch activity", "Coordinate branch reports", "Keep operational status current"],
+      reports: ["Branch directory", "Pending approvals", "Active branches", "Branch activity", "Operations summary"],
+      workflows: [["Add branch record", "admin"], ["Review branch account", "admin"], ["Send branch update", "staff"], ["Export branch report", "reporting"]],
+    },
     hr: {
       entity: "Employee",
       form: ["Employee", "Department", "Salary", "Payroll Status"],
@@ -254,6 +261,7 @@
   };
 
   const PORTAL_MENUS = {
+    branch: ["Dashboard", "Branch Accounts", "Branch Records", "Approvals", "Reports", "Activity"],
     finance: ["Dashboard", "Invoices", "Approvals", "Suppliers", "Budgets", "Employees", "Payroll", "Ledger", "Reports", "Export", "Settings"],
     hr: ["Dashboard", "Employees", "Attendance", "Leave Requests", "Payroll", "Recruitment", "Performance", "Schedules", "Reports"],
     pharmacy: ["Dashboard", "Medicines", "Inventory", "Prescriptions", "Customers", "Suppliers", "Sales", "Expiry Alerts", "Reports"],
@@ -273,6 +281,16 @@
   };
 
   const menuItemsFor = (moduleId, moduleDef) => {
+    if (moduleId === "branch") {
+      return [
+        ["Dashboard", "dashboard", "dashboard", "D"],
+        ["Branch Accounts", "approvals", "accounts", "A"],
+        ["Branch Records", "portal-records", "records", "R"],
+        ["Approvals", "approvals", "approvals", "P"],
+        ["Reports", "reports", "reports", "S"],
+        ["Activity", "reports", "activity", "T"],
+      ].map(([label, target, hash, icon]) => ({ label, target, hash, icon }));
+    }
     if (moduleId === "finance") {
       return [
         ["Main", "Dashboard", "dashboard", "dashboard", "D", ""],
@@ -646,6 +664,79 @@
     );
   };
 
+  const renderBranchManagementSections = (moduleId, moduleDef) => {
+    document.body.classList.add("branch-management-page");
+    document.body.classList.remove("finance-simple-page");
+    const subtitle = $("#module-workflow-subtitle");
+    if (subtitle) subtitle.textContent = "Create and maintain branch records for locations, managers, regions, and operating status.";
+    const recordTitle = $("#portal-records .panel-header h2");
+    if (recordTitle) recordTitle.textContent = "Branch Records";
+    const recordActions = $("#portal-records .panel-header .panel-actions");
+    if (recordActions) {
+      recordActions.innerHTML = `<input id="module-search" type="search" placeholder="Search branch records..." /><button class="btn" data-erp-export="csv" type="button">Export</button>`;
+    }
+    const portalKpis = $("#portal-kpis");
+    if (portalKpis && !portalKpis.classList.contains("branch-management-kpis")) {
+      portalKpis.classList.add("branch-management-kpis");
+      portalKpis.innerHTML = `
+        <article class="kpi"><div class="kpi-label">Branch Records</div><div id="module-kpi-a" class="kpi-value">0</div><div class="kpi-foot muted">Saved locations</div></article>
+        <article class="kpi"><div class="kpi-label">Shared Users</div><div id="module-kpi-users" class="kpi-value">0</div><div class="kpi-foot muted">Organization access</div></article>
+        <article class="kpi"><div class="kpi-label">Enabled Modules</div><div id="module-kpi-modules" class="kpi-value">0</div><div class="kpi-foot muted">Workspace tools</div></article>
+        <article class="kpi"><div class="kpi-label">Data Context</div><div class="kpi-value">Unified</div><div id="module-kpi-tenant" class="kpi-foot muted">Tenant workspace</div></article>`;
+    }
+    if (!$("#branch-management-overview")) {
+      $("#portal-kpis")?.insertAdjacentHTML(
+        "afterend",
+        `<section id="branch-management-overview" class="panel branch-management-overview">
+          <div class="panel-header">
+            <div>
+              <h2>Branch Operations</h2>
+              <p class="portal-manager-subtitle">Manage branch setup, account review, local records, and reporting from one workspace.</p>
+            </div>
+            <span class="badge">Operations</span>
+          </div>
+          <div class="branch-management-grid">
+            <article><strong>Account Review</strong><span>Approve or return branch access requests before managers can sign in.</span></article>
+            <article><strong>Branch Directory</strong><span>Keep location, manager, and region records easy to scan.</span></article>
+            <article><strong>Operational Status</strong><span>Track active, pending, returned, and rejected branch work.</span></article>
+          </div>
+        </section>`,
+      );
+    }
+    if ($("#erp-sections")) return;
+    $("#portal-records")?.insertAdjacentHTML(
+      "afterend",
+      `<div id="erp-sections" class="erp-sections branch-management-sections">
+        <section id="approvals" class="erp-work-grid">
+          <article class="panel">
+            <div class="panel-header"><div><h2>Branch Actions</h2><p class="portal-manager-subtitle">Common actions for branch setup and operations.</p></div><span class="badge">Workflow</span></div>
+            <div id="erp-actions" class="erp-action-list"></div>
+          </article>
+          <article class="panel">
+            <div class="panel-header"><div><h2>Branch Approvals</h2><p class="portal-manager-subtitle">Requests that need admin or finance review.</p></div><span id="erp-approval-count" class="badge">0 pending</span></div>
+            <div id="erp-approvals" class="erp-approval-list"></div>
+          </article>
+        </section>
+        <section id="reports" class="erp-work-grid">
+          <article class="panel">
+            <div class="panel-header"><div><h2>Messages</h2><p class="portal-manager-subtitle">Send updates to departments or branch teams.</p></div><span class="badge">Connected</span></div>
+            <form id="erp-message-form" class="erp-message-form">
+              <label class="field"><span>Send to</span><input name="to" value="admin" required /></label>
+              <label class="field"><span>Message</span><input name="body" value="Please review the latest branch update." required /></label>
+              <button class="btn primary" type="submit">Send</button>
+            </form>
+            <div id="erp-messages" class="erp-message-list"></div>
+          </article>
+          <article class="panel">
+            <div class="panel-header"><div><h2>Reports & Activity</h2><p class="portal-manager-subtitle">Export branch records and review recent activity.</p></div><span class="badge">Ready</span></div>
+            <div id="erp-reports" class="erp-report-grid"></div>
+            <div id="erp-activity" class="erp-activity-list"></div>
+          </article>
+        </section>
+      </div>`,
+    );
+  };
+
   const openFinanceWorkflowPage = (label, target, detail) => {
     const params = new URLSearchParams();
     params.set("tenant", window.EnterpriseCore?.currentTenantId?.() || "");
@@ -682,7 +773,12 @@
       renderFinanceSections();
       return;
     }
+    if (moduleId === "branch") {
+      renderBranchManagementSections(moduleId, moduleDef);
+      return;
+    }
     document.body.classList.remove("finance-simple-page");
+    document.body.classList.remove("branch-management-page");
     if ($("#erp-sections")) return;
     const blueprint = blueprintFor(moduleId);
     $(".portal-hub-widgets").insertAdjacentHTML(
@@ -825,7 +921,7 @@
               const employees = Array.isArray(item.payload?.employees) ? item.payload.employees : [];
               const employeeText = employees.length ? `<p>${escapeHtml(employees.map((employee) => `${employee.name} (${money(employee.salary)})`).join(", "))}</p>` : "";
               return `<article class="erp-approval ${escapeHtml(item.status)}">
-              <div><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.source)} • ${typeof item.amount === "number" && item.amount > 99 ? money(item.amount) : escapeHtml(item.amount)} • ${escapeHtml(item.status)}</span><p>${escapeHtml(item.note)} ${item.reason ? `Reason: ${escapeHtml(item.reason)}` : ""}</p>${employeeText}</div>
+              <div><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.source)} - ${typeof item.amount === "number" && item.amount > 99 ? money(item.amount) : escapeHtml(item.amount)} - ${escapeHtml(item.status)}</span><p>${escapeHtml(item.note)} ${item.reason ? `Reason: ${escapeHtml(item.reason)}` : ""}</p>${employeeText}</div>
               <div class="erp-row-actions">
                 <button class="btn primary" data-approval-id="${escapeHtml(item.id)}" data-approval-status="approved" type="button">Approve</button>
                 ${isPayroll ? `<button class="btn primary" data-approval-id="${escapeHtml(item.id)}" data-approval-status="paid" type="button">Mark Paid</button>` : ""}
@@ -1087,7 +1183,7 @@
         .flatMap((row) =>
           (row.employees || []).map(
             (employee) =>
-              `Bytewave PAYSLIP\nMonth: ${row.month}\nEmployee: ${employee.name}\nDepartment: ${employee.department}\nGross Salary: ${money(employee.salary)}\nTax/Deductions: ${money(Math.round(employee.salary * 0.1))}\nNet Pay: ${money(Math.round(employee.salary * 0.9))}\nStatus: Paid\nReference: ${row.approvalId}\n`,
+              `MAPPHEX PAYSLIP\nMonth: ${row.month}\nEmployee: ${employee.name}\nDepartment: ${employee.department}\nGross Salary: ${money(employee.salary)}\nTax/Deductions: ${money(Math.round(employee.salary * 0.1))}\nNet Pay: ${money(Math.round(employee.salary * 0.9))}\nStatus: Paid\nReference: ${row.approvalId}\n`,
           ),
         )
         .join("\n---\n");
@@ -1224,7 +1320,7 @@
       const permissions = settings.modulePermissions?.[moduleId] || [];
       const moduleCode = (moduleDef.title || "M").slice(0, 2).toUpperCase();
 
-      document.title = `${moduleDef.title} • Bytewave`;
+      document.title = `${moduleDef.title} • MAPPHEX`;
       $("#module-title").textContent = moduleDef.title;
       $("#module-subtitle").textContent = `${org.organizationId || session.tenantId} • enterprise portal`;
       $("#module-heading").textContent = moduleDef.title;
@@ -1250,6 +1346,9 @@
       renderForm(workflow);
       renderRows(moduleId, workflow);
       renderEnterpriseSections(moduleId, moduleDef);
+      $("#module-kpi-users").textContent = Array.isArray(admin.users) ? admin.users.length : 0;
+      $("#module-kpi-modules").textContent = installed.size;
+      $("#module-kpi-tenant").textContent = session.tenantId;
       refreshEnterpriseSections(moduleId);
 
       $("#module-menu-toggle")?.addEventListener("click", () => {
@@ -1276,7 +1375,7 @@
         renderRows(moduleId, workflow, $("#module-search")?.value || "");
         refreshEnterpriseSections(moduleId);
       });
-      window.addEventListener("bytewave:background-sync", async () => {
+      window.addEventListener("mapphex:background-sync", async () => {
         await hydrateSharedData();
         renderRows(moduleId, workflow, $("#module-search")?.value || "");
         refreshEnterpriseSections(moduleId);

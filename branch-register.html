@@ -21,6 +21,17 @@
 
         <form id="branch-register-form" class="auth-form" autocomplete="off">
           <label class="field">
+            <span>Organization ID</span>
+            <input
+              id="organizationId"
+              name="organizationId"
+              type="text"
+              placeholder="e.g. ORG-LEGEND-2D5987"
+              required
+            />
+          </label>
+
+          <label class="field">
             <span>County / City</span>
             <input
               id="county"
@@ -99,7 +110,7 @@
 
           <p class="muted" style="margin: 0; font-size: 13px;">
             Already have an account?
-            <a href="branch-login.html" style="text-decoration: underline;"
+            <a id="branch-login-link" href="branch-login.html" style="text-decoration: underline;"
               >Login</a
             >
           </p>

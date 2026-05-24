@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const COMPANY_NAME = "Bytewave";
+  const COMPANY_NAME = "MAPPHEX";
   const DEFAULT_TENANT_ID = "default-company";
   const TENANT_KEY = "enterprise_active_tenant_v1";
   const SESSION_META_KEY = "enterprise_session_meta_v1";

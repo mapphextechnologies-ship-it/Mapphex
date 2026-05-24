@@ -32,7 +32,14 @@
   const setActiveLink = () => {
     const hash = location.hash || "#dashboard";
     $$(".sidebar-link").forEach((link) => {
-      const active = link.getAttribute("href") === hash;
+      const href = link.getAttribute("href") || "";
+      let active = href === hash;
+      try {
+        const url = new URL(href, location.href);
+        active = active || (url.pathname === location.pathname && url.hash === hash);
+      } catch {
+        // keep direct comparison result
+      }
       link.classList.toggle("active", active);
       if (active) link.setAttribute("aria-current", "page");
       else link.removeAttribute("aria-current");

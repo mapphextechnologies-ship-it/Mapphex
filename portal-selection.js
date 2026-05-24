@@ -238,7 +238,7 @@
     if (summaryEl) {
       const monthlyTotal = pricingApi().totalFor([...selected]);
       summaryEl.textContent = count
-        ? `${names.join(", ")}${count > names.length ? ` and ${count - names.length} more` : ""} will install as one Bytewave app. Monthly total: ${pricingApi().formatMonthly(monthlyTotal)}.`
+        ? `${names.join(", ")}${count > names.length ? ` and ${count - names.length} more` : ""} will install as one MAPPHEX app. Monthly total: ${pricingApi().formatMonthly(monthlyTotal)}.`
         : available.length
           ? "Pick from the portals that match this organization's registered service."
           : "All portals for this registered service are already installed.";
@@ -413,7 +413,7 @@
       if (progress) progress.textContent = "Modules enabled. Installing the unified workspace app...";
       const pwaResult = await promptWorkspacePwa();
       if (pwaResult?.ok) {
-        if (progress) progress.textContent = "Bytewave installed. Opening workspace...";
+        if (progress) progress.textContent = "MAPPHEX installed. Opening workspace...";
         setTimeout(openWorkspace, 900);
         return;
       }
@@ -529,7 +529,7 @@
       if (progress) progress.textContent = "Trying the device app install prompt...";
       const result = await promptWorkspacePwa();
       if (result?.ok) {
-        if (progress) progress.textContent = "Bytewave installed. Opening workspace...";
+        if (progress) progress.textContent = "MAPPHEX installed. Opening workspace...";
         setTimeout(openWorkspace, 900);
       } else {
         const message = manualInstallMessage();
@@ -541,7 +541,7 @@
     window.MapphexPWA?.onStatus?.((status) => {
       const help = $("#pwa-install-help");
       if (status.promptReady && help?.hidden === false) {
-        $("#pwa-install-help-text").textContent = "The app install prompt is ready. Click Try install prompt again to install Bytewave on this device.";
+        $("#pwa-install-help-text").textContent = "The app install prompt is ready. Click Try install prompt again to install MAPPHEX on this device.";
       }
     });
     load().catch((err) => window.EnterpriseCore?.notify?.("Portal manager", err.message, "error"));

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MAPPHEX Login Hub</title>
+    <meta
+      name="description"
+      content="Open the correct MAPPHEX portal for organization admins, directors, branch managers, and agents."
+    />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/images/enterprise-icon-192.png" type="image/png" />
+    <link rel="stylesheet" href="director.css" />
+    <link rel="stylesheet" href="home.css?v=10" />
+  </head>
+  <body data-page="portals" class="mapphex-home phone-portal-page">
+    <header class="site-nav home-drawer-nav" data-nav>
+      <a class="site-brand" href="index.html" aria-label="MAPPHEX home">
+        <img class="logo-img" src="/images/enterprise-logo.png" alt="MAPPHEX logo" />
+        <span>MAPPHEX</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-label="Open navigation" aria-expanded="false" data-nav-toggle>
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <nav class="site-links" aria-label="Main navigation" data-nav-menu>
+        <a href="index.html">Home</a>
+        <a href="services.html#services">Services</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="features.html">Features</a>
+        <a href="portals.html">Login</a>
+      </nav>
+      <div class="site-actions">
+        <a class="btn primary" href="organization-register.html">Register Organization</a>
+      </div>
+      <button class="home-nav-backdrop" type="button" aria-label="Close navigation" data-nav-backdrop></button>
+    </header>
+
+    <main>
+      <section class="site-section phone-portal-hero">
+        <div>
+          <div class="eyebrow">Login Hub</div>
+          <h1>Open the right MAPPHEX workspace.</h1>
+          <p>
+            Use one secure hub for organization admins, directors, branch managers, and sales agents.
+          </p>
+        </div>
+        <div class="phone-portal-actions">
+          <a class="btn primary large" href="organization-login.html">Organization Login</a>
+          <a class="btn large" href="director-login.html">Director Login</a>
+        </div>
+      </section>
+
+      <section class="site-section phone-portal-list" aria-label="MAPPHEX portal logins">
+        <article>
+          <div>
+            <span>Organization</span>
+            <h3>Organization Admin</h3>
+            <p>Manage agreement, modules, users, workspace settings, and the main organization environment.</p>
+          </div>
+          <div><a class="btn primary" href="organization-login.html">Open</a></div>
+        </article>
+        <article>
+          <div>
+            <span>Director</span>
+            <h3>Director Dashboard</h3>
+            <p>Review all branches, reports, live KPIs, finance summaries, and pending branch account approvals.</p>
+          </div>
+          <div><a class="btn" href="director-login.html">Open</a></div>
+        </article>
+        <article>
+          <div>
+            <span>Branch</span>
+            <h3>Branch Manager</h3>
+            <p>Enter inventory, manage branch sales records, track damage/loss, and generate branch reports.</p>
+          </div>
+          <div>
+            <a class="btn" href="branch-login.html">Login</a>
+            <a class="btn ghost" href="branch-register.html">Register</a>
+          </div>
+        </article>
+        <article>
+          <div>
+            <span>Agent</span>
+            <h3>Sales Agent</h3>
+            <p>Open the sales portal for assigned stock, customer transactions, and field activity.</p>
+          </div>
+          <div>
+            <a class="btn" href="agent-login.html">Login</a>
+            <a class="btn ghost" href="agent-register.html">Register</a>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <script src="home.js?v=6"></script>
+    <script src="pwa.js"></script>
+  </body>
+</html>

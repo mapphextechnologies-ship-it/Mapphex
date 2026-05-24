@@ -6,6 +6,7 @@
   const SESSION_LOCAL_KEY = "enterprise_session_director_v1";
   const SESSION_SESSION_KEY = "enterprise_session_director_tmp_v1";
   const DIRECTOR_ACCOUNT_KEY = "enterprise_director_account_v1";
+  const BRANCH_ACCOUNTS_KEY = "enterprise_branch_accounts_v1";
   const DATA_KEY = "enterprise_erp_v1";
   const UI_BRANCHES_OPEN_KEY = "enterprise_ui_branches_open_v1";
   const UI_REPORTS_OPEN_KEY = "enterprise_ui_reports_open_v1";
@@ -662,132 +663,6 @@
     }
   };
 
-  const initDirectorLogin = () => {
-    const session = getSession();
-    if (isDirector(session)) {
-      window.location.href = "Director.html";
-      return;
-    }
-
-    const account = loadDirectorAccount();
-    if (!account) {
-      window.location.href = "director-register.html";
-      return;
-    }
-
-    ensureData();
-
-    const form = $("#director-login-form");
-    const username = $("#username");
-    const password = $("#password");
-    const rememberMe = $("#rememberMe");
-    const error = $("#login-error");
-
-    if (!form || !username || !password || !error) return;
-
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      error.textContent = "";
-
-      const u = String(username.value || "").trim().toLowerCase();
-      const p = String(password.value || "");
-
-      const accountEmail = String(account.email || "").trim().toLowerCase();
-      if (u !== accountEmail) {
-        error.textContent = "Email not found. Please use the registered email.";
-        password.value = "";
-        password.focus();
-        return;
-      }
-
-      const inputHash = await hashHex(`${account.salt}:${p}`);
-      if (inputHash !== account.passwordHash) {
-        error.textContent = "Incorrect password.";
-        password.value = "";
-        password.focus();
-        return;
-      }
-
-      setSession(
-        {
-          role: "director",
-          userId: account.id,
-          email: account.email,
-          username: account.username || "",
-        },
-        !!rememberMe?.checked,
-      );
-      window.location.href = "Director.html";
-    });
-  };
-
-  const initDirectorRegister = () => {
-    const session = getSession();
-    if (isDirector(session)) {
-      window.location.href = "Director.html";
-      return;
-    }
-
-    const existing = loadDirectorAccount();
-    if (existing) {
-      // Prevent accidental overwrite in this browser.
-      window.location.href = "director-login.html";
-      return;
-    }
-
-    ensureData();
-
-    const form = $("#director-register-form");
-    const username = $("#username");
-    const email = $("#email");
-    const password = $("#password");
-    const confirmPassword = $("#confirmPassword");
-    const error = $("#register-error");
-
-    if (!form || !username || !email || !password || !confirmPassword || !error)
-      return;
-
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      error.textContent = "";
-
-      const uname = String(username.value || "").trim();
-      const mail = String(email.value || "").trim().toLowerCase();
-      const p1 = String(password.value || "");
-      const p2 = String(confirmPassword.value || "");
-
-      if (uname.length < 2) {
-        error.textContent = "Username is required.";
-        return;
-      }
-      if (p1.length < 8) {
-        error.textContent = "Password must be at least 8 characters.";
-        return;
-      }
-      if (p1 !== p2) {
-        error.textContent = "Passwords do not match.";
-        confirmPassword.value = "";
-        confirmPassword.focus();
-        return;
-      }
-
-      const salt = crypto.getRandomValues(new Uint32Array(4)).join("-");
-      const passwordHash = await hashHex(`${salt}:${p1}`);
-
-      const account = {
-        id: `director-${crypto.getRandomValues(new Uint32Array(1))[0]}`,
-        role: "director",
-        username: uname,
-        email: mail,
-        salt,
-        passwordHash,
-      };
-
-      saveDirectorAccount(account);
-      window.location.href = "director-login.html";
-    });
-  };
-
   const initDirectorDashboard = () => {
     const session = requireDirector();
     if (!session) return;
@@ -799,9 +674,13 @@
     const syncBtn = $("#sync-btn");
     const realtimeIndicator = $("#realtime-indicator");
 
+    const kpiBranches = $("#kpi-branches");
     const kpiStock = $("#kpi-stock");
     const kpiSold = $("#kpi-sold");
     const kpiEmployees = $("#kpi-employees");
+    const branchAccountSummary = $("#branch-account-summary");
+    const branchAccountsRefreshBtn = $("#branch-accounts-refresh-btn");
+    const branchAccountsTbody = $("#branch-accounts-tbody");
 
     const inventoryPanel = $("#inventory-panel");
     const branchesToggleBtn = $("#branches-toggle-btn");
@@ -836,8 +715,113 @@
 
     if (sessionBadge) sessionBadge.textContent = "Director";
 
+    const loadBranchAccounts = () => {
+      const accounts = loadJson(BRANCH_ACCOUNTS_KEY, []);
+      return Array.isArray(accounts) ? accounts : [];
+    };
+
+    const saveBranchAccounts = (accounts) => saveJson(BRANCH_ACCOUNTS_KEY, accounts);
+
+    const branchById = (branchId) =>
+      (Array.isArray(data.branches) ? data.branches : []).find((branch) => branch.id === branchId) || null;
+
+    const updateBranchRegistrationStatus = (account, status) => {
+      const branch = branchById(account?.branchId);
+      if (!branch) return;
+      branch.registrationStatus = status;
+      branch.accountId = account.id;
+      branch.city = account.county || branch.city || "";
+      branch.area = account.area || branch.area || "";
+      if (account.county || account.area) {
+        const number = String(branch.id || "").replace(/^b/i, "") || branch.id;
+        branch.name = `Branch ${number} - ${[account.county, account.area].filter(Boolean).join(" - ")}`;
+      }
+      branch.updatedAt = isoNow();
+    };
+
+    const setBranchAccountStatus = (accountId, status) => {
+      const nextStatus = String(status || "").toLowerCase();
+      const accounts = loadBranchAccounts();
+      const idx = accounts.findIndex((account) => account.id === accountId);
+      if (idx === -1) return;
+      const account = {
+        ...accounts[idx],
+        status: nextStatus,
+        reviewedAt: isoNow(),
+        reviewedBy: session.email || session.username || "director",
+      };
+      accounts[idx] = account;
+      saveBranchAccounts(accounts);
+      updateBranchRegistrationStatus(account, nextStatus);
+      persist();
+      renderBranchAccounts();
+      renderKPIs();
+      renderBranchesTable();
+      refreshCurrentReport();
+      toast(
+        nextStatus === "approved" ? "Branch approved" : "Branch rejected",
+        `${account.username || account.email || "Branch account"} is now ${nextStatus}.`,
+      );
+    };
+
+    const renderBranchAccounts = () => {
+      if (!branchAccountsTbody) return;
+      const accounts = loadBranchAccounts().slice().sort((a, b) => {
+        const statusRank = { pending: 0, approved: 1, rejected: 2 };
+        return (statusRank[String(a.status || "pending").toLowerCase()] ?? 9) - (statusRank[String(b.status || "pending").toLowerCase()] ?? 9)
+          || String(b.createdAt || "").localeCompare(String(a.createdAt || ""));
+      });
+      const pendingCount = accounts.filter((account) => String(account.status || "pending").toLowerCase() === "pending").length;
+      if (branchAccountSummary) branchAccountSummary.textContent = `${formatInt(pendingCount)} pending`;
+      branchAccountsTbody.textContent = "";
+      if (!accounts.length) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td colspan="6" class="muted">No branch account requests yet.</td>`;
+        branchAccountsTbody.appendChild(tr);
+        return;
+      }
+      for (const account of accounts) {
+        const status = String(account.status || "pending").toLowerCase();
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        `;
+        tr.children[0].textContent = `${account.branchId || "Branch"} - ${[account.county, account.area].filter(Boolean).join(" - ") || "Location pending"}`;
+        tr.children[1].textContent = `${account.username || "User"} / ${account.email || "No email"}`;
+        tr.children[2].textContent = status.toUpperCase();
+        tr.children[3].textContent = account.createdAt ? new Date(account.createdAt).toLocaleString() : "-";
+        tr.children[4].textContent = account.reviewedAt ? new Date(account.reviewedAt).toLocaleString() : "-";
+        const actions = document.createElement("div");
+        actions.className = "report-buttons";
+        actions.innerHTML = `
+          <button class="btn primary" type="button" data-account-action="approved" data-account-id="${account.id}">Approve</button>
+          <button class="btn" type="button" data-account-action="rejected" data-account-id="${account.id}">Reject</button>
+        `;
+        actions.querySelectorAll("button").forEach((button) => {
+          button.disabled = status !== "pending";
+        });
+        tr.children[5].appendChild(actions);
+        branchAccountsTbody.appendChild(tr);
+      }
+    };
+
     const renderKPIs = () => {
       const totals = computeCompanyTotals(data);
+      if (kpiBranches) {
+        const accounts = loadBranchAccounts();
+        const activeBranches = accounts.length
+          ? accounts.filter((account) => String(account.status || "").toLowerCase() === "approved").length
+          : (Array.isArray(data.branches) ? data.branches : []).filter((branch) => {
+              const status = String(branch.registrationStatus || "").toLowerCase();
+              return status === "approved" || branch.city || branch.area || computeBranchTotals(branch).models > 0;
+            }).length;
+        kpiBranches.textContent = formatInt(activeBranches);
+      }
       if (kpiStock) kpiStock.textContent = formatInt(totals.totalStock);
       if (kpiSold) kpiSold.textContent = formatInt(totals.totalSold);
       if (kpiEmployees) kpiEmployees.textContent = formatInt(totals.employees);
@@ -1923,6 +1907,7 @@
         branchSelect.value = selectedBranchId;
       }
       renderKPIs();
+      renderBranchAccounts();
       renderBranchesTable();
       refreshCurrentReport();
       if (opts.toast) toast("Synced", "Dashboard refreshed from ERP store.");
@@ -1960,6 +1945,25 @@
 
     if (syncBtn) {
       syncBtn.addEventListener("click", () => syncAndRender({ toast: true }));
+    }
+
+    if (branchAccountsRefreshBtn) {
+      branchAccountsRefreshBtn.addEventListener("click", () => {
+        window.EnterpriseStore?.refresh?.([BRANCH_ACCOUNTS_KEY]).finally(() => {
+          renderBranchAccounts();
+          toast("Refreshed", "Branch account requests updated.");
+        });
+      });
+    }
+
+    if (branchAccountsTbody) {
+      branchAccountsTbody.addEventListener("click", (event) => {
+        const button = event.target?.closest?.("[data-account-action]");
+        if (!button) return;
+        const id = button.getAttribute("data-account-id");
+        const action = button.getAttribute("data-account-action");
+        if (id && action) setBranchAccountStatus(id, action);
+      });
     }
 
     if (generalReportBtn) {
@@ -2127,6 +2131,13 @@
     generateGeneralReport();
     setBranchesOpen(isBranchesOpen());
     setReportsOpen(isReportsOpen());
+    window.setInterval(() => {
+      data = mutateRealtime(data);
+      persist();
+      renderKPIs();
+      renderBranchesTable();
+      refreshCurrentReport();
+    }, REALTIME_INTERVAL_MS);
 
     // Cross-tab sync
     subscribeDataChanges(syncAndRender);
@@ -2711,9 +2722,7 @@
   };
 
   const main = async () => {
-    await bootstrapKeyFromApi(DATA_KEY);
-    if (PAGE === "director-login") initDirectorLogin();
-    if (PAGE === "director-register") initDirectorRegister();
+    await Promise.all([bootstrapKeyFromApi(DATA_KEY), bootstrapKeyFromApi(BRANCH_ACCOUNTS_KEY)]);
     if (PAGE === "director-dashboard") initDirectorDashboard();
     if (PAGE === "director-hr") initDirectorHR();
     if (PAGE === "director-finance") initDirectorFinance();

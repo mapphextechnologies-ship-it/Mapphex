@@ -36,7 +36,8 @@ const isProduction = () => process.env.NODE_ENV === "production" || process.env.
 const requireProductionSecret = (value, name, fallback) => {
   const secret = String(value || "");
   if (secret) return secret;
-  return isProduction() && name === "SESSION_SECRET" ? "mapphex-session-fallback-v1" : fallback;
+  if (isProduction()) throw new Error(`${name} is required in production`);
+  return fallback;
 };
 
 const sessionSecret = () => requireProductionSecret(process.env.SESSION_SECRET || process.env.AUTH_SECRET, "SESSION_SECRET", "development-session-secret");

@@ -118,7 +118,7 @@
     const session = window.EnterpriseCore?.getSession?.();
     const currentTenant = tenant || session?.tenantId || window.EnterpriseCore?.currentTenantId?.() || "";
     if (currentTenant) window.EnterpriseCore?.setTenant?.(currentTenant);
-    const title = portal?.title || "Bytewave Portal";
+    const title = portal?.title || "MAPPHEX Portal";
     document.title = `${title} Login`;
     $("#portal-auth-title").textContent = `${title} Login`;
     $("#portal-auth-subtitle").textContent =

@@ -1,10 +1,11 @@
-const CACHE_NAME = "enterprise-erp-v145";
+const CACHE_NAME = "mapphex-erp-v146";
 const APP_SHELL = [
   "./",
   "./manifest.webmanifest",
   "./index.html",
   "./services.html",
   "./service-detail.html",
+  "./portals.html",
   "./organization-register.html",
   "./access-denied.html",
   "./organization-login.html",
@@ -144,10 +145,10 @@ self.addEventListener("fetch", (event) => {
 });
 
 self.addEventListener("sync", (event) => {
-  if (event.tag !== "bytewave-background-sync") return;
+  if (event.tag !== "mapphex-background-sync") return;
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
-      clients.forEach((client) => client.postMessage({ type: "BYTEWAVE_BACKGROUND_SYNC", at: new Date().toISOString() }));
+      clients.forEach((client) => client.postMessage({ type: "MAPPHEX_BACKGROUND_SYNC", at: new Date().toISOString() }));
     })
   );
 });
@@ -155,10 +156,10 @@ self.addEventListener("sync", (event) => {
 self.addEventListener("push", (event) => {
   const data = event.data?.json?.() || {};
   event.waitUntil(
-    self.registration.showNotification(data.title || "Bytewave", {
+    self.registration.showNotification(data.title || "MAPPHEX", {
       body: data.body || "ERP workflow update",
-      icon: "/images/bytewave-icon-192.png",
-      badge: "/images/bytewave-icon-192.png",
+      icon: "/images/enterprise-icon-192.png",
+      badge: "/images/enterprise-icon-192.png",
       data: data.url || "/organization-workspace.html",
     })
   );

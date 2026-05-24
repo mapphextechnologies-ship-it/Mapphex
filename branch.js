@@ -227,6 +227,7 @@
       window.location.href = "branch-login.html";
       return null;
     }
+    if (session.tenantId) window.EnterpriseCore?.setTenant?.(session.tenantId);
     return session;
   };
 
@@ -237,7 +238,7 @@
 
   const getAccount = (session) => {
     const accounts = loadAccounts();
-    return accounts.find((a) => a.id === session.userId) || null;
+    return accounts.find((a) => a.id === session.userId && (!a.tenantId || a.tenantId === session.tenantId)) || null;
   };
 
   const computeBranchTotals = (branch) => {
@@ -683,10 +684,8 @@
       if (!phone) {
         if (txHelper) txHelper.textContent = "Reference not found in inventory.";
         if (txSms) txSms.textContent = "";
-        if (txCustomerPhone) txCustomerPhone.value = "";
         return;
       }
-      if (txCustomerPhone) txCustomerPhone.disabled = false;
       if (txAmount && !String(txAmount.value || "").trim()) {
         txAmount.value = String(Number(phone.price || 0));
       }
@@ -839,6 +838,18 @@
       }
     };
 
+    const renderTransactionsSafely = async () => {
+      try {
+        await renderTransactions();
+      } catch (err) {
+        console.error("Transaction render error:", err);
+        if (ledgerIndicator) {
+          ledgerIndicator.textContent = "Render error";
+          ledgerIndicator.classList.add("offline");
+        }
+      }
+    };
+
     const findOpenCreditSale = (branch, serialRaw) => {
       const serial = String(serialRaw || "").trim().toLowerCase();
       if (!serial) return null;
@@ -875,7 +886,7 @@
       let ref = String(creditRef?.value || "").trim();
       const rawAmount = Number(creditAmount?.value || 0);
       if (!serial) {
-        if (creditHelper) creditHelper.textContent = "Enter the sale, subscription, or asset reference for the open credit account.";
+        if (creditHelper) creditHelper.textContent = "Enter the serial or reference from the original credit sale.";
         return creditSerial?.focus?.();
       }
       if (!Number.isFinite(rawAmount) || rawAmount <= 0) {
@@ -909,8 +920,8 @@
             transactionDesc: `MAPPHEX credit payment ${saleTx.serial || ""}`.trim(),
           });
         } catch (err) {
-          if (creditHelper) creditHelper.textContent = String(err?.message || "M-Pesa STK push failed.");
-          return;
+          if (creditHelper) creditHelper.textContent = `${String(err?.message || "M-Pesa STK push failed.")} Recording payment manually.`;
+          mpesaResponse = { response: { manualFallback: true, reason: String(err?.message || "M-Pesa STK push failed") } };
         }
       }
 
@@ -972,7 +983,7 @@
       if (creditHelper) creditHelper.textContent = nextBalance > 0
         ? `Payment recorded. Remaining balance KES ${formatInt(nextBalance)}.`
         : "Payment recorded. Credit cleared.";
-      await renderTransactions();
+      await renderTransactionsSafely();
       renderKPIs();
     };
 
@@ -985,8 +996,14 @@
       const customerPhone = String(txCustomerPhone?.value || "").trim();
       let ref = String(txRef?.value || "").trim();
 
-      if (!serial) return txSerial?.focus?.();
-      if (!customerPhone) return txCustomerPhone?.focus?.();
+      if (!serial) {
+        if (txHelper) txHelper.textContent = "Enter the product/service serial or reference first.";
+        return txSerial?.focus?.();
+      }
+      if (!customerPhone) {
+        if (txHelper) txHelper.textContent = "Enter the customer phone number before completing the sale.";
+        return txCustomerPhone?.focus?.();
+      }
 
       const phone =
         (branch.phones || []).find(
@@ -1023,8 +1040,8 @@
             transactionDesc: `MAPPHEX ${itemName(phone)} sale`,
           });
         } catch (err) {
-          if (txSms) txSms.textContent = String(err?.message || "M-Pesa STK push failed.");
-          return;
+          if (txSms) txSms.textContent = `${String(err?.message || "M-Pesa STK push failed.")} Sale recorded manually; reconcile payment outside M-Pesa.`;
+          mpesaResponse = { response: { manualFallback: true, reason: String(err?.message || "M-Pesa STK push failed") } };
         }
       }
 
@@ -1128,14 +1145,15 @@
       if (txSerial) txSerial.value = "";
       if (txCustomerPhone) {
         txCustomerPhone.value = "";
-        txCustomerPhone.disabled = true;
       }
       if (txHelper) txHelper.textContent = "";
 
       if (saleType === "credit") {
         if (txSms) txSms.textContent = `Credit sale recorded. Paid KES ${formatInt(amountPaid)}, balance KES ${formatInt(balance)}. Ref ${ref}.`;
       } else if (channel === "mpesa") {
-        const promptMsg = `M-Pesa prompt sent. Enter your M-Pesa PIN to pay KES ${formatInt(amountPaid)} for ${itemName(sold)} (${itemUnit(sold)}, ${itemCategory(sold)}) [Ref:${sold.serial}]. Ref ${ref}.`;
+        const promptMsg = mpesaResponse?.response?.manualFallback
+          ? `M-Pesa integration not active. Manual payment recorded for KES ${formatInt(amountPaid)}. Ref ${ref}.`
+          : `M-Pesa prompt sent. Enter your M-Pesa PIN to pay KES ${formatInt(amountPaid)} for ${itemName(sold)} (${itemUnit(sold)}, ${itemCategory(sold)}) [Ref:${sold.serial}]. Ref ${ref}.`;
         if (txSms) txSms.textContent = promptMsg;
       } else {
         if (txSms) txSms.textContent = `Bank transaction recorded. Ref ${ref}.`;
@@ -1148,7 +1166,7 @@
           : `MAPPHEX: Payment received KES ${formatInt(amount)} for ${itemName(sold)} (${itemUnit(sold)}, ${itemCategory(sold)}). Ref: ${ref}. Thank you.`,
       );
 
-      await renderTransactions();
+      await renderTransactionsSafely();
       renderInventory();
       renderKPIs();
       setTxButtonState();
@@ -1731,7 +1749,7 @@
       renderKPIs();
       renderInventory();
       renderDamageLoss();
-      await renderTransactions();
+      await renderTransactionsSafely();
     };
 
     if (logoutBtn) {
@@ -1804,11 +1822,16 @@
     if (chartsCloseBtn) chartsCloseBtn.addEventListener("click", () => closeCharts());
 
     // First render
-    sync();
-    generateReport();
-    navigateTo(String(window.location.hash || "").replace("#", "") || "overview");
-    if (txCustomerPhone) txCustomerPhone.disabled = true;
-    setTxButtonState();
+    sync()
+      .catch((err) => {
+        console.error("Branch sync failed:", err);
+        if (ledgerIndicator) ledgerIndicator.textContent = "Sync error";
+      })
+      .finally(() => {
+        generateReport();
+        navigateTo(String(window.location.hash || "").replace("#", "") || "overview");
+        setTxButtonState();
+      });
 
     // Cross-tab sync with Director/other sessions
     const store = window.EnterpriseStore || null;

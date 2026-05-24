@@ -15,14 +15,13 @@ const { assertSameOrigin, decodeSessionToken, rateLimit, requireActiveTenantSess
 const { PORTAL_CATALOG, VALID_PORTAL_IDS } = require("../../api/_lib/portal-catalog");
 
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
-const SESSION_SECRET_FALLBACK = "mapphex-session-fallback-v1";
-
 const isProduction = () => process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production";
 
 const secret = () => {
   const value = process.env.SESSION_SECRET || process.env.AUTH_SECRET;
   if (value) return value;
-  return isProduction() ? SESSION_SECRET_FALLBACK : "development-session-secret";
+  if (isProduction()) throw new Error("SESSION_SECRET is required in production");
+  return "development-session-secret";
 };
 
 const sign = (payload) =>

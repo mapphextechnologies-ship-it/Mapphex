@@ -42,6 +42,7 @@
           <a class="sidebar-link active" href="Director.html">Dashboard</a>
           <a class="sidebar-link" href="Director.html#overview">Overview</a>
           <a class="sidebar-link" href="Director.html#inventory-panel">Inventory by Branch</a>
+          <a class="sidebar-link" href="Director.html#branch-accounts-panel">Branch Accounts</a>
           <a class="sidebar-link" href="Director.html#report-center">Report Center</a>
           <a class="sidebar-link" href="Director.html#report-output">Reports</a>
           <a class="sidebar-link" href="organization-workspace.html">ERP Workspace</a>
@@ -88,6 +89,31 @@
             <div id="kpi-employees" class="kpi-value">0</div>
             <div class="kpi-foot muted">HR snapshot</div>
           </article>
+        </div>
+      </section>
+
+      <section class="panel" id="branch-accounts-panel">
+        <div class="panel-header">
+          <h2>Branch Accounts</h2>
+          <div class="panel-actions">
+            <span id="branch-account-summary" class="pill">0 pending</span>
+            <button id="branch-accounts-refresh-btn" class="btn" type="button">Refresh</button>
+          </div>
+        </div>
+        <div class="table-wrap accounts-table-wrap" role="region" aria-label="Branch account approvals" tabindex="0">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Branch</th>
+                <th>Contact</th>
+                <th>Status</th>
+                <th>Submitted</th>
+                <th>Reviewed</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="branch-accounts-tbody"></tbody>
+          </table>
         </div>
       </section>
 

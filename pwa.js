@@ -92,7 +92,7 @@
     installBanner = document.createElement("div");
     installBanner.className = "pwa-install-banner";
     installBanner.innerHTML = `
-      <div><strong>Install Bytewave</strong><span>Use the ERP as one native-style app across your selected portals.</span></div>
+      <div><strong>Install MAPPHEX</strong><span>Use the ERP as one native-style app across your selected portals.</span></div>
       <button class="btn primary" type="button">Install</button>
       <button class="btn" type="button" data-pwa-dismiss>Later</button>
     `;
@@ -124,7 +124,7 @@
 
     if (!deferredPrompt) {
       setButtonState("Use Browser Menu", true);
-      window.setTimeout(() => setButtonState("Install Bytewave App", false), 2400);
+      window.setTimeout(() => setButtonState("Install MAPPHEX App", false), 2400);
       emitStatus();
       return { ok: false, reason: "prompt-unavailable" };
     }
@@ -144,15 +144,15 @@
       emitStatus();
       return { ok: true, installed: true };
     }
-    setButtonState("Install Bytewave App", false);
+    setButtonState("Install MAPPHEX App", false);
     emitStatus();
     return { ok: false, reason: "dismissed" };
   };
 
   const manualInstallMessage = () => {
     const ua = navigator.userAgent || "";
-    if (/iphone|ipad|ipod/i.test(ua)) return "Use Share, then Add to Home Screen to install Bytewave.";
-    if (/firefox/i.test(ua)) return "Use your browser menu to install Bytewave if app install is available.";
+    if (/iphone|ipad|ipod/i.test(ua)) return "Use Share, then Add to Home Screen to install MAPPHEX.";
+    if (/firefox/i.test(ua)) return "Use your browser menu to install MAPPHEX if app install is available.";
     return "Use the browser menu and choose Install app or Add to Home screen.";
   };
 
@@ -161,7 +161,7 @@
     const footer = document.createElement("footer");
     footer.id = "site-powered-footer";
     footer.className = "site-powered-footer";
-    footer.textContent = "Powered by © Mapphex Technology";
+    footer.textContent = "Powered by MAPPHEX Technology";
     document.body.appendChild(footer);
   };
 
@@ -174,7 +174,7 @@
   window.addEventListener("beforeinstallprompt", (event) => {
     event.preventDefault();
     deferredPrompt = event;
-    setButtonState("Install Bytewave App", false);
+    setButtonState("Install MAPPHEX App", false);
     hideButtonIfInstalled();
     if (allowAutoInstallBanner()) showInstallBanner();
     emitStatus();
@@ -195,19 +195,19 @@
       installButtons.add(button);
       button.addEventListener("click", () => promptInstall());
     });
-    setButtonState(isStandalone() ? "App Installed" : "Install Bytewave App", isStandalone());
+    setButtonState(isStandalone() ? "App Installed" : "Install MAPPHEX App", isStandalone());
     emitStatus();
   });
 
   window.addEventListener("online", () => {
     navigator.serviceWorker?.ready
-      ?.then((registration) => registration.sync?.register?.("bytewave-background-sync"))
+      ?.then((registration) => registration.sync?.register?.("mapphex-background-sync"))
       .catch(() => null);
   });
 
   navigator.serviceWorker?.addEventListener?.("message", (event) => {
-    if (event.data?.type !== "BYTEWAVE_BACKGROUND_SYNC") return;
-    window.dispatchEvent(new CustomEvent("bytewave:background-sync", { detail: event.data }));
+    if (event.data?.type !== "MAPPHEX_BACKGROUND_SYNC") return;
+    window.dispatchEvent(new CustomEvent("mapphex:background-sync", { detail: event.data }));
   });
 
   window.MapphexPWA = Object.freeze({

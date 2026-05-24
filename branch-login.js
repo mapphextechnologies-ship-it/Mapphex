@@ -8,6 +8,13 @@
   const BRANCH_ACCOUNTS_KEY = "enterprise_branch_accounts_v1";
 
   const $ = (selector, root = document) => root.querySelector(selector);
+  const cleanTenant = (value) =>
+    String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 64);
 
   const safeJsonParse = (raw, fallback) => {
     try {
@@ -102,8 +109,6 @@
   const init = async () => {
     if (PAGE !== "branch-login") return;
 
-    await window.EnterpriseStore?.bootstrap?.([BRANCH_ACCOUNTS_KEY]);
-
     const session = getSession();
     if (session?.role === "branch" && session?.branchId) {
       window.location.href = "Branch.html";
@@ -111,17 +116,31 @@
     }
 
     const form = $("#branch-login-form");
+    const organizationId = $("#organizationId");
     const identifier = $("#identifier");
     const password = $("#password");
     const rememberMe = $("#rememberMe");
     const error = $("#branch-login-error");
     const loginBtn = $("#branch-login-btn");
 
-    if (!form || !identifier || !password || !error) return;
+    if (!form || !organizationId || !identifier || !password || !error) return;
+    const params = new URLSearchParams(location.search);
+    const tenantFromUrl = cleanTenant(params.get("tenant") || params.get("organization") || params.get("org"));
+    if (tenantFromUrl) {
+      organizationId.value = tenantFromUrl;
+      window.EnterpriseCore?.setTenant?.(tenantFromUrl);
+      const registerLink = $("#branch-register-link");
+      if (registerLink) registerLink.href = `branch-register.html?tenant=${encodeURIComponent(tenantFromUrl)}`;
+    }
     window.EnterpriseCore?.rememberLogin?.restore?.("branch", {
       checkbox: rememberMe,
-      fields: { identifier },
+      fields: { organizationId, identifier },
     });
+    const restoredOrg = cleanTenant(organizationId.value);
+    if (restoredOrg) window.EnterpriseCore?.setTenant?.(restoredOrg);
+
+    await window.EnterpriseStore?.bootstrap?.([BRANCH_ACCOUNTS_KEY]);
+    await window.EnterpriseStore?.refresh?.([BRANCH_ACCOUNTS_KEY]);
 
     if (loadBranchAccounts().length === 0) {
       if (loginBtn) loginBtn.textContent = "Login";
@@ -133,7 +152,14 @@
       error.textContent = "";
 
       const inputId = String(identifier.value || "").trim().toLowerCase();
+      const orgId = cleanTenant(organizationId.value);
       const inputPassword = String(password.value || "");
+      if (!orgId) {
+        error.textContent = "Organization ID is required.";
+        organizationId.focus();
+        return;
+      }
+      window.EnterpriseCore?.setTenant?.(orgId);
 
       await window.EnterpriseStore?.bootstrap?.([BRANCH_ACCOUNTS_KEY]);
       await window.EnterpriseStore?.refresh?.([BRANCH_ACCOUNTS_KEY]);
@@ -141,8 +167,9 @@
       const account =
         latestAccounts.find(
           (a) =>
-            String(a.email || "").toLowerCase() === inputId ||
-            String(a.username || "").toLowerCase() === inputId,
+            (!a.tenantId || String(a.tenantId).toLowerCase() === orgId) &&
+            (String(a.email || "").toLowerCase() === inputId ||
+              String(a.username || "").toLowerCase() === inputId),
         ) || null;
 
       if (!account) {
@@ -172,6 +199,7 @@
         {
           role: "branch",
           userId: account.id,
+          tenantId: orgId,
           branchId: account.branchId,
           email: account.email,
           username: account.username,
@@ -180,7 +208,7 @@
       );
       window.EnterpriseCore?.rememberLogin?.save?.("branch", {
         checkbox: rememberMe,
-        fields: { identifier },
+        fields: { organizationId, identifier },
       });
 
       window.location.href = "Branch.html";

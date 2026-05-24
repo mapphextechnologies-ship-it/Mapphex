@@ -116,6 +116,13 @@
   const saveAccounts = (accounts) => saveJson(BRANCH_ACCOUNTS_KEY, accounts);
 
   const normalized = (value) => String(value || "").trim().toLowerCase();
+  const cleanTenant = (value) =>
+    String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 64);
   const validEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
 
   const accountIdentityTaken = (email, username) => {
@@ -139,17 +146,8 @@
   const init = async () => {
     if (PAGE !== "branch-register") return;
 
-    await window.EnterpriseStore?.bootstrap?.([
-      BRANCH_ACCOUNTS_KEY,
-      AGENT_ACCOUNTS_KEY,
-      TEAMLEADER_ACCOUNTS_KEY,
-      DEPT_ACCOUNTS_KEY,
-      DIRECTOR_ACCOUNT_KEY,
-      DATA_KEY,
-    ]);
-    ensureData();
-
     const form = $("#branch-register-form");
+    const organizationId = $("#organizationId");
     const county = $("#county");
     const area = $("#area");
     const username = $("#username");
@@ -160,6 +158,7 @@
 
     if (
       !form ||
+      !organizationId ||
       !county ||
       !area ||
       !username ||
@@ -170,16 +169,49 @@
     )
       return;
 
+    const params = new URLSearchParams(location.search);
+    const tenantFromUrl = cleanTenant(params.get("tenant") || params.get("organization") || params.get("org"));
+    if (tenantFromUrl) {
+      organizationId.value = tenantFromUrl;
+      window.EnterpriseCore?.setTenant?.(tenantFromUrl);
+      const loginLink = $("#branch-login-link");
+      if (loginLink) loginLink.href = `branch-login.html?tenant=${encodeURIComponent(tenantFromUrl)}`;
+    }
+
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       error.textContent = "";
 
+      const orgId = cleanTenant(organizationId.value);
       const c = String(county.value || "").trim();
       const a = String(area.value || "").trim();
       const u = String(username.value || "").trim();
       const m = String(email.value || "").trim().toLowerCase();
       const p1 = String(password.value || "");
       const p2 = String(confirmPassword.value || "");
+
+      if (!orgId) {
+        error.textContent = "Organization ID is required so this branch is attached to the correct company.";
+        organizationId.focus();
+        return;
+      }
+      window.EnterpriseCore?.setTenant?.(orgId);
+      await window.EnterpriseStore?.bootstrap?.([
+        BRANCH_ACCOUNTS_KEY,
+        AGENT_ACCOUNTS_KEY,
+        TEAMLEADER_ACCOUNTS_KEY,
+        DEPT_ACCOUNTS_KEY,
+        DIRECTOR_ACCOUNT_KEY,
+        DATA_KEY,
+      ]);
+      await window.EnterpriseStore?.refresh?.([
+        BRANCH_ACCOUNTS_KEY,
+        AGENT_ACCOUNTS_KEY,
+        TEAMLEADER_ACCOUNTS_KEY,
+        DEPT_ACCOUNTS_KEY,
+        DIRECTOR_ACCOUNT_KEY,
+        DATA_KEY,
+      ]);
 
       if (!c) {
         error.textContent = "County is required.";
@@ -253,6 +285,7 @@
         id: `branch-${crypto.getRandomValues(new Uint32Array(1))[0]}`,
         role: "branch",
         status: "pending",
+        tenantId: orgId,
         branchId: slot.id,
         county: c,
         area: a,
@@ -269,7 +302,7 @@
 
       // Update the shared ERP branch record for Director live updates.
       const idx = data.branches.findIndex((b) => b.id === slot.id);
-      const label = `Branch ${slot.id.replace("b", "")} • ${c} • ${a}`;
+      const label = `Branch ${slot.id.replace("b", "")} - ${c} - ${a}`;
       data.branches[idx] = {
         ...data.branches[idx],
         name: label,
@@ -283,6 +316,7 @@
 
       error.textContent = "Registration submitted. Admin must approve this branch before login.";
       form.reset();
+      organizationId.value = orgId;
     });
   };
 

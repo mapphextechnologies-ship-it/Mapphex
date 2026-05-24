@@ -1,0 +1,15 @@
+﻿{
+  "name": "mapphex",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MAPPHEX enterprise SaaS workspace and serverless API.",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "node server/server.js",
+    "check:js": "node --check server/server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

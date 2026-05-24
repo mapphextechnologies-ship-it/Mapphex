@@ -156,7 +156,7 @@
     if (!portalId) return;
     const portal = portals.find((item) => item.id === portalId);
     const name = portal?.title || portalId;
-    const ok = window.confirm(`Uninstall ${name} from this Bytewave workspace? You can install it again later from Portal Manager.`);
+    const ok = window.confirm(`Uninstall ${name} from this MAPPHEX workspace? You can install it again later from Portal Manager.`);
     if (!ok) return;
     try {
       const response = await fetchJson("/api/org-admin", {
