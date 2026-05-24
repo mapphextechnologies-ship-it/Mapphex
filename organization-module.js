@@ -1041,6 +1041,9 @@
     }
     if ($("#erp-sections")) return;
     const blueprint = blueprintFor(moduleId);
+    const dashboardInsightCard = moduleId === "pharmacy"
+      ? ""
+      : `<article class="erp-card"><strong>Performance</strong>${renderBars(blueprint.chart)}<span class="muted">A quick look at recent movement</span></article>`;
     const salesDashboardSection = moduleId === "sales"
       ? `<section id="dashboard" class="panel sales-dashboard-page">
           <div class="panel-header">
@@ -1083,7 +1086,7 @@
           </div>
           <div id="erp-kpis" class="erp-kpi-grid"></div>
           <div class="erp-dashboard-grid">
-            <article class="erp-card"><strong>Performance</strong>${renderBars(blueprint.chart)}<span class="muted">A quick look at recent movement</span></article>
+            ${dashboardInsightCard}
             <article class="erp-card"><strong>Responsibilities</strong><ul>${blueprint.responsibilities.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></article>
           </div>
         </section>`;
