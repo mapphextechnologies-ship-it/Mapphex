@@ -55,6 +55,9 @@ const rolePortalDefaults = (role) => {
   if (clean === "director") return ["technology", "director", "reporting", "analytics"];
   if (clean === "branch") return ["technology", "device-branch", "branch", "inventory", "sales"];
   if (clean === "agent") return ["technology", "agent", "sales", "customer"];
+  if (clean === "hr" || clean === "hr-staff" || clean === "hr_staff") return ["hr", "staff", "reporting"];
+  if (clean === "logistics" || clean === "logistics-staff" || clean === "logistics_staff") return ["logistics", "driver", "inventory", "reporting"];
+  if (clean === "driver") return ["driver", "logistics"];
   if (clean === "team-leader" || clean === "team_leader") return ["technology", "team-leader", "agent", "sales", "reporting"];
   return [];
 };
@@ -64,6 +67,9 @@ const rolePermissionDefaults = (role, portals = []) => {
   if (clean === "director") return ["technology.read", "director.read", "director.manage", "reporting.read", "analytics.read"];
   if (clean === "branch") return ["technology.read", "device-branch.read", "device-branch.manage", "inventory.read", "sales.create"];
   if (clean === "agent") return ["technology.read", "agent.read", "sales.create", "customer.read"];
+  if (clean === "hr" || clean === "hr-staff" || clean === "hr_staff") return ["hr.read", "hr.manage", "staff.read", "reporting.read"];
+  if (clean === "logistics" || clean === "logistics-staff" || clean === "logistics_staff") return ["logistics.read", "logistics.manage", "driver.read", "inventory.read", "reporting.read"];
+  if (clean === "driver") return ["driver.read", "logistics.read"];
   if (clean === "team-leader" || clean === "team_leader") return ["technology.read", "team-leader.read", "team-leader.manage", "agent.read", "agent.manage", "sales.read", "reporting.read"];
   return (Array.isArray(portals) ? portals : []).map((id) => `${id}.read`);
 };
