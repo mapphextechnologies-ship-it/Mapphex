@@ -559,7 +559,17 @@
 }
 
 .module-detail-page[hidden] {
-  display: none;
+  display: none !important;
+}
+
+.module-content > section[hidden],
+#erp-sections > section[hidden],
+.erp-dashboard-panel[hidden],
+.erp-work-grid[hidden],
+.sales-dashboard-page[hidden],
+.sales-review-layout[hidden],
+.sales-report-workspace[hidden] {
+  display: none !important;
 }
 
 .module-page-summary {
