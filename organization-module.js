@@ -279,7 +279,7 @@
     hr: ["Dashboard", "Employees", "Attendance", "Leave Requests", "Payroll", "Recruitment", "Performance", "Schedules", "Reports"],
     pharmacy: ["Dashboard", "Medicines", "Inventory", "Prescriptions", "Customers", "Suppliers", "Sales", "Expiry Alerts", "Reports"],
     technology: ["Dashboard", "Projects", "Tasks", "Clients", "Developers", "Support Tickets", "Documentation", "Billing", "Analytics"],
-    sales: ["Dashboard", "Orders", "Products", "Customers", "Discounts", "Reports", "Revenue"],
+    sales: ["Dashboard", "Orders", "Products", "Customers", "Discounts", "Reports", "Revenue", "Settings"],
     inventory: ["Dashboard", "Stock", "Warehouses", "Transfers", "Suppliers", "Alerts", "Reports"],
     procurement: ["Dashboard", "Suppliers", "Purchase Requests", "Approvals", "Purchase Orders", "Deliveries", "Reports"],
     customer: ["Dashboard", "Tickets", "Complaints", "Live Chat", "Escalations", "Feedback", "Reports"],
@@ -470,6 +470,21 @@
   const renderNav = (moduleId, moduleDef) => {
     const items = menuItemsFor(moduleId, moduleDef);
     $("#module-sidebar-title").textContent = `${moduleDef.title} Menu`;
+    const navCount = (item) => {
+      if (item.badge) return item.badge;
+      const state = ensurePortalState(moduleId);
+      const records = Array.isArray(moduleData()[moduleId]) ? moduleData()[moduleId] : [];
+      const hash = String(item.hash || "");
+      const label = String(item.label || "").toLowerCase();
+      if (hash === "dashboard") return records.length;
+      if (item.target === "approvals") return (state.approvals || []).filter((row) => row.status === "pending").length;
+      if (item.target === "reports") return blueprintFor(moduleId).reports.length;
+      if (/setting/.test(label)) return "";
+      if (/revenue/.test(label)) return records.filter((row) => /\d/.test((row.values || []).join(" "))).length;
+      const matching = records.filter((row) => (row.values || []).join(" ").toLowerCase().includes(label));
+      return matching.length || 0;
+    };
+    const groupOrder = ["Main", "Finance", "Branch", "Operations", "People", "Workflow", "Accounting", "Insights", "Tools"];
     const groups = items.reduce((list, item) => {
       const label = item.group || "Menu";
       let group = list.find((entry) => entry.label === label);
@@ -479,11 +494,15 @@
       }
       group.items.push(item);
       return list;
-    }, []);
+    }, []).sort((a, b) => {
+      const aIdx = groupOrder.includes(a.label) ? groupOrder.indexOf(a.label) : 99;
+      const bIdx = groupOrder.includes(b.label) ? groupOrder.indexOf(b.label) : 99;
+      return aIdx - bIdx;
+    });
     $("#module-nav").innerHTML = groups
       .map(
         (group) => `<div class="module-nav-group"><strong>${escapeHtml(group.label)}</strong>${group.items
-          .map((item) => `<a class="${item.hash === "dashboard" ? "active" : ""}" href="${escapeHtml(moduleViewUrl(item.hash))}" data-module-nav="${escapeHtml(item.hash)}" data-module-target="${escapeHtml(item.target)}" data-module-label="${escapeHtml(item.label)}"><span><b aria-hidden="true">${escapeHtml(item.icon)}</b>${escapeHtml(item.label)}</span>${item.badge ? `<small class="nav-badge">${escapeHtml(item.badge)}</small>` : `<small>View</small>`}</a>`)
+          .map((item) => `<a class="${item.hash === "dashboard" ? "active" : ""}" href="${escapeHtml(moduleViewUrl(item.hash))}" data-module-nav="${escapeHtml(item.hash)}" data-module-target="${escapeHtml(item.target)}" data-module-label="${escapeHtml(item.label)}"><span><b aria-hidden="true">${escapeHtml(item.icon)}</b>${escapeHtml(item.label)}</span><small${item.badge ? ` class="nav-badge"` : ""}>${escapeHtml(navCount(item))}</small></a>`)
           .join("")}</div>`,
       )
       .join("");
