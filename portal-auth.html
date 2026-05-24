@@ -40,9 +40,17 @@
         <div class="auth-footer"><a id="portal-auth-back" class="btn" href="organization-workspace.html">Back to workspace</a></div>
       </section>
     </main>
+    <script>
+      (() => {
+        const params = new URLSearchParams(location.search);
+        const tenant = params.get("tenant") || "";
+        const link = document.getElementById("portal-auth-back");
+        if (link && tenant) link.href = `organization-workspace.html?tenant=${encodeURIComponent(tenant)}`;
+      })();
+    </script>
     <script src="enterprise-core.js"></script>
     <script src="enterprise-modules.js"></script>
     <script src="pwa.js"></script>
-    <script src="portal-auth.js?v=2"></script>
+    <script src="portal-auth.js?v=3"></script>
   </body>
 </html>
