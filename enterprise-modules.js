@@ -17,7 +17,7 @@
     {
       id: "departments",
       title: "Department Management",
-      href: moduleHref,
+      href: "departments-portal.html",
       category: "Technology Services",
       package: "Phone Operations",
       componentRole: "Owns phone service department structure, approvals, and internal workflow routing.",
@@ -48,7 +48,7 @@
     {
       id: "pharmacy",
       title: "Pharmacy / Chemistry Portal",
-      href: moduleHref,
+      href: "pharmacy-portal.html",
       category: "Inventory",
       componentRole: "Controls medicine stock, prescriptions, expiry and low-stock alerts, suppliers, receipts, barcode lookup, returns, discounts, and pharmacist activity.",
       description: "Medicine inventory, prescriptions, suppliers, customers, barcode scanning, returns, discounts, and pharmacy sales.",
@@ -58,7 +58,7 @@
     {
       id: "inventory",
       title: "Inventory Module",
-      href: moduleHref,
+      href: "inventory-portal.html",
       category: "Inventory",
       componentRole: "Controls stock, transfers, availability, and warehouse records.",
       description: "Stock, items, transfers, and availability.",
@@ -88,7 +88,7 @@
     {
       id: "retail",
       title: "Retail Operations Module",
-      href: moduleHref,
+      href: "retail-portal.html",
       category: "Industry",
       componentRole: "Runs POS activity, product catalog, shelf stock, customer purchases, returns, discounts, and daily retail reporting.",
       description: "Retail operations for shops, supermarkets, wholesalers, and multi-branch stores.",
@@ -98,7 +98,7 @@
     {
       id: "manufacturing",
       title: "Manufacturing Module",
-      href: moduleHref,
+      href: "manufacturing-portal.html",
       category: "Industry",
       componentRole: "Runs bills of materials, production orders, work centers, raw material usage, finished goods, quality checks, and production costing.",
       description: "Manufacturing operations for production, quality, materials, and costing.",
@@ -108,7 +108,7 @@
     {
       id: "sales",
       title: "Sales Portal",
-      href: moduleHref,
+      href: "sales-portal.html",
       category: "Revenue",
       componentRole: "Owns products, customer orders, sales tracking, discounts, promotions, invoices, daily sales, and revenue analytics.",
       description: "Product management, orders, customers, invoices, discounts, daily reports, and revenue analytics.",
@@ -118,7 +118,7 @@
     {
       id: "procurement",
       title: "Procurement Portal",
-      href: moduleHref,
+      href: "procurement-portal.html",
       category: "Operations",
       componentRole: "Manages suppliers, purchase requests, purchase orders, delivery tracking, inventory requests, and finance approval routing.",
       description: "Supplier management, purchase requests, approvals, inventory requests, purchase orders, deliveries, and procurement reports.",
@@ -128,7 +128,7 @@
     {
       id: "technology",
       title: "Technology Services Portal",
-      href: moduleHref,
+      href: "technology-portal.html",
       category: "Technology Services",
       package: "Phone Operations",
       componentRole: "Runs phone services, device repairs, branch work, service tickets, subscriptions, support tasks, documentation, and client billing.",
@@ -139,7 +139,7 @@
     {
       id: "analytics",
       title: "Analytics Module",
-      href: moduleHref,
+      href: "analytics-portal.html",
       category: "Insights",
       componentRole: "Reads shared module data and turns it into trends, charts, and insights.",
       description: "Realtime analytics, reports, and insights.",
@@ -159,7 +159,7 @@
     {
       id: "staff",
       title: "Staff Module",
-      href: moduleHref,
+      href: "staff-portal.html",
       category: "People",
       componentRole: "Provides role-specific staff tasks and daily work views.",
       description: "Role-specific staff workspace.",
@@ -169,7 +169,7 @@
     {
       id: "customer",
       title: "Customer Service Portal",
-      href: moduleHref,
+      href: "customer-portal.html",
       category: "Service",
       componentRole: "Runs support tickets, complaints, live chat queues, feedback, issue escalation, service analytics, and customer communication.",
       description: "Customer tickets, complaints, live chat, feedback, escalation, and service analytics.",
@@ -179,7 +179,7 @@
     {
       id: "academic",
       title: "Academic / School Portal",
-      href: moduleHref,
+      href: "academic-portal.html",
       category: "Education",
       componentRole: "Manages students, fees, attendance, exams, results, timetables, teachers, and parent communication for school organizations.",
       description: "Student registration, fee tracking, attendance, exams, results, timetables, teacher management, and parent communication.",
@@ -189,7 +189,7 @@
     {
       id: "hospital",
       title: "Hospital Portal",
-      href: moduleHref,
+      href: "hospital-portal.html",
       category: "Healthcare",
       componentRole: "Coordinates patient records, appointments, doctor schedules, prescriptions, billing, laboratory reports, nurse management, and emergency records.",
       description: "Patients, appointments, doctor schedules, prescriptions, billing, lab reports, nurses, and emergency records.",
@@ -199,7 +199,7 @@
     {
       id: "restaurant",
       title: "Restaurant Portal",
-      href: moduleHref,
+      href: "restaurant-portal.html",
       category: "Hospitality",
       componentRole: "Runs order management, kitchen workflow, reservations, menu control, staff coordination, customer order tracking, and sales reporting.",
       description: "Orders, kitchen dashboard, reservations, menus, staff, sales reports, and customer order tracking.",
@@ -209,7 +209,7 @@
     {
       id: "real-estate",
       title: "Real Estate Portal",
-      href: moduleHref,
+      href: "real-estate-portal.html",
       category: "Property",
       componentRole: "Manages property listings, tenants, rent collection, maintenance requests, property analytics, and payment records.",
       description: "Properties, tenants, rent tracking, maintenance requests, analytics, and payment records.",
@@ -219,7 +219,7 @@
     {
       id: "reporting",
       title: "Reporting Module",
-      href: moduleHref,
+      href: "reporting-portal.html",
       category: "Insights",
       componentRole: "Combines operational, finance, and organization data into exportable reports.",
       description: "Operational, finance, and organization reports.",
