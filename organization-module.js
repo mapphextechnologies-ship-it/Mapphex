@@ -281,6 +281,8 @@
     reporting: ["Dashboard", "Operational Reports", "Finance Reports", "Audit Reports", "Exports", "Analytics", "Settings"],
   };
 
+  const SALES_REPORT_TYPES = ["Orders", "Quotations", "Invoices", "Revenue", "Discounts", "Customer history"];
+
   const menuItemsFor = (moduleId, moduleDef) => {
     if (moduleId === "branch") {
       return [
@@ -817,6 +819,60 @@
     document.body.classList.remove("branch-management-page");
     if ($("#erp-sections")) return;
     const blueprint = blueprintFor(moduleId);
+    const salesReportSection = moduleId === "sales"
+      ? `<section id="reports" class="panel sales-report-workspace">
+          <div class="panel-header">
+            <div>
+              <span class="eyebrow">Accounting</span>
+              <h2>Generate and export reports</h2>
+              <p class="portal-manager-subtitle">Create clean sales reports from orders, quotations, invoices, revenue, discounts, and customer history.</p>
+            </div>
+            <span class="badge">Reports</span>
+          </div>
+          <div class="sales-report-status-grid">
+            <article><span>Report status</span><strong data-sales-report-status>Not generated</strong><small>Ready after generation</small></article>
+            <article><span>Report type</span><strong data-sales-report-type>Sales</strong><small>Selected output</small></article>
+            <article><span>Export format</span><strong data-sales-report-format>PDF</strong><small>PDF or Excel</small></article>
+            <article><span>Last generated</span><strong data-sales-report-time>Never</strong><small>Current session</small></article>
+          </div>
+          <div class="sales-report-generator">
+            <div class="panel-header">
+              <div><h2>Reports</h2><p class="portal-manager-subtitle">Select what Sales should generate, then export the report.</p></div>
+              <div class="panel-actions">
+                <button class="btn" data-sales-report-export="pdf" type="button">Export PDF</button>
+                <button class="btn" data-sales-report-export="excel" type="button">Export Excel</button>
+              </div>
+            </div>
+            <form id="sales-report-form" class="sales-report-form">
+              <label class="field"><span>Report</span><select name="report">${SALES_REPORT_TYPES.map((item) => `<option>${escapeHtml(item)}</option>`).join("")}</select></label>
+              <label class="field"><span>Period</span><select name="period">${REPORT_PERIODS.map((period) => `<option value="${escapeHtml(period)}">${escapeHtml(period[0].toUpperCase() + period.slice(1))}</option>`).join("")}</select></label>
+              <label class="field"><span>Format</span><select name="format"><option value="pdf">PDF</option><option value="excel">Excel</option></select></label>
+              <button class="btn primary" type="submit">Generate Report</button>
+            </form>
+            <div class="table-wrap sales-report-table">
+              <table class="table">
+                <thead><tr><th>Report</th><th>Period</th><th>Format</th><th>Generated</th></tr></thead>
+                <tbody id="sales-report-output"><tr><td colspan="4" class="muted">No report generated yet.</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </section>`
+      : `<section id="reports" class="erp-work-grid">
+          <article class="panel">
+            <div class="panel-header"><h2>Department Messaging</h2><span class="badge">Connected</span></div>
+            <form id="erp-message-form" class="erp-message-form">
+              <label class="field"><span>Send to department</span><input name="to" value="${moduleId === "finance" ? "hr" : "finance"}" required /></label>
+              <label class="field"><span>Message</span><input name="body" value="Please review the latest ${escapeHtml(moduleDef.title)} workflow." required /></label>
+              <button class="btn primary" type="submit">Send</button>
+            </form>
+            <div id="erp-messages" class="erp-message-list"></div>
+          </article>
+          <article class="panel">
+            <div class="panel-header"><h2>Reports & Audit</h2><span class="badge">PDF / Excel</span></div>
+            <div id="erp-reports" class="erp-report-grid"></div>
+            <div id="erp-activity" class="erp-activity-list"></div>
+          </article>
+        </section>`;
     $(".portal-hub-widgets").insertAdjacentHTML(
       "afterend",
       `<div id="erp-sections" class="erp-sections">
@@ -844,22 +900,7 @@
             <div id="erp-approvals" class="erp-approval-list"></div>
           </article>
         </section>
-        <section id="reports" class="erp-work-grid">
-          <article class="panel">
-            <div class="panel-header"><h2>Department Messaging</h2><span class="badge">Connected</span></div>
-            <form id="erp-message-form" class="erp-message-form">
-              <label class="field"><span>Send to department</span><input name="to" value="${moduleId === "finance" ? "hr" : "finance"}" required /></label>
-              <label class="field"><span>Message</span><input name="body" value="Please review the latest ${escapeHtml(moduleDef.title)} workflow." required /></label>
-              <button class="btn primary" type="submit">Send</button>
-            </form>
-            <div id="erp-messages" class="erp-message-list"></div>
-          </article>
-          <article class="panel">
-            <div class="panel-header"><h2>Reports & Audit</h2><span class="badge">PDF / Excel</span></div>
-            <div id="erp-reports" class="erp-report-grid"></div>
-            <div id="erp-activity" class="erp-activity-list"></div>
-          </article>
-        </section>
+        ${salesReportSection}
       </div>`,
     );
   };
@@ -977,19 +1018,22 @@
         : `<div class="empty-state">No messages yet.</div>`;
     }
 
-    $("#erp-reports").innerHTML =
-      moduleId === "finance"
-        ? blueprint.reports.map((item) => `<button class="finance-report-button" data-report-name="${escapeHtml(item)}" data-report-period="monthly" type="button">${escapeHtml(item)}</button>`).join("")
-        : blueprint.reports
-            .map(
-              (item) => `<article class="erp-report-card">
+    const reportGrid = $("#erp-reports");
+    if (reportGrid) {
+      reportGrid.innerHTML =
+        moduleId === "finance"
+          ? blueprint.reports.map((item) => `<button class="finance-report-button" data-report-name="${escapeHtml(item)}" data-report-period="monthly" type="button">${escapeHtml(item)}</button>`).join("")
+          : blueprint.reports
+              .map(
+                (item) => `<article class="erp-report-card">
           <strong>${escapeHtml(item)}</strong>
           <div class="erp-report-periods">
             ${REPORT_PERIODS.map((period) => `<button class="btn" data-report-name="${escapeHtml(item)}" data-report-period="${period}" type="button">${period[0].toUpperCase()}${period.slice(1)}</button>`).join("")}
           </div>
         </article>`,
-            )
-            .join("");
+              )
+              .join("");
+    }
     const activityList = $("#erp-activity");
     if (activityList) {
       activityList.innerHTML = activities.length
@@ -1275,6 +1319,26 @@
     return true;
   };
 
+  const setSalesReportStatus = (reportName, period, format) => {
+    const generatedAt = new Date();
+    const report = reportName || "Orders";
+    const selectedPeriod = period || "monthly";
+    const selectedFormat = format || "pdf";
+    const formatLabel = selectedFormat === "excel" ? "Excel" : "PDF";
+    const status = document.querySelector("[data-sales-report-status]");
+    const type = document.querySelector("[data-sales-report-type]");
+    const formatEl = document.querySelector("[data-sales-report-format]");
+    const time = document.querySelector("[data-sales-report-time]");
+    const output = $("#sales-report-output");
+    if (status) status.textContent = "Generated";
+    if (type) type.textContent = report;
+    if (formatEl) formatEl.textContent = formatLabel;
+    if (time) time.textContent = generatedAt.toLocaleString();
+    if (output) {
+      output.innerHTML = `<tr><td>${escapeHtml(report)}</td><td>${escapeHtml(selectedPeriod)}</td><td>${escapeHtml(formatLabel)}</td><td>${escapeHtml(generatedAt.toLocaleString())}</td></tr>`;
+    }
+  };
+
   const postModuleRecordTransaction = async (moduleId, row) => {
     const amount = row.values
       .map((value) => Number(String(value).replace(/[^\d.-]/g, "")))
@@ -1512,6 +1576,36 @@
         const exportBtn = event.target.closest("[data-erp-export]");
         if (exportBtn?.dataset.erpExport === "csv") exportCsv(moduleId);
         if (exportBtn?.dataset.erpExport === "pdf") window.print();
+        const salesExport = event.target.closest("[data-sales-report-export]");
+        if (salesExport) {
+          const form = $("#sales-report-form");
+          const reportName = form?.elements?.namedItem("report")?.value || "Orders";
+          const period = form?.elements?.namedItem("period")?.value || "monthly";
+          const format = salesExport.dataset.salesReportExport || form?.elements?.namedItem("format")?.value || "pdf";
+          setSalesReportStatus(reportName, period, format);
+          if (format === "excel") exportPeriodReport(moduleId, reportName, period);
+          else window.print();
+          appendActivity(moduleId, "report.exported", { label: reportName, message: `${period} ${reportName} exported as ${format}.` });
+          refreshEnterpriseSections(moduleId);
+        }
+      });
+
+      $("#sales-report-form")?.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const reportName = form.elements.namedItem("report")?.value || "Orders";
+        const period = form.elements.namedItem("period")?.value || "monthly";
+        const format = form.elements.namedItem("format")?.value || "pdf";
+        setSalesReportStatus(reportName, period, format);
+        appendActivity(moduleId, "report.generated", { label: reportName, message: `${period} ${reportName} report generated.` });
+        await window.ERPClient?.sendWorkflow?.({
+          sourceModule: moduleId,
+          targetModule: "reporting",
+          title: `${reportName} report generated`,
+          detail: `${moduleId} generated ${reportName} for shared analytics.`,
+          approvalRequired: false,
+        }).catch(() => null);
+        refreshEnterpriseSections(moduleId);
       });
 
       $("#erp-message-form")?.addEventListener("submit", async (event) => {

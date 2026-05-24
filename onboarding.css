@@ -528,6 +528,60 @@
   align-items: end;
 }
 
+.sales-report-workspace {
+  display: grid;
+  gap: 16px;
+}
+
+.sales-report-status-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.sales-report-status-grid article {
+  min-height: 118px;
+  padding: 16px;
+  border: 1px solid rgba(130, 190, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.sales-report-status-grid span,
+.sales-report-status-grid small {
+  display: block;
+  color: rgba(218, 232, 255, 0.66);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.sales-report-status-grid strong {
+  display: block;
+  margin: 8px 0 6px;
+  color: rgba(255, 255, 255, 0.96);
+  font-size: clamp(20px, 2.4vw, 28px);
+  line-height: 1.1;
+}
+
+.sales-report-generator {
+  border: 1px solid rgba(130, 190, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(3, 10, 22, 0.42);
+  overflow: hidden;
+}
+
+.sales-report-form {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(150px, 0.8fr) minmax(140px, 0.7fr) auto;
+  gap: 12px;
+  padding: 16px 18px;
+  align-items: end;
+}
+
+.sales-report-table {
+  padding: 0 18px 18px;
+}
+
 .module-record-form .btn {
   min-height: 44px;
 }
@@ -1478,6 +1532,11 @@
 
   .module-sidebar-head .btn {
     display: inline-flex;
+  }
+
+  .sales-report-status-grid,
+  .sales-report-form {
+    grid-template-columns: 1fr;
   }
 
   .module-record-form {
