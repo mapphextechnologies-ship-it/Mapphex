@@ -171,7 +171,7 @@
     },
     pharmacy: {
       entity: "Pharmacy Record",
-      form: ["Medicine/Item", "Batch", "Expiry/Status", "Stock/Action"],
+      form: ["Medicine/Item", "Batch", "Expiry/Status", "Amount", "Action"],
       responsibilities: ["Medicine inventory", "Prescriptions", "Customers", "Suppliers", "Sales", "Expiry alerts", "Returns", "Regulated reports"],
       reports: ["Medicine stock", "Expiry alerts", "Prescriptions", "Supplier activity", "Sales", "Returns"],
       workflows: [["Dispense prescription", "finance"], ["Create expiry alert", "inventory"], ["Request medicine stock", "procurement"], ["Submit pharmacy sales", "reporting"]],
@@ -464,6 +464,16 @@
     }
   };
 
+  const clearLegacyPharmacyRecords = () => {
+    const data = moduleData();
+    const rows = Array.isArray(data.pharmacy) ? data.pharmacy : [];
+    const nextRows = rows.filter((row) => Array.isArray(row.values) && row.values.length >= 5);
+    if (nextRows.length !== rows.length) {
+      data.pharmacy = nextRows;
+      saveModuleData(data);
+    }
+  };
+
   const clearSavedSalesDashboardState = () => {
     const state = erpState();
     const approvals = Array.isArray(state.approvals) ? state.approvals : [];
@@ -746,7 +756,8 @@
         <label class="field"><span>Medicine/Item</span><input name="field0" placeholder="Medicine or item name" required /></label>
         <label class="field"><span>Batch</span><input name="field1" placeholder="Batch number" required /></label>
         <label class="field"><span>Expiry/Status</span><input name="field2" placeholder="Expiry date or status" required /></label>
-        <label class="field"><span>Stock/Action</span><select name="field3" required><option value="">Select action</option><option>In stock</option><option>Low stock</option><option>Out of stock</option><option>Dispensed</option><option>Returned</option><option>Expired</option><option>Order stock</option></select></label>
+        <label class="field"><span>Amount</span><input name="field3" type="number" min="0" step="0.01" placeholder="KES 0" required /></label>
+        <label class="field"><span>Action</span><select name="field4" required><option value="">Select action</option><option>In stock</option><option>Low stock</option><option>Out of stock</option><option>Dispensed</option><option>Returned</option><option>Expired</option><option>Order stock</option><option>Paid</option><option>Pending</option></select></label>
         <button class="btn primary" type="submit">Add Record</button>`;
       return;
     }
@@ -1968,7 +1979,7 @@
   };
 
   const postModuleRecordTransaction = async (moduleId, row) => {
-    const amount = moduleId === "sales"
+    const amount = ["sales", "pharmacy"].includes(moduleId)
       ? Number(String(row.values?.[3] || "").replace(/[^\d.-]/g, "")) || 0
       : row.values
           .map((value) => Number(String(value).replace(/[^\d.-]/g, "")))
@@ -2072,6 +2083,10 @@
         clearLegacySalesRecords();
         syncStore();
       }
+      if (moduleId === "pharmacy") {
+        clearLegacyPharmacyRecords();
+        syncStore();
+      }
       ensurePortalState(moduleId);
       applyModulePreferences(moduleId);
 
@@ -2127,7 +2142,7 @@
       const refreshCurrentModuleView = () => {
         renderRows(moduleId, workflow, $("#module-search")?.value || "");
         refreshEnterpriseSections(moduleId);
-        if (String(moduleViewFromUrl()).startsWith("module-page:")) {
+        if (String(currentModuleView()).startsWith("module-page:")) {
           renderModuleDetailPage(moduleId, blueprintFor(moduleId), document.querySelector("[data-module-nav].active"));
         }
       };
