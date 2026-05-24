@@ -20,6 +20,18 @@
   let orgContext = { businessType: "general", settings: {}, organization: {} };
   let activeModuleId = "";
 
+  const currentModuleView = () => {
+    const params = new URLSearchParams(location.search);
+    return String(params.get("view") || location.hash.replace(/^#/, "") || "dashboard").trim().toLowerCase() || "dashboard";
+  };
+
+  const moduleViewUrl = (view) => {
+    const next = new URL(location.href);
+    next.searchParams.set("view", view || "dashboard");
+    next.hash = view || "dashboard";
+    return `${next.pathname}${next.search}${next.hash}`;
+  };
+
   const redirectFinanceModule = () => {
     const params = new URLSearchParams(location.search);
     const moduleId = String(params.get("portal") || params.get("module") || "").trim().toLowerCase();
@@ -471,7 +483,7 @@
     $("#module-nav").innerHTML = groups
       .map(
         (group) => `<div class="module-nav-group"><strong>${escapeHtml(group.label)}</strong>${group.items
-          .map((item) => `<a class="${item.hash === "dashboard" ? "active" : ""}" href="#${escapeHtml(item.hash)}" data-module-nav="${escapeHtml(item.hash)}" data-module-target="${escapeHtml(item.target)}" data-module-label="${escapeHtml(item.label)}"><span><b aria-hidden="true">${escapeHtml(item.icon)}</b>${escapeHtml(item.label)}</span>${item.badge ? `<small class="nav-badge">${escapeHtml(item.badge)}</small>` : `<small>View</small>`}</a>`)
+          .map((item) => `<a class="${item.hash === "dashboard" ? "active" : ""}" href="${escapeHtml(moduleViewUrl(item.hash))}" data-module-nav="${escapeHtml(item.hash)}" data-module-target="${escapeHtml(item.target)}" data-module-label="${escapeHtml(item.label)}"><span><b aria-hidden="true">${escapeHtml(item.icon)}</b>${escapeHtml(item.label)}</span>${item.badge ? `<small class="nav-badge">${escapeHtml(item.badge)}</small>` : `<small>View</small>`}</a>`)
           .join("")}</div>`,
       )
       .join("");
@@ -500,12 +512,12 @@
     if (window.matchMedia("(max-width: 980px)").matches) setMenuOpen(false);
   };
 
-  const setActivePortalNav = (hash = location.hash) => {
-    const current = String(hash || "#dashboard").replace(/^#/, "");
+  const setActivePortalNav = (view = currentModuleView()) => {
+    const current = String(view || "dashboard").replace(/^#/, "");
     let target = "dashboard";
     let activeLink = null;
     document.querySelectorAll("[data-module-nav]").forEach((link) => {
-      const active = link.dataset.moduleNav === current || (!hash && link.dataset.moduleNav === "dashboard");
+      const active = link.dataset.moduleNav === current || (!view && link.dataset.moduleNav === "dashboard");
       link.classList.toggle("active", active);
       if (active) {
         target = link.dataset.moduleTarget || "dashboard";
@@ -585,7 +597,7 @@
       if (active) item.setAttribute("aria-current", "page");
       else item.removeAttribute("aria-current");
     });
-    history.replaceState(null, "", `#${nav}`);
+    history.pushState({ moduleView: nav }, "", moduleViewUrl(nav));
     setPortalView(target);
     if (String(target).startsWith("module-page:")) renderModuleDetailPage(activeModuleId, blueprintFor(activeModuleId), link);
   };
@@ -1534,6 +1546,7 @@
         if (event.key === "Escape") setMenuOpen(false);
       });
       window.addEventListener("hashchange", () => setActivePortalNav());
+      window.addEventListener("popstate", () => setActivePortalNav());
       window.addEventListener("storage", (event) => {
         if (![ERP_STATE_KEY, MODULE_DATA_KEY, ACTIVITY_KEY, TRANSACTIONS_KEY, REPORTS_KEY].some((key) => event.key?.includes(key))) return;
         renderRows(moduleId, workflow, $("#module-search")?.value || "");
