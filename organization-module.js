@@ -1044,6 +1044,19 @@
         </section>`;
     const salesReportSection = moduleId === "sales"
       ? `<section id="reports" class="panel sales-report-workspace">
+          <div class="panel-header">
+            <div>
+              <span class="eyebrow">Accounting</span>
+              <h2>Generate and export reports</h2>
+              <p class="portal-manager-subtitle">Create clean sales reports from orders, quotations, invoices, revenue, discounts, and customer history.</p>
+            </div>
+          </div>
+          <div class="sales-report-status-grid">
+            <article><span>Report status</span><strong data-sales-report-status>Not generated</strong><small>Ready after generation</small></article>
+            <article><span>Report type</span><strong data-sales-report-type>Sales</strong><small>Selected output</small></article>
+            <article><span>Export format</span><strong data-sales-report-format>PDF</strong><small>PDF or Excel</small></article>
+            <article><span>Last generated</span><strong data-sales-report-time>Never</strong><small>Current session</small></article>
+          </div>
           <div class="sales-report-generator">
             <div class="content-head">
               <div>
