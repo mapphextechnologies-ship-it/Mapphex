@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Logistics Portal - MAPPHEX</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/images/enterprise-icon-192.png" type="image/png" />
+    <link rel="stylesheet" href="director.css" />
+    <link rel="stylesheet" href="branch.css" />
+    <link rel="stylesheet" href="enterprise-platform.css" />
+  </head>
+  <body data-department-portal="logistics" data-portal-title="Logistics Portal">
+    <header class="topbar">
+      <div class="brand"><img class="logo-img" src="/images/enterprise-logo.png" alt="" /><div><div id="portal-title" class="brand-title">Logistics Portal</div><div id="portal-subtitle" class="brand-subtitle muted">Dispatch and tracking</div></div></div>
+      <div class="topbar-actions"><a id="workspace-link" class="btn" href="organization-workspace.html">Workspace</a><a class="btn" href="driver-portal.html">Driver View</a><a class="btn" href="index.html?logout=1">Logout</a></div>
+    </header>
+    <div class="branch-shell">
+      <aside class="branch-sidebar">
+        <nav class="sidebar-nav">
+          <div class="sidebar-nav-group"><strong>Main</strong><a class="sidebar-link active" href="#overview" data-nav="overview" data-icon="O">Overview</a></div>
+          <div class="sidebar-nav-group"><strong>Dispatch</strong><a class="sidebar-link" href="#orders" data-nav="orders" data-icon="R">Orders</a><a class="sidebar-link" href="#drivers" data-nav="drivers" data-icon="D">Drivers</a><a class="sidebar-link" href="#zones" data-nav="zones" data-icon="Z">Routes & zones</a></div>
+          <div class="sidebar-nav-group"><strong>Operations</strong><a class="sidebar-link" href="#movements" data-nav="movements" data-icon="M">Depot movement</a><a class="sidebar-link" href="#finance" data-nav="finance" data-icon="F">Finance</a><a class="sidebar-link" href="#reports" data-nav="reports" data-icon="P">Reports</a></div>
+        </nav>
+      </aside>
+      <main class="layout">
+        <section class="panel" id="overview" data-section="overview">
+          <div class="panel-header"><h2>Logistics Overview</h2><div class="panel-actions"><button id="logistics-export-btn" class="btn">Export orders</button><button id="logistics-print-btn" class="btn primary">Print report</button></div></div>
+          <div class="kpis">
+            <article class="kpi"><div class="kpi-label">Orders today</div><div id="log-kpi-orders" class="kpi-value">0</div><div class="kpi-foot muted">Created today</div></article>
+            <article class="kpi"><div class="kpi-label">In transit</div><div id="log-kpi-transit" class="kpi-value">0</div><div class="kpi-foot muted">Dispatched or moving</div></article>
+            <article class="kpi"><div class="kpi-label">Delivered today</div><div id="log-kpi-delivered" class="kpi-value">0</div><div class="kpi-foot muted">Confirmed deliveries</div></article>
+            <article class="kpi"><div class="kpi-label">Revenue</div><div id="log-kpi-revenue" class="kpi-value">KES 0</div><div class="kpi-foot muted">All orders</div></article>
+          </div>
+        </section>
+
+        <section class="panel" id="orders" data-section="orders">
+          <div class="panel-header"><h2>Orders Management</h2></div>
+          <form id="order-form" class="branch-form">
+            <label class="field"><span>Order reference</span><input name="ref" placeholder="Auto if blank" /></label><label class="field"><span>Customer name</span><input name="customerName" required /></label><label class="field"><span>Customer phone</span><input name="customerPhone" /></label><label class="field"><span>Pickup branch/depot</span><select id="order-pickup" name="pickup"></select></label>
+            <label class="field"><span>Delivery address</span><input name="address" required /></label><label class="field"><span>Item description</span><input name="item" required /></label><label class="field"><span>Weight / dimensions</span><input name="weight" /></label><label class="field"><span>Declared value</span><input name="declaredValue" type="number" min="0" /></label>
+            <label class="field"><span>Delivery type</span><select name="deliveryType"><option>standard</option><option>express</option><option>same-day</option></select></label><label class="field"><span>Payment type</span><select name="paymentType"><option>prepaid</option><option value="cod">cash on delivery</option><option>credit</option></select></label><label class="field"><span>Amount</span><input name="amount" type="number" min="0" /></label><label class="field"><span>Assign driver</span><select class="driver-select" name="driverId"></select></label>
+            <label class="field" style="grid-column:1/-1"><span>Special instructions</span><input name="instructions" /></label><button class="btn primary" type="submit">Create order</button>
+          </form>
+          <div class="table-wrap"><table class="table"><thead><tr><th>Ref</th><th>Customer</th><th>Pickup</th><th>Address</th><th>Driver</th><th>Status</th><th class="num">Amount</th><th>Action</th></tr></thead><tbody id="orders-tbody"></tbody></table></div>
+        </section>
+
+        <section class="panel" id="drivers" data-section="drivers">
+          <div class="panel-header"><h2>Driver / Rider Management</h2></div>
+          <form id="driver-form" class="branch-form">
+            <label class="field"><span>Full name</span><input name="name" required /></label><label class="field"><span>Phone</span><input name="phone" /></label><label class="field"><span>Email</span><input name="email" type="email" /></label><label class="field"><span>Vehicle type</span><select name="vehicleType"><option>motorbike</option><option>van</option><option>truck</option><option>foot</option></select></label>
+            <label class="field"><span>Vehicle registration</span><input name="vehicleReg" /></label><label class="field"><span>License number</span><input name="license" /></label><label class="field"><span>License expiry</span><input name="licenseExpiry" type="date" /></label><label class="field"><span>Depot / branch</span><select id="driver-branch" name="branchId"></select></label><button class="btn primary" type="submit">Save driver</button>
+          </form>
+          <div class="table-wrap"><table class="table"><thead><tr><th>Name</th><th>Phone</th><th>Vehicle</th><th>Reg</th><th>Depot</th><th>Status</th><th class="num">Assigned</th><th class="num">Delivered</th></tr></thead><tbody id="drivers-tbody"></tbody></table></div>
+        </section>
+
+        <section class="panel" id="zones" data-section="zones">
+          <div class="panel-header"><h2>Routes & Zones</h2></div>
+          <form id="zone-form" class="branch-form"><label class="field"><span>Zone name</span><input name="name" required /></label><label class="field"><span>Areas covered</span><input name="areas" /></label><label class="field"><span>Assigned drivers</span><input name="drivers" /></label><label class="field"><span>Base fee</span><input name="fee" type="number" min="0" /></label><button class="btn primary" type="submit">Save zone</button></form>
+          <div class="table-wrap"><table class="table"><thead><tr><th>Zone</th><th>Areas</th><th>Drivers</th><th class="num">Base fee</th></tr></thead><tbody id="zones-tbody"></tbody></table></div>
+        </section>
+
+        <section class="panel" id="movements" data-section="movements">
+          <div class="panel-header"><h2>Warehouse / Stock Movement</h2></div>
+          <form id="movement-form" class="branch-form"><label class="field"><span>Date</span><input name="date" type="date" /></label><label class="field"><span>Depot / branch</span><select id="movement-location" name="location"></select></label><label class="field"><span>Type</span><select name="type"><option>received</option><option>dispatched</option><option>transfer</option><option>returned</option><option>damaged</option></select></label><label class="field"><span>Item</span><input name="item" /></label><label class="field"><span>Quantity</span><input name="qty" type="number" min="0" /></label><label class="field"><span>Condition</span><select name="condition"><option>good</option><option>damaged</option><option>lost</option></select></label><button class="btn primary" type="submit">Record movement</button></form>
+          <div class="table-wrap"><table class="table"><thead><tr><th>Date</th><th>Depot</th><th>Type</th><th>Item</th><th class="num">Qty</th><th>Condition</th></tr></thead><tbody id="movements-tbody"></tbody></table></div>
+        </section>
+
+        <section class="panel" id="finance" data-section="finance">
+          <div class="panel-header"><h2>Finance & Remittance</h2></div>
+          <form id="expense-form" class="branch-form"><label class="field"><span>Date</span><input name="date" type="date" /></label><label class="field"><span>Expense type</span><input name="type" placeholder="Fuel, repair, allowance" /></label><label class="field"><span>Amount</span><input name="amount" type="number" min="0" /></label><label class="field"><span>Notes</span><input name="notes" /></label><button class="btn primary" type="submit">Record expense</button></form>
+          <div id="finance-summary" class="report-output"></div>
+        </section>
+
+        <section class="panel" id="reports" data-section="reports"><div class="panel-header"><h2>Reports</h2></div><div class="report-output">Daily delivery, driver performance, zone, failed delivery, stock movement, revenue, and remittance reports are generated from the records above.</div></section>
+      </main>
+    </div>
+    <script src="enterprise-core.js?v=2"></script><script src="auth-guard.js?v=2"></script><script src="kv-client.js"></script><script src="enterprise-store.js"></script><script src="department-portals.js?v=1"></script>
+  </body>
+</html>
