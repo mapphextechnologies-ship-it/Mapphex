@@ -317,6 +317,26 @@
   gap: 8px;
 }
 
+.module-nav-group {
+  display: grid;
+  gap: 7px;
+  padding-top: 8px;
+}
+
+.module-nav-group + .module-nav-group {
+  margin-top: 10px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.module-nav-group > strong {
+  padding: 0 4px;
+  color: rgba(218, 232, 255, 0.68);
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
 .module-nav a {
   display: flex;
   align-items: center;
@@ -357,6 +377,20 @@
   background: rgba(0, 119, 255, 0.16);
   box-shadow: inset 3px 0 0 #5bd6ff;
   transform: translateX(2px);
+}
+
+.module-nav .nav-badge,
+.module-nav a small {
+  min-width: 24px;
+  min-height: 24px;
+  padding: 4px 7px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(52, 211, 153, 0.85);
+  font-size: 12px;
+  font-weight: 950;
 }
 
 .branch-management-page .module-app-shell,
@@ -464,7 +498,8 @@
 
 .module-sidebar.is-collapsed .module-sidebar-head strong,
 .module-sidebar.is-collapsed .module-nav a small,
-.module-sidebar.is-collapsed .module-nav a span {
+.module-sidebar.is-collapsed .module-nav a span,
+.module-sidebar.is-collapsed .module-nav-group > strong {
   font-size: 0;
 }
 
@@ -1415,7 +1450,8 @@
 
   .module-sidebar.is-collapsed .module-sidebar-head strong,
   .module-sidebar.is-collapsed .module-nav a small,
-  .module-sidebar.is-collapsed .module-nav a span {
+  .module-sidebar.is-collapsed .module-nav a span,
+  .module-sidebar.is-collapsed .module-nav-group > strong {
     font-size: inherit;
   }
 

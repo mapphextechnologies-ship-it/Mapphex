@@ -284,13 +284,13 @@
   const menuItemsFor = (moduleId, moduleDef) => {
     if (moduleId === "branch") {
       return [
-        ["Dashboard", "dashboard", "dashboard", "D"],
-        ["Branch Accounts", "approvals", "accounts", "A"],
-        ["Branch Records", "portal-records", "records", "R"],
-        ["Approvals", "approvals", "approvals", "P"],
-        ["Reports", "reports", "reports", "S"],
-        ["Activity", "reports", "activity", "T"],
-      ].map(([label, target, hash, icon]) => ({ label, target, hash, icon }));
+        ["Main", "Dashboard", "dashboard", "dashboard", "D"],
+        ["Branch", "Branch Accounts", "approvals", "accounts", "A"],
+        ["Branch", "Branch Records", "portal-records", "records", "R"],
+        ["Workflow", "Approvals", "approvals", "approvals", "P"],
+        ["Insights", "Reports", "reports", "reports", "S"],
+        ["Insights", "Activity", "reports", "activity", "T"],
+      ].map(([group, label, target, hash, icon]) => ({ group, label, target, hash, icon }));
     }
     if (moduleId === "finance") {
       return [
@@ -316,18 +316,30 @@
     }
     const blueprint = blueprintFor(moduleId);
     const base = PORTAL_MENUS[moduleId] || ["Dashboard", blueprint.title || "Records", "Approvals", "Messages", "Reports", "Activity", "Settings"];
-    return base.map((label, idx) => ({
-      label,
-      target: idx === 0
+    const groupFor = (label, idx) => {
+      if (idx === 0) return "Main";
+      if (/approval|payroll|leave|ticket|complaint|escalation|alert|request/i.test(label)) return "Workflow";
+      if (/report|tax|analytic|revenue|budget|expense|transaction|billing|cost|sales|fees|payments/i.test(label)) return "Insights";
+      if (/setting|export|activity|audit/i.test(label)) return "Tools";
+      if (/employee|student|patient|customer|tenant|parent|staff|doctor|developer|client/i.test(label)) return "People";
+      return "Operations";
+    };
+    return base.map((label, idx) => {
+      const target = idx === 0
         ? "dashboard"
         : /approval|payroll/i.test(label)
           ? "approvals"
           : /report|tax|analytic|revenue|budget|expense|transaction|billing|cost/i.test(label)
             ? "reports"
-            : "portal-records",
-      hash: idx === 0 ? "dashboard" : label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "records",
-      icon: (label || moduleDef?.title || "M").slice(0, 1).toUpperCase(),
-    }));
+            : "portal-records";
+      return {
+        group: groupFor(label, idx),
+        label,
+        target,
+        hash: idx === 0 ? "dashboard" : label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "records",
+        icon: (label || moduleDef?.title || "M").slice(0, 1).toUpperCase(),
+      };
+    });
   };
 
   const DEFAULT_PORTAL_VIEW_GROUPS = {
@@ -436,24 +448,19 @@
   const renderNav = (moduleId, moduleDef) => {
     const items = menuItemsFor(moduleId, moduleDef);
     $("#module-sidebar-title").textContent = `${moduleDef.title} Menu`;
-    if (moduleId === "finance") {
-      const groups = items.reduce((list, item) => {
-        const last = list[list.length - 1];
-        if (!last || last.label !== item.group) list.push({ label: item.group, items: [] });
-        list[list.length - 1].items.push(item);
-        return list;
-      }, []);
-      $("#module-nav").innerHTML = groups
-        .map(
-          (group) => `<div class="module-nav-group"><strong>${escapeHtml(group.label)}</strong>${group.items
-            .map((item, idx) => `<a class="${item.hash === "dashboard" ? "active" : ""}" href="#${escapeHtml(item.hash)}" data-module-nav="${escapeHtml(item.hash)}" data-module-target="${escapeHtml(item.target)}"><span><b aria-hidden="true">${escapeHtml(item.icon)}</b>${escapeHtml(item.label)}</span>${item.badge ? `<small class="nav-badge">${escapeHtml(item.badge)}</small>` : ""}</a>`)
-            .join("")}</div>`,
-        )
-        .join("");
-      return;
-    }
-    $("#module-nav").innerHTML = items
-      .map((item, idx) => `<a class="${idx === 0 ? "active" : ""}" href="#${escapeHtml(item.hash)}" data-module-nav="${escapeHtml(item.hash)}" data-module-target="${escapeHtml(item.target)}"><span><b aria-hidden="true">${escapeHtml(item.icon)}</b>${escapeHtml(item.label)}</span><small>${idx === 0 ? "Open" : "View"}</small></a>`)
+    const groups = items.reduce((list, item) => {
+      const label = item.group || "Menu";
+      const last = list[list.length - 1];
+      if (!last || last.label !== label) list.push({ label, items: [] });
+      list[list.length - 1].items.push(item);
+      return list;
+    }, []);
+    $("#module-nav").innerHTML = groups
+      .map(
+        (group) => `<div class="module-nav-group"><strong>${escapeHtml(group.label)}</strong>${group.items
+          .map((item) => `<a class="${item.hash === "dashboard" ? "active" : ""}" href="#${escapeHtml(item.hash)}" data-module-nav="${escapeHtml(item.hash)}" data-module-target="${escapeHtml(item.target)}"><span><b aria-hidden="true">${escapeHtml(item.icon)}</b>${escapeHtml(item.label)}</span>${item.badge ? `<small class="nav-badge">${escapeHtml(item.badge)}</small>` : `<small>View</small>`}</a>`)
+          .join("")}</div>`,
+      )
       .join("");
   };
 
