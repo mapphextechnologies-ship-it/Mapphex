@@ -80,7 +80,7 @@
       staff: "Staff access enabled",
       branch: `${branches || 1} branch workspace`,
       departments: `${departments || 1} department workflow`,
-      analytics: "Realtime insights ready",
+      analytics: "Insights ready when you need them",
       admin: "Organization controls enabled",
       sales: "Customer and sales tracking",
       procurement: "Purchase and supplier workflow",
@@ -96,7 +96,7 @@
       agent: "ERP agent onboarding enabled",
       "device-departments": `${departments || 1} department workflow`,
     };
-    return summaries[portal.id] || "Workspace module ready";
+    return summaries[portal.id] || "Ready to use";
   };
 
   const canOpenPortal = (portalId) => {
@@ -156,7 +156,7 @@
     if (!portalId) return;
     const portal = portals.find((item) => item.id === portalId);
     const name = portal?.title || portalId;
-    const ok = window.confirm(`Uninstall ${name} from this MAPPHEX workspace? You can install it again later from Portal Manager.`);
+    const ok = window.confirm(`Remove ${name} from this workspace? You can add it again later from the portal manager.`);
     if (!ok) return;
     try {
       const response = await fetchJson("/api/org-admin", {
@@ -238,14 +238,14 @@
       $("#workspace-title").textContent = orgName;
       $("#workspace-subtitle").textContent = `${org?.organizationId || tenantId} • ${org?.businessType || settings.businessType || "company"}`;
       $("#portal-hub-heading").textContent = orgName;
-      $("#portal-hub-summary").textContent = `One installed workspace app for ${orgName}'s selected modules, organization data, and secure workflows.`;
+      $("#portal-hub-summary").textContent = `Open ${orgName}'s apps, review work, and keep the organization moving from one place.`;
       $("#profile-name").textContent = orgName;
       const monthly = Number(settings.monthlyAmount || settings.estimatedTotal || org?.monthlyAmount || org?.estimatedTotal || 0) || 0;
       $("#subscription-status").textContent = `${org?.subscriptionStatus ? `Subscription: ${org.subscriptionStatus}` : "Subscription: active"}${monthly ? ` • KSh ${monthly.toLocaleString("en-KE")} / month` : ""}`;
       $("#notification-badge").textContent = `${Math.max(1, (settings.installedPortals || []).length)} notifications`;
       $("#hub-kpi-branches").textContent = settings.branches?.length || org?.metrics?.branches || 0;
       $("#hub-kpi-departments").textContent = settings.departments?.length || 0;
-      $("#hub-kpi-session").textContent = `${tenantId} isolated`;
+      $("#hub-kpi-session").textContent = "Signed in and ready";
       $("#manage-portals-link").href = `portal-selection.html?tenant=${encodeURIComponent(tenantId)}`;
 
       refreshPortalState(settingsState, org);

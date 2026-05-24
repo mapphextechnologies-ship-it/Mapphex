@@ -116,7 +116,7 @@
     const portalChecks = installedPortalIds()
       .map((id) => `<label class="check-chip"><input type="checkbox" data-user-portal value="${escapeHtml(id)}" /> <span>${escapeHtml(portalLabel(id))}</span></label>`)
       .join("");
-    $("#org-user-portals").innerHTML = portalChecks || `<span class="muted">No installed portals yet.</span>`;
+    $("#org-user-portals").innerHTML = portalChecks || `<span class="muted">Install a portal first, then assign access here.</span>`;
     $("#org-users-table").innerHTML = state.users
       .map((user) => {
         const portals = (user.portalAccess || []).map(portalLabel).join(", ") || "Not assigned";
@@ -169,7 +169,7 @@
     $("#org-activity-table").innerHTML = events.length ? events
       .reverse()
       .map((event) => `<tr><td>${escapeHtml(new Date(event.at).toLocaleString())}</td><td>${escapeHtml(eventLabel(event))}</td><td>${escapeHtml(eventDetail(event))}</td></tr>`)
-      .join("") : `<tr><td colspan="3" class="muted">No important activity yet.</td></tr>`;
+      .join("") : `<tr><td colspan="3" class="muted">Important admin activity will appear here.</td></tr>`;
   };
 
   const load = async () => {

@@ -546,7 +546,7 @@
     };
     const visible = rows.filter((row) => (!q || row.values.join(" ").toLowerCase().includes(q)) && matchesFilter(row));
     $("#module-empty").hidden = visible.length > 0;
-    if ($("#module-empty")) $("#module-empty").textContent = moduleId === "finance" ? "No transactions yet. Start by recording your first sale." : "Nothing here yet.";
+    if ($("#module-empty")) $("#module-empty").textContent = moduleId === "finance" ? "No transactions yet. Record the first sale when it is ready." : "No records here yet.";
     $("#module-table-head").innerHTML = [...workflow.labels, "Updated", "Actions"].map((label) => `<th>${escapeHtml(label)}</th>`).join("");
     $("#module-table-body").innerHTML = visible
       .map((row) => `<tr>${row.values.map((value) => `<td>${escapeHtml(value)}</td>`).join("")}<td>${escapeHtml(humanDate(row.updatedAt))}</td><td><button class="btn danger" type="button" data-record-delete="${escapeHtml(row.id)}">Delete</button></td></tr>`)
@@ -720,7 +720,7 @@
         <article class="kpi"><div class="kpi-label">Branch Records</div><div id="module-kpi-a" class="kpi-value">0</div><div class="kpi-foot muted">Saved locations</div></article>
         <article class="kpi"><div class="kpi-label">Shared Users</div><div id="module-kpi-users" class="kpi-value">0</div><div class="kpi-foot muted">Organization access</div></article>
         <article class="kpi"><div class="kpi-label">Enabled Modules</div><div id="module-kpi-modules" class="kpi-value">0</div><div class="kpi-foot muted">Workspace tools</div></article>
-        <article class="kpi"><div class="kpi-label">Data Context</div><div class="kpi-value">Unified</div><div id="module-kpi-tenant" class="kpi-foot muted">Tenant workspace</div></article>`;
+        <article class="kpi"><div class="kpi-label">Workspace</div><div class="kpi-value">Connected</div><div id="module-kpi-tenant" class="kpi-foot muted">Data kept together</div></article>`;
     }
     if (!$("#branch-management-overview")) {
       $("#portal-kpis")?.insertAdjacentHTML(
@@ -831,9 +831,9 @@
           </div>
           <div class="sales-report-status-grid">
             <article><span>Report status</span><strong data-sales-report-status>Not generated</strong><small>Ready after generation</small></article>
-            <article><span>Report type</span><strong data-sales-report-type>Sales</strong><small>Selected output</small></article>
+            <article><span>Report type</span><strong data-sales-report-type>Sales</strong><small>What will be created</small></article>
             <article><span>Export format</span><strong data-sales-report-format>PDF</strong><small>PDF or Excel</small></article>
-            <article><span>Last generated</span><strong data-sales-report-time>Never</strong><small>Current session</small></article>
+            <article><span>Last generated</span><strong data-sales-report-time>Never</strong><small>Latest report time</small></article>
           </div>
           <div class="sales-report-generator">
             <div class="panel-header">
@@ -852,7 +852,7 @@
             <div class="table-wrap sales-report-table">
               <table class="table">
                 <thead><tr><th>Report</th><th>Period</th><th>Format</th><th>Generated</th></tr></thead>
-                <tbody id="sales-report-output"><tr><td colspan="4" class="muted">No report generated yet.</td></tr></tbody>
+                <tbody id="sales-report-output"><tr><td colspan="4" class="muted">Choose a report and generate it when you are ready.</td></tr></tbody>
               </table>
             </div>
           </div>
@@ -878,7 +878,7 @@
       `<div id="erp-sections" class="erp-sections">
         <section id="dashboard" class="panel erp-dashboard-panel">
           <div class="panel-header">
-            <div><h2>${escapeHtml(moduleDef.title)} Dashboard</h2><p class="portal-manager-subtitle">Live departmental KPIs, workflow status, and role-specific responsibilities.</p></div>
+            <div><h2>${escapeHtml(moduleDef.title)} Dashboard</h2><p class="portal-manager-subtitle">See the latest work, pending items, and the jobs this team handles.</p></div>
             <div class="panel-actions">
               <button class="btn" data-erp-export="csv" type="button">Export Excel</button>
               <button class="btn" data-erp-export="pdf" type="button">Print / PDF</button>
@@ -886,7 +886,7 @@
           </div>
           <div id="erp-kpis" class="erp-kpi-grid"></div>
           <div class="erp-dashboard-grid">
-            <article class="erp-card"><strong>Performance</strong>${renderBars(blueprint.chart)}<span class="muted">Realtime-ready trend view</span></article>
+            <article class="erp-card"><strong>Performance</strong>${renderBars(blueprint.chart)}<span class="muted">A quick look at recent movement</span></article>
             <article class="erp-card"><strong>Responsibilities</strong><ul>${blueprint.responsibilities.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></article>
           </div>
         </section>
@@ -915,7 +915,7 @@
     const kpiGrid = $("#erp-kpis");
     if (kpiGrid) {
       kpiGrid.innerHTML = blueprint.kpis
-        .map(([label, value]) => `<article class="kpi"><div class="kpi-label">${escapeHtml(label)}</div><div class="kpi-value">${typeof value === "number" && label.toLowerCase().match(/revenue|sales|expenses|billing|amount/) ? money(value) : escapeHtml(value)}</div><div class="kpi-foot muted">Live workspace metric</div></article>`)
+        .map(([label, value]) => `<article class="kpi"><div class="kpi-label">${escapeHtml(label)}</div><div class="kpi-value">${typeof value === "number" && label.toLowerCase().match(/revenue|sales|expenses|billing|amount/) ? money(value) : escapeHtml(value)}</div><div class="kpi-foot muted">Updated from this workspace</div></article>`)
         .join("");
     }
 
@@ -1009,13 +1009,13 @@
             },
           )
           .join("")
-      : `<div class="empty-state">No approvals yet.</div>`;
+      : `<div class="empty-state">No approvals are waiting right now.</div>`;
 
     const messageList = $("#erp-messages");
     if (messageList) {
       messageList.innerHTML = messages.length
         ? messages.map((item) => `<article><strong>${escapeHtml(item.from)} to ${escapeHtml(item.to)}</strong><span>${escapeHtml(item.body)}</span><small>${escapeHtml(humanDate(item.createdAt))}</small></article>`).join("")
-        : `<div class="empty-state">No messages yet.</div>`;
+        : `<div class="empty-state">No messages have been sent yet.</div>`;
     }
 
     const reportGrid = $("#erp-reports");
@@ -1038,7 +1038,7 @@
     if (activityList) {
       activityList.innerHTML = activities.length
         ? activities.map((item) => `<article><strong>${escapeHtml(item.action)}</strong><span>${escapeHtml(item.detail?.message || item.detail?.label || "Activity recorded")}</span><small>${escapeHtml(humanDate(item.at))}</small></article>`).join("")
-        : `<div class="empty-state">Activity will appear as this portal is used.</div>`;
+        : `<div class="empty-state">Recent activity will show here once the team starts working.</div>`;
     }
   };
 
@@ -1427,7 +1427,7 @@
 
       document.title = `${moduleDef.title} • MAPPHEX`;
       $("#module-title").textContent = moduleDef.title;
-      $("#module-subtitle").textContent = `${org.organizationId || session.tenantId} • enterprise portal`;
+      $("#module-subtitle").textContent = `${org.organizationId || session.tenantId} • workspace portal`;
       $("#module-heading").textContent = moduleDef.title;
       $("#module-description").textContent = moduleDef.description;
       $("#module-icon").textContent = moduleCode;
