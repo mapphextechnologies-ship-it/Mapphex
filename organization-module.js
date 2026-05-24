@@ -139,7 +139,7 @@
       form: ["Customer", "Item / Service", "Purpose / Delivery", "Amount", "Invoice Status"],
       responsibilities: ["Orders", "Customers", "Quotations", "Product sales", "Discounts", "Invoices", "Revenue tracking", "Sales reports", "Customer history"],
       reports: ["Orders", "Quotations", "Invoices", "Revenue", "Discounts", "Customer history"],
-      workflows: [["Create order", "inventory"], ["Send invoice", "finance"], ["Request discount approval", "finance"], ["Submit sales report", "reporting"]],
+      workflows: [["Create order", "finance"], ["Send invoice", "finance"], ["Request discount approval", "admin"], ["Notify HR sales staff", "hr"], ["Submit sales report", "reporting"]],
     },
     inventory: {
       entity: "Stock Item",
@@ -460,6 +460,27 @@
       data.sales = [];
       saveModuleData(data);
     }
+  };
+
+  const clearSavedSalesApprovals = () => {
+    const cutoff = new Date("2026-05-24T15:30:00.000Z").getTime();
+    const state = erpState();
+    const approvals = Array.isArray(state.approvals) ? state.approvals : [];
+    const workflow = Array.isArray(state.workflow) ? state.workflow : [];
+    const messages = Array.isArray(state.messages) ? state.messages : [];
+    const isSalesItem = (item) => item?.moduleId === "sales" || item?.source === "sales" || item?.from === "sales";
+    const isOldItem = (item) => {
+      const time = new Date(item?.updatedAt || item?.createdAt || item?.at || 0).getTime();
+      return !Number.isFinite(time) || time < cutoff;
+    };
+    const nextApprovals = approvals.filter((item) => !(isSalesItem(item) && isOldItem(item)));
+    const nextWorkflow = workflow.filter((item) => !(isSalesItem(item) && isOldItem(item)));
+    const nextMessages = messages.filter((item) => !(isSalesItem(item) && isOldItem(item)));
+    if (nextApprovals.length === approvals.length && nextWorkflow.length === workflow.length && nextMessages.length === messages.length) return;
+    state.approvals = nextApprovals;
+    state.workflow = nextWorkflow;
+    state.messages = nextMessages;
+    saveErpState(state);
   };
 
   const appendActivity = (moduleId, action, detail = {}) => {
@@ -2024,6 +2045,7 @@
       await hydrateSharedData();
       if (moduleId === "sales") {
         clearLegacySalesRecords();
+        clearSavedSalesApprovals();
         await store()?.flush?.().catch(() => null);
       }
       ensurePortalState(moduleId);
