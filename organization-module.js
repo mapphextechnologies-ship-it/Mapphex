@@ -1543,7 +1543,6 @@
   };
 
   const setSalesReportStatus = (reportName, period, format) => {
-    const generatedAt = new Date();
     const report = reportName || "Orders";
     const selectedPeriod = period || "monthly";
     const selectedFormat = format || "pdf";
@@ -1553,18 +1552,23 @@
     const formatEl = document.querySelector("[data-sales-report-format]");
     const time = document.querySelector("[data-sales-report-time]");
     const output = $("#sales-report-output");
+    const generatedAtText = time?.dataset.salesGeneratedAt || new Date().toLocaleString();
     if (status) status.textContent = "Generated";
     if (type) type.textContent = report;
     if (formatEl) formatEl.textContent = formatLabel;
-    if (time) time.textContent = generatedAt.toLocaleString();
-    if (output) {
-      output.innerHTML = `<strong>${escapeHtml(report)} report ready</strong><span>${escapeHtml(selectedPeriod)} - ${escapeHtml(formatLabel)} - ${escapeHtml(generatedAt.toLocaleString())}</span>`;
+    if (time) {
+      time.dataset.salesGeneratedAt = generatedAtText;
+      time.textContent = generatedAtText;
     }
+    if (output) {
+      output.innerHTML = `<strong>${escapeHtml(report)} report ready</strong><span>${escapeHtml(selectedPeriod)} - ${escapeHtml(formatLabel)} - ${escapeHtml(generatedAtText)}</span>`;
+    }
+    return generatedAtText;
   };
 
-  const printSalesReport = (reportName, period) => {
+  const printSalesReport = (reportName, period, generatedAtText) => {
     const title = `${reportName || "Orders"} report`;
-    const generatedAt = new Date().toLocaleString();
+    const generatedAt = generatedAtText || document.querySelector("[data-sales-report-time]")?.dataset.salesGeneratedAt || new Date().toLocaleString();
     const reportWindow = window.open("", "_blank", "width=900,height=700");
     if (!reportWindow) {
       window.print();
@@ -1868,9 +1872,9 @@
           const reportName = form?.elements?.namedItem("report")?.value || "Orders";
           const period = form?.elements?.namedItem("period")?.value || "monthly";
           const format = salesExport.dataset.salesReportExport || form?.elements?.namedItem("format")?.value || "pdf";
-          setSalesReportStatus(reportName, period, format);
+          const generatedAt = setSalesReportStatus(reportName, period, format);
           if (format === "excel") exportPeriodReport(moduleId, reportName, period);
-          else printSalesReport(reportName, period);
+          else printSalesReport(reportName, period, generatedAt);
           appendActivity(moduleId, "report.exported", { label: reportName, message: `${period} ${reportName} exported as ${format}.` });
           refreshEnterpriseSections(moduleId);
         }
