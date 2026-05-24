@@ -6,7 +6,7 @@
     <title>Ledger | Finance Portal</title>
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/images/bytewave-icon-192.png" type="image/png" />
-    <link rel="stylesheet" href="finance-ledger.css?v=1" />
+    <link rel="stylesheet" href="finance-ledger.css?v=4" />
   </head>
   <body data-finance-page="ledger">
     <div class="finance-shell">
@@ -14,20 +14,33 @@
         <div class="sidebar-head"><div class="brand-mark">FI</div><div><p>Finance Portal</p><strong data-org-name>Business Finance</strong></div></div>
         <nav class="finance-nav" aria-label="Finance portal navigation">
           <p class="nav-group">Main</p><a class="nav-link" href="finance-workflow.html">Dashboard</a>
-          <p class="nav-group">Finance</p><a class="nav-link" href="finance-invoices.html">Invoices <span>3</span></a><a class="nav-link" href="finance-approvals.html">Approvals <span>4</span></a><a class="nav-link" href="finance-suppliers.html">Suppliers</a><a class="nav-link" href="finance-budgets.html">Budgets</a>
+          <p class="nav-group">Finance</p><a class="nav-link" href="finance-invoices.html">Invoices <span data-invoice-badge>0</span></a><a class="nav-link" href="finance-approvals.html">Approvals <span data-approval-badge>0</span></a><a class="nav-link" href="finance-suppliers.html">Suppliers</a><a class="nav-link" href="finance-budgets.html">Budgets</a>
           <p class="nav-group">People</p><a class="nav-link" href="finance-employees.html">Employees</a><a class="nav-link" href="finance-payroll.html">Payroll <span>!</span></a>
           <p class="nav-group">Accounting</p><a class="nav-link active" href="finance-ledger.html">Ledger</a><a class="nav-link" href="finance-reports.html">Reports</a>
-          <p class="nav-group">Tools</p><a class="nav-link" href="finance-export.html">Export</a><a class="nav-link" href="finance-settings.html">Settings</a>
+          <p class="nav-group">Tools</p><a class="nav-link" href="finance-settings.html">Settings</a>
         </nav>
       </aside>
       <div class="sidebar-backdrop" data-close-sidebar></div>
       <main class="finance-main">
         <header class="finance-topbar"><button class="menu-button" type="button" aria-label="Open menu" data-menu-button><span></span><span></span><span></span></button><div><p>Workspace Portal</p><h1>Ledger</h1></div><a class="topbar-link" href="organization-module.html?portal=finance">Back to portal</a></header>
-        <section class="hero-panel"><div><p class="eyebrow">Accounting</p><h2>Full accounting record</h2><p>All debit and credit entries in one organized place.</p></div><button class="primary-action" type="button">Add entry</button></section>
-        <section class="summary-grid"><article><span>Debit</span><strong>KES 0</strong><small>Money out</small></article><article><span>Credit</span><strong>KES 0</strong><small>Money in</small></article><article><span>Entries</span><strong>2</strong><small>Total rows</small></article><article><span>Status</span><strong>Ready</strong><small>Balanced</small></article></section>
-        <section class="content-card"><div class="content-head"><div><p class="eyebrow">Ledger</p><h2>Accounting entries</h2><p>Complete debit and credit movement.</p></div><div class="toolbar"><input type="search" placeholder="Search ledger" /><select><option>All</option><option>Debit</option><option>Credit</option></select></div></div><div class="table-wrap"><table><thead><tr><th>Entry</th><th>Status</th><th>Amount</th><th>Date</th><th>Action</th></tr></thead><tbody data-records-body></tbody></table></div></section>
+        <section class="hero-panel"><div><p class="eyebrow">Accounting</p><h2>Full accounting record</h2><p>All debit and credit entries in one organized place.</p></div><button class="primary-action" type="button" data-toggle-ledger-form>Add ledger entry</button></section>
+        <form class="ledger-form" data-ledger-form hidden>
+          <label><span>Entry name</span><input type="text" name="name" placeholder="Entry name" required /></label>
+          <label><span>Type</span><select name="type" required><option>Debit</option><option>Credit</option></select></label>
+          <label><span>Amount</span><input type="number" name="amount" placeholder="0" min="0" step="1" required /></label>
+          <label><span>Date</span><input type="date" name="date" required /></label>
+          <button class="primary-action" type="submit">Save entry</button>
+        </form>
+        <section class="summary-grid"><article><span>Debit</span><strong data-debit-total>KES 0</strong><small>Money out</small></article><article><span>Credit</span><strong data-credit-total>KES 0</strong><small>Money in</small></article><article><span>Entries</span><strong data-entry-count>0</strong><small>Total rows</small></article><article><span>Status</span><strong data-ledger-status>Ready</strong><small>Ledger position</small></article></section>
+        <section class="content-card">
+          <div class="content-head"><div><p class="eyebrow">Ledger</p><h2>Accounting entries</h2><p>Complete debit and credit movement.</p></div><div class="toolbar"><input type="search" placeholder="Search ledger" data-ledger-search /><select data-ledger-filter><option>All</option><option>Debit</option><option>Credit</option></select></div></div>
+          <div class="table-wrap"><table><thead><tr><th>Entry</th><th>Type</th><th>Amount</th><th>Date</th><th>Action</th></tr></thead><tbody data-records-body></tbody></table></div>
+        </section>
+        <footer class="finance-footer">Powered by © Mapphex Technology</footer>
       </main>
     </div>
-    <script src="finance-ledger.js?v=1"></script>
+    <script src="finance-db.js?v=3"></script>
+    <script src="finance-badges.js?v=2"></script>
+    <script src="finance-ledger.js?v=5"></script>
   </body>
 </html>

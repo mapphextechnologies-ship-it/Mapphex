@@ -6,7 +6,7 @@
     <title>Settings | Finance Portal</title>
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/images/bytewave-icon-192.png" type="image/png" />
-    <link rel="stylesheet" href="finance-settings.css?v=1" />
+    <link rel="stylesheet" href="finance-settings.css?v=3" />
   </head>
   <body data-finance-page="settings">
     <div class="finance-shell">
@@ -14,20 +14,110 @@
         <div class="sidebar-head"><div class="brand-mark">FI</div><div><p>Finance Portal</p><strong data-org-name>Business Finance</strong></div></div>
         <nav class="finance-nav" aria-label="Finance portal navigation">
           <p class="nav-group">Main</p><a class="nav-link" href="finance-workflow.html">Dashboard</a>
-          <p class="nav-group">Finance</p><a class="nav-link" href="finance-invoices.html">Invoices <span>3</span></a><a class="nav-link" href="finance-approvals.html">Approvals <span>4</span></a><a class="nav-link" href="finance-suppliers.html">Suppliers</a><a class="nav-link" href="finance-budgets.html">Budgets</a>
+          <p class="nav-group">Finance</p><a class="nav-link" href="finance-invoices.html">Invoices <span data-invoice-badge>0</span></a><a class="nav-link" href="finance-approvals.html">Approvals <span data-approval-badge>0</span></a><a class="nav-link" href="finance-suppliers.html">Suppliers</a><a class="nav-link" href="finance-budgets.html">Budgets</a>
           <p class="nav-group">People</p><a class="nav-link" href="finance-employees.html">Employees</a><a class="nav-link" href="finance-payroll.html">Payroll <span>!</span></a>
           <p class="nav-group">Accounting</p><a class="nav-link" href="finance-ledger.html">Ledger</a><a class="nav-link" href="finance-reports.html">Reports</a>
-          <p class="nav-group">Tools</p><a class="nav-link" href="finance-export.html">Export</a><a class="nav-link active" href="finance-settings.html">Settings</a>
+          <p class="nav-group">Tools</p><a class="nav-link active" href="finance-settings.html">Settings</a>
         </nav>
       </aside>
       <div class="sidebar-backdrop" data-close-sidebar></div>
       <main class="finance-main">
         <header class="finance-topbar"><button class="menu-button" type="button" aria-label="Open menu" data-menu-button><span></span><span></span><span></span></button><div><p>Workspace Portal</p><h1>Settings</h1></div><a class="topbar-link" href="organization-module.html?portal=finance">Back to portal</a></header>
-        <section class="hero-panel"><div><p class="eyebrow">Tools</p><h2>Finance settings</h2><p>Manage finance access, approvals, and basic portal controls.</p></div><button class="primary-action" type="button">Save settings</button></section>
-        <section class="summary-grid"><article><span>Users</span><strong>Active</strong><small>Finance access</small></article><article><span>Approvals</span><strong>Active</strong><small>Rules enabled</small></article><article><span>Exports</span><strong>Allowed</strong><small>PDF and Excel</small></article><article><span>Status</span><strong>Ready</strong><small>Configured</small></article></section>
-        <section class="content-card"><div class="content-head"><div><p class="eyebrow">Settings</p><h2>Finance controls</h2><p>Access and workflow settings for the finance portal.</p></div><div class="toolbar"><input type="search" placeholder="Search settings" /><select><option>All</option><option>Users</option><option>Rules</option></select></div></div><div class="table-wrap"><table><thead><tr><th>Setting</th><th>Status</th><th>Value</th><th>Date</th><th>Action</th></tr></thead><tbody data-records-body></tbody></table></div></section>
+        <section class="hero-panel">
+          <div><p class="eyebrow">Finance Settings</p><h2>Portal preferences</h2><p>Set how finance screens display records, approvals, payroll, and reports.</p></div>
+          <div class="settings-actions">
+            <button class="primary-action secondary-action" type="button" data-reset-settings>Reset</button>
+            <button class="primary-action" type="submit" form="finance-settings-form" data-save-settings>Save settings</button>
+          </div>
+        </section>
+        <section class="summary-grid">
+          <article><span>Theme</span><strong data-theme-summary>Dark</strong><small>Screen appearance</small></article>
+          <article><span>Currency</span><strong data-currency-summary>KES</strong><small>Money display</small></article>
+          <article><span>Approvals</span><strong data-approval-summary>Required</strong><small>Supplier and payroll controls</small></article>
+          <article><span>Reports</span><strong data-report-summary>Monthly</strong><small>Default report period</small></article>
+        </section>
+        <form class="settings-grid" id="finance-settings-form" data-finance-settings-form>
+          <section class="content-card">
+            <div class="content-head"><div><p class="eyebrow">Appearance</p><h2>Display mode</h2><p>Choose the finance portal theme for all finance screens.</p></div></div>
+            <div class="setting-list">
+              <label class="setting-row">
+                <span><strong>Theme</strong><small>Switch between dark and light mode.</small></span>
+                <select name="theme" data-theme-select>
+                  <option value="dark">Dark mode</option>
+                  <option value="light">Light mode</option>
+                </select>
+              </label>
+              <label class="setting-row">
+                <span><strong>Compact tables</strong><small>Show tighter rows for invoices, payroll, suppliers, and ledger.</small></span>
+                <input type="checkbox" name="compactTables" />
+              </label>
+            </div>
+          </section>
+          <section class="content-card">
+            <div class="content-head"><div><p class="eyebrow">Money</p><h2>Currency and payments</h2><p>Control default finance values used when adding records.</p></div></div>
+            <div class="setting-list">
+              <label class="setting-row">
+                <span><strong>Currency</strong><small>Used for reports, invoices, suppliers, ledger, and payroll.</small></span>
+                <select name="currency">
+                  <option value="KES">KES</option>
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                </select>
+              </label>
+              <label class="setting-row">
+                <span><strong>Default payment method</strong><small>Preselected payment option for employee and supplier payments.</small></span>
+                <select name="paymentMethod">
+                  <option value="M-Pesa">M-Pesa</option>
+                  <option value="Bank">Bank</option>
+                </select>
+              </label>
+            </div>
+          </section>
+          <section class="content-card">
+            <div class="content-head"><div><p class="eyebrow">Controls</p><h2>Approvals and payroll</h2><p>Set rules for finance review and payment processing.</p></div></div>
+            <div class="setting-list">
+              <label class="setting-row">
+                <span><strong>Require supplier approval</strong><small>Supplier payments must pass approval before being marked paid.</small></span>
+                <input type="checkbox" name="supplierApproval" />
+              </label>
+              <label class="setting-row">
+                <span><strong>Require payroll approval</strong><small>Employee payment details must be approved before payroll is queued.</small></span>
+                <input type="checkbox" name="payrollApproval" />
+              </label>
+              <label class="setting-row">
+                <span><strong>Notify HR after payroll payment</strong><small>HR receives updates when finance approves, rejects, or pays HR-sent records.</small></span>
+                <input type="checkbox" name="notifyHr" />
+              </label>
+            </div>
+          </section>
+          <section class="content-card">
+            <div class="content-head"><div><p class="eyebrow">Reports</p><h2>Finance reports</h2><p>Set the default period and export format for generated reports.</p></div></div>
+            <div class="setting-list">
+              <label class="setting-row">
+                <span><strong>Default report period</strong><small>Used when opening the finance reports page.</small></span>
+                <select name="reportPeriod">
+                  <option value="Today">Today</option>
+                  <option value="This week">This week</option>
+                  <option value="This month">This month</option>
+                  <option value="This quarter">This quarter</option>
+                </select>
+              </label>
+              <label class="setting-row">
+                <span><strong>Default export format</strong><small>Preferred download format for finance reports.</small></span>
+                <select name="exportFormat">
+                  <option value="Excel">Excel</option>
+                  <option value="PDF">PDF</option>
+                </select>
+              </label>
+            </div>
+          </section>
+        </form>
+        <p class="settings-save-note" data-settings-save-note role="status"></p>
+        <footer class="finance-footer">Powered by © Mapphex Technology</footer>
       </main>
     </div>
-    <script src="finance-settings.js?v=1"></script>
+    <script src="finance-db.js?v=3"></script>
+    <script src="finance-badges.js?v=2"></script>
+    <script src="finance-settings.js?v=3"></script>
   </body>
 </html>

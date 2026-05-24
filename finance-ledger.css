@@ -1,1 +1,57 @@
-@import url("finance-workflow.css?v=3");
+@import url("finance-workflow.css?v=9");
+
+.ledger-form {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.5fr) minmax(130px, 0.8fr) minmax(130px, 0.8fr) minmax(150px, 0.9fr) auto;
+  gap: 12px;
+  align-items: end;
+  margin: -8px 0 22px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.ledger-form[hidden] {
+  display: none;
+}
+
+.ledger-form label,
+.ledger-form span {
+  display: grid;
+  gap: 7px;
+}
+
+.ledger-form span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.ledger-form input,
+.ledger-form select {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0 12px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.ledger-form select option {
+  color: #102033;
+}
+
+@media (max-width: 920px) {
+  .ledger-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .ledger-form {
+    grid-template-columns: 1fr;
+  }
+}

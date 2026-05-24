@@ -1,1 +1,25 @@
-@import url("finance-workflow.css?v=4");
+@import url("finance-workflow.css?v=9");
+
+body[data-finance-page="payroll"] .payroll-actions {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+}
+
+body[data-finance-page="payroll"] .payroll-action,
+body[data-finance-page="payroll"] .row-action {
+  white-space: nowrap;
+}
+
+body[data-finance-page="payroll"] .payroll-action.clear {
+  border-color: rgba(251, 113, 133, 0.35);
+  color: #fb7185;
+  background: rgba(251, 113, 133, 0.1);
+}
+
+body[data-finance-page="payroll"] .danger-action {
+  border-color: rgba(251, 113, 133, 0.35);
+  color: #fb7185;
+  background: rgba(251, 113, 133, 0.1);
+}

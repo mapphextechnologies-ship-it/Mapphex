@@ -15,10 +15,10 @@ body.portal-sidebar-collapsed .portal-shell {
   position: sticky;
   top: 72px;
   height: calc(100vh - 72px);
-  border-right: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(0, 0, 0, 0.18);
-  backdrop-filter: blur(10px);
-  padding: 14px 12px;
+  border-right: 1px solid rgba(130, 190, 255, 0.16);
+  background: rgba(2, 8, 18, 0.78);
+  backdrop-filter: blur(18px);
+  padding: 22px;
   overflow: auto;
   overscroll-behavior: contain;
   transition: transform 180ms ease, box-shadow 180ms ease;
@@ -59,6 +59,7 @@ body.portal-sidebar-collapsed .sidebar-link::before {
 }
 
 .sidebar-title {
+  color: rgba(255, 255, 255, 0.94);
   font-weight: 800;
   letter-spacing: 0.2px;
 }
@@ -66,29 +67,30 @@ body.portal-sidebar-collapsed .sidebar-link::before {
 .sidebar-nav {
   display: grid;
   gap: 8px;
-  padding: 6px;
+  padding: 6px 0;
 }
 
 .sidebar-link {
   display: flex;
   align-items: center;
-  padding: 10px 12px;
-  border-radius: 14px;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: 10px;
   text-decoration: none;
-  color: rgba(255, 255, 255, 0.86);
-  border: 1px solid rgba(173, 122, 82, 0.16);
-  background: rgba(23, 16, 12, 0.42);
-  min-height: 42px;
+  color: rgba(255, 255, 255, 0.94);
+  border: 0;
+  background: rgba(255, 255, 255, 0.02);
+  min-height: 44px;
   touch-action: manipulation;
+  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.sidebar-link:hover {
-  background: rgba(55, 35, 24, 0.64);
-}
-
+.sidebar-link:hover,
 .sidebar-link.active {
-  border-color: rgba(211, 154, 103, 0.34);
-  background: rgba(92, 58, 37, 0.72);
+  color: #050914;
+  background: rgba(0, 119, 255, 0.16);
+  box-shadow: inset 3px 0 0 #5bd6ff;
+  transform: translateX(2px);
 }
 
 .sidebar-foot {

@@ -43,6 +43,40 @@ const pickItem = (items, name) => {
   return found && Object.prototype.hasOwnProperty.call(found, "Value") ? found.Value : null;
 };
 
+const updateFinancePayment = async (store, entry) => {
+  const index = (await store.get("enterprise_mpesa_checkout_index_v1")) || {};
+  const match = index[String(entry.checkoutRequestId || "")];
+  if (!match?.tenantId || !match?.paymentId) return;
+
+  const status = Number(entry.resultCode) === 0 ? "Paid" : "Failed";
+  const paidAt = status === "Paid" ? new Date().toISOString() : "";
+  const tenantPrefix = `tenant:${match.tenantId}:`;
+  const paymentKey = `${tenantPrefix}mapphex_finance_payment_transactions_v1`;
+  const payrollKey = `${tenantPrefix}mapphex_finance_payroll_requests_v1`;
+  const queueKey = `${tenantPrefix}mapphex_finance_payment_queue_v1`;
+  const payments = (await store.get(paymentKey)) || [];
+
+  if (Array.isArray(payments)) {
+    await store.set(paymentKey, payments.map((row) =>
+      row.id === match.paymentId
+        ? { ...row, status, paidAt, failedAt: status === "Failed" ? new Date().toISOString() : "", receipt: entry.receipt || "", callback: entry }
+        : row,
+    ));
+  }
+
+  for (const key of [payrollKey, queueKey]) {
+    const rows = (await store.get(key)) || [];
+    if (!Array.isArray(rows)) continue;
+    await store.set(key, rows.map((row) => {
+      const matches =
+        row.paymentId === match.paymentId ||
+        String(row.id || "") === String(match.recordId || "") ||
+        String(row.employeeId || "") === String(match.recordId || "");
+      return matches ? { ...row, status, paymentStatus: status, paidAt, receipt: entry.receipt || row.receipt || "" } : row;
+    }));
+  }
+};
+
 module.exports = async (req, res) => {
   if (req.method !== "POST") return sendJson(res, 405, { ok: false, error: "Method not allowed" });
 
@@ -75,6 +109,7 @@ module.exports = async (req, res) => {
     const arr = Array.isArray(current) ? current : [];
     arr.push(entry);
     await store.set(logKey, arr.slice(-800));
+    await updateFinancePayment(store, entry);
 
     const success = Number(entry.resultCode) === 0;
     const amount = Number(entry.amount || 0) || 0;

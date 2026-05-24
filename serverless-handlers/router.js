@@ -11,6 +11,7 @@ const routes = new Map([
   ["/api/auth/session", () => require("./auth/session")],
   ["/api/erp", () => require("./erp")],
   ["/api/files", () => require("./files")],
+  ["/api/finance/payments", () => require("./finance/payments")],
   ["/api/health", () => require("./health")],
   ["/api/kv", () => require("./kv")],
   ["/api/kv/batch", () => require("./kv/batch")],

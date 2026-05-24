@@ -1,1 +1,43 @@
-@import url("finance-workflow.css?v=3");
+@import url("finance-workflow.css?v=9");
+
+.approval-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: min(100%, 280px);
+}
+
+.approval-action {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  flex: 1 1 78px;
+  min-height: 40px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #9bdcff;
+  font-size: 0.78rem;
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.approval-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.approval-action.approve {
+  border-color: rgba(52, 211, 153, 0.45);
+  color: #34d399;
+}
+
+.approval-action.reject,
+.approval-action.clear {
+  border-color: rgba(251, 113, 133, 0.35);
+  color: #fb7185;
+}
+
+.danger-action {
+  border-color: rgba(251, 113, 133, 0.35);
+  color: #fb7185;
+}

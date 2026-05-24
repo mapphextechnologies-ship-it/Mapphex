@@ -6,7 +6,7 @@
     <title>Finance Portal | MAPPHEX</title>
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/images/bytewave-icon-192.png" type="image/png" />
-    <link rel="stylesheet" href="finance-workflow.css?v=3" />
+    <link rel="stylesheet" href="finance-workflow.css?v=9" />
   </head>
   <body data-finance-page="dashboard">
     <div class="finance-shell">
@@ -18,14 +18,13 @@
             <strong data-org-name>Business Finance</strong>
           </div>
         </div>
-
         <nav class="finance-nav" aria-label="Finance portal navigation">
           <p class="nav-group">Main</p>
           <a class="nav-link active" href="finance-workflow.html">Dashboard</a>
 
           <p class="nav-group">Finance</p>
-          <a class="nav-link" href="finance-invoices.html">Invoices <span>3</span></a>
-          <a class="nav-link" href="finance-approvals.html">Approvals <span>4</span></a>
+          <a class="nav-link" href="finance-invoices.html">Invoices <span data-invoice-badge>0</span></a>
+          <a class="nav-link" href="finance-approvals.html">Approvals <span data-approval-badge>0</span></a>
           <a class="nav-link" href="finance-suppliers.html">Suppliers</a>
           <a class="nav-link" href="finance-budgets.html">Budgets</a>
 
@@ -38,7 +37,7 @@
           <a class="nav-link" href="finance-reports.html">Reports</a>
 
           <p class="nav-group">Tools</p>
-          <a class="nav-link" href="finance-export.html">Export</a>
+
           <a class="nav-link" href="finance-settings.html">Settings</a>
         </nav>
       </aside>
@@ -81,7 +80,7 @@
           </article>
           <article>
             <span>Pending Items</span>
-            <strong data-pending-count>7</strong>
+            <strong data-pending-count>0</strong>
             <small>Invoices and approvals waiting</small>
           </article>
           <article>
@@ -128,7 +127,7 @@
             </a>
           </div>
 
-          <div class="table-wrap">
+          <div class="table-wrap" data-record-table>
             <table>
               <thead>
                 <tr>
@@ -143,9 +142,12 @@
             </table>
           </div>
         </section>
+        <footer class="finance-footer">Powered by © Mapphex Technology</footer>
       </main>
     </div>
 
-    <script src="finance-workflow.js?v=3"></script>
+    <script src="finance-db.js?v=3"></script>
+    <script src="finance-badges.js?v=2"></script>
+    <script src="finance-workflow.js?v=10"></script>
   </body>
 </html>

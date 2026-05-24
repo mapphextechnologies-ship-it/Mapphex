@@ -6,7 +6,7 @@
     <title>Reports | Finance Portal</title>
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/images/bytewave-icon-192.png" type="image/png" />
-    <link rel="stylesheet" href="finance-reports.css?v=1" />
+    <link rel="stylesheet" href="finance-reports.css?v=6" />
   </head>
   <body data-finance-page="reports">
     <div class="finance-shell">
@@ -14,20 +14,34 @@
         <div class="sidebar-head"><div class="brand-mark">FI</div><div><p>Finance Portal</p><strong data-org-name>Business Finance</strong></div></div>
         <nav class="finance-nav" aria-label="Finance portal navigation">
           <p class="nav-group">Main</p><a class="nav-link" href="finance-workflow.html">Dashboard</a>
-          <p class="nav-group">Finance</p><a class="nav-link" href="finance-invoices.html">Invoices <span>3</span></a><a class="nav-link" href="finance-approvals.html">Approvals <span>4</span></a><a class="nav-link" href="finance-suppliers.html">Suppliers</a><a class="nav-link" href="finance-budgets.html">Budgets</a>
+          <p class="nav-group">Finance</p><a class="nav-link" href="finance-invoices.html">Invoices <span data-invoice-badge>0</span></a><a class="nav-link" href="finance-approvals.html">Approvals <span data-approval-badge>0</span></a><a class="nav-link" href="finance-suppliers.html">Suppliers</a><a class="nav-link" href="finance-budgets.html">Budgets</a>
           <p class="nav-group">People</p><a class="nav-link" href="finance-employees.html">Employees</a><a class="nav-link" href="finance-payroll.html">Payroll <span>!</span></a>
           <p class="nav-group">Accounting</p><a class="nav-link" href="finance-ledger.html">Ledger</a><a class="nav-link active" href="finance-reports.html">Reports</a>
-          <p class="nav-group">Tools</p><a class="nav-link" href="finance-export.html">Export</a><a class="nav-link" href="finance-settings.html">Settings</a>
+          <p class="nav-group">Tools</p><a class="nav-link" href="finance-settings.html">Settings</a>
         </nav>
       </aside>
       <div class="sidebar-backdrop" data-close-sidebar></div>
       <main class="finance-main">
         <header class="finance-topbar"><button class="menu-button" type="button" aria-label="Open menu" data-menu-button><span></span><span></span><span></span></button><div><p>Workspace Portal</p><h1>Reports</h1></div><a class="topbar-link" href="organization-module.html?portal=finance">Back to portal</a></header>
-        <section class="hero-panel"><div><p class="eyebrow">Accounting</p><h2>Financial summaries</h2><p>Reports by period, department, or record type, ready to export.</p></div><button class="primary-action" type="button">Generate report</button></section>
-        <section class="summary-grid"><article><span>Reports</span><strong>2</strong><small>Ready</small></article><article><span>Monthly</span><strong>1</strong><small>This month</small></article><article><span>Department</span><strong>1</strong><small>Current</small></article><article><span>Exportable</span><strong>Yes</strong><small>PDF or Excel</small></article></section>
-        <section class="content-card"><div class="content-head"><div><p class="eyebrow">Reports</p><h2>Report list</h2><p>Financial summaries available for review.</p></div><div class="toolbar"><input type="search" placeholder="Search reports" /><select><option>All</option><option>Monthly</option><option>Department</option></select></div></div><div class="table-wrap"><table><thead><tr><th>Report</th><th>Status</th><th>Amount</th><th>Date</th><th>Action</th></tr></thead><tbody data-records-body></tbody></table></div></section>
+        <section class="hero-panel"><div><p class="eyebrow">Accounting</p><h2>Generate and export reports</h2><p>Create clean finance reports from ledger, payroll, approvals, invoices, and payment records.</p></div><button class="primary-action" type="button" data-generate-report>Generate report</button></section>
+        <section class="summary-grid"><article><span>Report status</span><strong data-report-status>Not generated</strong><small>Ready after generation</small></article><article><span>Report type</span><strong data-report-type>Finance</strong><small>Selected output</small></article><article><span>Export format</span><strong data-report-format>PDF</strong><small>PDF or Excel</small></article><article><span>Last generated</span><strong data-report-date>Never</strong><small>Current session</small></article></section>
+        <section class="content-card">
+          <div class="content-head"><div><p class="eyebrow">Reports</p><h2>Report generation</h2><p>Select what Finance should generate, then export the report.</p></div></div>
+          <form class="payroll-capture-form report-generator-form" data-report-form>
+            <label><span>Report</span><select name="reportType" required><option>Finance summary</option><option>Ledger report</option><option>Payroll report</option><option>Invoices report</option><option>Approvals report</option><option>Payments report</option><option>Suppliers report</option><option>Employee payment report</option></select></label>
+            <label><span>Period</span><select name="period" required><option>Today</option><option>This week</option><option>This month</option><option>This year</option><option>Custom period</option></select></label>
+            <label><span>Format</span><select name="format" required><option>PDF</option><option>Excel XLSX</option></select></label>
+            <button class="primary-action" type="submit">Generate</button>
+            <button class="primary-action secondary-action" type="button" data-print-report disabled>Print</button>
+            <button class="primary-action secondary-action" type="button" data-export-report disabled>Export</button>
+          </form>
+          <div class="report-preview" data-report-preview>No report generated yet.</div>
+        </section>
+        <footer class="finance-footer">Powered by © Mapphex Technology</footer>
       </main>
     </div>
-    <script src="finance-reports.js?v=1"></script>
+    <script src="finance-db.js?v=3"></script>
+    <script src="finance-badges.js?v=2"></script>
+    <script src="finance-reports.js?v=10"></script>
   </body>
 </html>

@@ -5,11 +5,7 @@ const views = {
     copy: "Totals, pending items, and recent activity at a glance.",
     action: "Add record",
     col: "Record",
-    rows: [
-      ["Money summary", "Ready", "KES 0", "Today"],
-      ["Recent activity", "Ready", "KES 0", "Today"],
-      ["Pending review", "Pending", "7 items", "Today"],
-    ],
+    rows: [],
   },
   invoices: {
     title: "Invoices",
@@ -17,11 +13,8 @@ const views = {
     copy: "Track invoices with approved, pending, and rejected status.",
     action: "Add invoice",
     col: "Invoice",
-    rows: [
-      ["Customer invoice", "Approved", "KES 0", "Today"],
-      ["Supplier bill", "Pending", "KES 0", "Today"],
-      ["Service invoice", "Rejected", "KES 0", "Today"],
-    ],
+    empty: "No invoices yet.",
+    rows: [],
   },
   approvals: {
     title: "Approvals",
@@ -29,11 +22,8 @@ const views = {
     copy: "Review expenses, contracts, and purchases before money is committed.",
     action: "Review approvals",
     col: "Request",
-    rows: [
-      ["Expense approval", "Pending", "KES 0", "Today"],
-      ["Purchase approval", "Pending", "KES 0", "Today"],
-      ["Contract approval", "Pending", "KES 0", "Today"],
-    ],
+    empty: "No approvals yet.",
+    rows: [],
   },
   suppliers: {
     title: "Suppliers",
@@ -41,10 +31,7 @@ const views = {
     copy: "All payments going to external companies and service providers.",
     action: "Add supplier",
     col: "Supplier",
-    rows: [
-      ["Main supplier", "Approved", "KES 0", "Today"],
-      ["Service provider", "Pending", "KES 0", "Today"],
-    ],
+    rows: [],
   },
   budgets: {
     title: "Budgets",
@@ -52,10 +39,7 @@ const views = {
     copy: "See how much is assigned and how much has been used.",
     action: "Add budget",
     col: "Budget",
-    rows: [
-      ["Operations budget", "Approved", "KES 0", "This month"],
-      ["Staff budget", "Pending", "KES 0", "This month"],
-    ],
+    rows: [],
   },
   employees: {
     title: "Employees",
@@ -63,10 +47,7 @@ const views = {
     copy: "View department, role, and contract type for each employee.",
     action: "Add employee",
     col: "Employee",
-    rows: [
-      ["Finance staff", "Approved", "Full-time", "Today"],
-      ["Casual staff", "Pending", "Contract", "Today"],
-    ],
+    rows: [],
   },
   payroll: {
     title: "Payroll",
@@ -74,10 +55,7 @@ const views = {
     copy: "See who gets paid, how much, and when.",
     action: "Run payroll",
     col: "Salary run",
-    rows: [
-      ["Monthly payroll", "Pending", "KES 0", "This month"],
-      ["Salary adjustment", "Pending", "KES 0", "This month"],
-    ],
+    rows: [],
   },
   ledger: {
     title: "Ledger",
@@ -85,10 +63,7 @@ const views = {
     copy: "All debit and credit entries in one organized place.",
     action: "Add entry",
     col: "Entry",
-    rows: [
-      ["Debit entry", "Approved", "KES 0", "Today"],
-      ["Credit entry", "Approved", "KES 0", "Today"],
-    ],
+    rows: [],
   },
   reports: {
     title: "Reports",
@@ -96,10 +71,7 @@ const views = {
     copy: "Reports by period, department, or record type, ready to export.",
     action: "Generate report",
     col: "Report",
-    rows: [
-      ["Monthly summary", "Ready", "KES 0", "This month"],
-      ["Department report", "Ready", "KES 0", "This month"],
-    ],
+    rows: [],
   },
   export: {
     title: "Export",
@@ -107,10 +79,7 @@ const views = {
     copy: "Download clean finance summaries for review or sharing.",
     action: "Export files",
     col: "Export",
-    rows: [
-      ["PDF report", "Ready", "PDF", "Today"],
-      ["Excel report", "Ready", "Excel", "Today"],
-    ],
+    rows: [],
   },
   settings: {
     title: "Settings",
@@ -118,15 +87,14 @@ const views = {
     copy: "Manage finance access, approvals, and basic portal controls.",
     action: "Save settings",
     col: "Setting",
-    rows: [
-      ["Finance users", "Ready", "Active", "Today"],
-      ["Approval rules", "Ready", "Active", "Today"],
-    ],
+    rows: [],
   },
 };
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
+const INVOICES_KEY = "mapphex_finance_invoices_v1";
+const APPROVALS_KEY = "mapphex_finance_approvals_v1";
 
 function money(value) {
   return new Intl.NumberFormat("en-KE", {
@@ -147,12 +115,35 @@ function readState() {
   }
 }
 
-function updateTotals(records) {
+const isPendingInvoice = (item) => {
+  const status = String(item?.status || "").toLowerCase();
+  const paymentStatus = String(item?.paymentStatus || "").toLowerCase();
+  return status === "pending" || paymentStatus === "unpaid" || paymentStatus === "partly paid";
+};
+
+const isPendingApproval = (item) => String(item?.status || "").toLowerCase() === "pending";
+
+async function readFinanceRows(key) {
+  const rows = window.MapphexFinanceDB ? await window.MapphexFinanceDB.read(key, []) : [];
+  return Array.isArray(rows) ? rows : [];
+}
+
+async function updatePendingItems() {
+  const [invoices, approvals] = await Promise.all([
+    readFinanceRows(INVOICES_KEY),
+    readFinanceRows(APPROVALS_KEY),
+  ]);
+  const pendingCount = invoices.filter(isPendingInvoice).length + approvals.filter(isPendingApproval).length;
+  $("[data-pending-count]").textContent = String(pendingCount);
+}
+
+async function updateTotals(records) {
   const moneyIn = records.filter((item) => item.type === "in").reduce((sum, item) => sum + Number(item.amount || 0), 0);
   const moneyOut = records.filter((item) => item.type === "out").reduce((sum, item) => sum + Number(item.amount || 0), 0);
   $("[data-money-in]").textContent = money(moneyIn);
   $("[data-money-out]").textContent = money(moneyOut);
   $("[data-activity-count]").textContent = String(records.length);
+  await updatePendingItems();
 }
 
 function statusClass(status) {
@@ -162,6 +153,12 @@ function statusClass(status) {
 function renderRows(view) {
   const body = $("[data-records-body]");
   body.innerHTML = "";
+  if (!view.rows.length) {
+    const row = document.createElement("tr");
+    row.innerHTML = `<td colspan="5">${view.empty || "No records yet."}</td>`;
+    body.appendChild(row);
+    return;
+  }
   view.rows.forEach(([name, status, amount, date]) => {
     const row = document.createElement("tr");
     row.innerHTML = `
@@ -177,24 +174,28 @@ function renderRows(view) {
 
 function setView(key) {
   const view = views[key] || views.dashboard;
+  const isDashboard = (views[key] ? key : "dashboard") === "dashboard";
+  const mainAction = $("[data-main-action]");
   $("[data-page-title]").textContent = view.title;
   $("[data-hero-title]").textContent = view.hero;
   $("[data-hero-copy]").textContent = view.copy;
-  $("[data-main-action]").textContent = view.action;
+  mainAction.textContent = view.action;
+  mainAction.hidden = isDashboard;
   $("[data-section-kicker]").textContent = view.title;
   $("[data-section-title]").textContent = view.hero;
   $("[data-section-copy]").textContent = view.copy;
   $("[data-col-one]").textContent = view.col;
+  document.querySelector("[data-record-table]")?.toggleAttribute("hidden", isDashboard);
   $$("[data-view]").forEach((button) => button.classList.toggle("active", button.dataset.view === key));
   renderRows(view);
   history.replaceState(null, "", `#${key}`);
   document.body.classList.remove("sidebar-open");
 }
 
-function init() {
+async function init() {
   const state = readState();
   if (state.org) $("[data-org-name]").textContent = state.org;
-  updateTotals(state.records);
+  await updateTotals(state.records);
 
   $$("[data-view]").forEach((button) => {
     button.addEventListener("click", () => setView(button.dataset.view));

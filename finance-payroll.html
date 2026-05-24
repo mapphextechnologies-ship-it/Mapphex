@@ -6,7 +6,7 @@
     <title>Payroll | Finance Portal</title>
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/images/bytewave-icon-192.png" type="image/png" />
-    <link rel="stylesheet" href="finance-payroll.css?v=2" />
+    <link rel="stylesheet" href="finance-payroll.css?v=4" />
   </head>
   <body data-finance-page="payroll">
     <div class="finance-shell">
@@ -14,37 +14,30 @@
         <div class="sidebar-head"><div class="brand-mark">FI</div><div><p>Finance Portal</p><strong data-org-name>Business Finance</strong></div></div>
         <nav class="finance-nav" aria-label="Finance portal navigation">
           <p class="nav-group">Main</p><a class="nav-link" href="finance-workflow.html">Dashboard</a>
-          <p class="nav-group">Finance</p><a class="nav-link" href="finance-invoices.html">Invoices <span>3</span></a><a class="nav-link" href="finance-approvals.html">Approvals <span>4</span></a><a class="nav-link" href="finance-suppliers.html">Suppliers</a><a class="nav-link" href="finance-budgets.html">Budgets</a>
+          <p class="nav-group">Finance</p><a class="nav-link" href="finance-invoices.html">Invoices <span data-invoice-badge>0</span></a><a class="nav-link" href="finance-approvals.html">Approvals <span data-approval-badge>0</span></a><a class="nav-link" href="finance-suppliers.html">Suppliers</a><a class="nav-link" href="finance-budgets.html">Budgets</a>
           <p class="nav-group">People</p><a class="nav-link" href="finance-employees.html">Employees</a><a class="nav-link active" href="finance-payroll.html">Payroll <span>!</span></a>
           <p class="nav-group">Accounting</p><a class="nav-link" href="finance-ledger.html">Ledger</a><a class="nav-link" href="finance-reports.html">Reports</a>
-          <p class="nav-group">Tools</p><a class="nav-link" href="finance-export.html">Export</a><a class="nav-link" href="finance-settings.html">Settings</a>
+          <p class="nav-group">Tools</p><a class="nav-link" href="finance-settings.html">Settings</a>
         </nav>
       </aside>
       <div class="sidebar-backdrop" data-close-sidebar></div>
       <main class="finance-main">
         <header class="finance-topbar"><button class="menu-button" type="button" aria-label="Open menu" data-menu-button><span></span><span></span><span></span></button><div><p>Workspace Portal</p><h1>Payroll</h1></div><a class="topbar-link" href="organization-module.html?portal=finance">Back to portal</a></header>
-        <section class="hero-panel"><div><p class="eyebrow">People</p><h2>HR payroll approvals</h2><p>Review worker payment details sent by HR before Finance approves or rejects salary payment.</p></div><button class="primary-action" type="button" data-seed-payroll>Add HR sample</button></section>
-        <section class="summary-grid"><article><span>Workers sent by HR</span><strong data-total-workers>0</strong><small>Ready for finance review</small></article><article><span>Pending approval</span><strong data-pending-workers>0</strong><small>Needs action</small></article><article><span>Approved payment</span><strong data-approved-workers>0</strong><small>Can be paid</small></article><article><span>Total salary</span><strong data-total-salary>KES 0</strong><small>Pending and approved</small></article></section>
+        <section class="hero-panel"><div><p class="eyebrow">People</p><h2>Paid and unpaid payrolls</h2><p>See which worker salaries have been paid and which payrolls are still unpaid.</p></div></section>
+        <section class="summary-grid"><article><span>Workers</span><strong data-total-workers>0</strong><small>Payroll records</small></article><article><span>Unpaid payrolls</span><strong data-unpaid-workers>0</strong><small>Waiting for payment</small></article><article><span>Paid payroll</span><strong data-paid-workers>0</strong><small>Payment completed</small></article><article><span>Total unpaid</span><strong data-total-unpaid>KES 0</strong><small>Still to pay</small></article></section>
         <section class="content-card">
           <div class="content-head">
             <div>
               <p class="eyebrow">Payroll</p>
-              <h2>Worker payment requests</h2>
-              <p>Finance can approve or reject each salary payment request after checking the details sent by HR.</p>
+              <h2>Payroll list</h2>
+              <p>Finance can mark unpaid payrolls as paid after payment is completed through M-Pesa or bank processing.</p>
             </div>
             <div class="toolbar">
               <input type="search" placeholder="Search name, ID, role" data-payroll-search />
-              <select data-payroll-filter aria-label="Filter payroll status"><option>All</option><option>Pending</option><option>Approved</option><option>Rejected</option></select>
+              <select data-payroll-filter aria-label="Filter payroll status"><option>All</option><option>Unpaid</option><option>Paid</option></select>
+              <button class="row-action danger-action" type="button" data-clear-all-payroll>Clear all</button>
             </div>
           </div>
-
-          <form class="payroll-capture-form" data-payroll-form>
-            <label><span>Worker name</span><input name="name" required placeholder="Full worker name" /></label>
-            <label><span>ID / Passport number</span><input name="documentId" required placeholder="ID or passport" /></label>
-            <label><span>Role</span><select name="role" required><option value="">Select role</option><option>HR</option><option>Sales</option><option>Finance</option><option>Inventory</option><option>Procurement</option><option>Cashier</option><option>Employee</option></select></label>
-            <label><span>Salary to pay</span><input name="salary" type="number" min="0" step="1" required placeholder="Amount in KES" /></label>
-            <button class="primary-action" type="submit">Add worker payment</button>
-          </form>
 
           <div class="table-wrap">
             <table>
@@ -53,8 +46,12 @@
             </table>
           </div>
         </section>
+        <footer class="finance-footer">Powered by © Mapphex Technology</footer>
       </main>
     </div>
-    <script src="finance-payroll.js?v=2"></script>
+    <script src="finance-db.js?v=3"></script>
+    <script src="finance-badges.js?v=2"></script>
+    <script src="finance-payments.js?v=1"></script>
+    <script src="finance-payroll.js?v=10"></script>
   </body>
 </html>

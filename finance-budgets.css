@@ -1,1 +1,41 @@
-@import url("finance-workflow.css?v=3");
+@import url("finance-workflow.css?v=9");
+
+.budget-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(72px, 1fr));
+  gap: 8px;
+  width: min(100%, 280px);
+}
+
+.budget-action {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  min-height: 40px;
+  padding: 8px;
+  color: #9bdcff;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 0.78rem;
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.budget-action.add {
+  border-color: rgba(91, 214, 255, 0.4);
+}
+
+.budget-action.approve {
+  border-color: rgba(52, 211, 153, 0.45);
+  color: #34d399;
+}
+
+.budget-action.clear {
+  border-color: rgba(251, 113, 133, 0.35);
+  color: #fb7185;
+}
+
+@media (max-width: 680px) {
+  .budget-actions {
+    width: 100%;
+  }
+}

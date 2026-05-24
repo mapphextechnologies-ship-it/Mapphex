@@ -1,1 +1,127 @@
-@import url("finance-workflow.css?v=3");
+@import url("finance-workflow.css?v=9");
+
+.hero-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(140px, 1fr));
+  gap: 10px;
+  align-items: center;
+  min-width: min(100%, 320px);
+}
+
+.hero-actions .primary-action {
+  width: 100%;
+  white-space: nowrap;
+}
+
+.employee-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  align-items: end;
+  margin: -8px 0 22px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.employee-form .primary-action {
+  grid-column: 1 / -1;
+  justify-self: end;
+  width: auto;
+  min-width: 0;
+  min-height: 44px;
+  padding-inline: 22px;
+}
+
+.employee-form[hidden] {
+  display: none;
+}
+
+.employee-form label,
+.employee-form span {
+  display: grid;
+  gap: 7px;
+}
+
+.employee-form span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.employee-form input,
+.employee-form select {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0 12px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.employee-form select option {
+  color: #102033;
+}
+
+.payroll-action.clear,
+.danger-action {
+  border-color: rgba(251, 113, 133, 0.35);
+  color: #fb7185;
+  background: rgba(251, 113, 133, 0.1);
+}
+
+.payroll-action.clear:hover,
+.payroll-action.clear.is-clicked,
+.danger-action:hover,
+.danger-action.is-clicked {
+  color: #360812;
+  background: #fb7185;
+  border-color: #fda4af;
+  box-shadow: 0 10px 22px rgba(251, 113, 133, 0.24);
+  transform: translateY(-2px) scale(1.03);
+}
+
+body[data-finance-page="employees"] .payroll-actions {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  min-width: max-content;
+}
+
+body[data-finance-page="employees"] .payroll-actions .status {
+  margin: 0;
+  white-space: nowrap;
+}
+
+body[data-finance-page="employees"] .payroll-action {
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+body[data-finance-page="employees"] td:last-child {
+  white-space: nowrap;
+}
+
+@media (max-width: 680px) {
+  .employee-form {
+    grid-template-columns: 1fr;
+  }
+
+  .employee-form .primary-action {
+    justify-self: stretch;
+    width: 100%;
+  }
+
+  .hero-actions,
+  .hero-actions .primary-action {
+    width: 100%;
+  }
+
+  .hero-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

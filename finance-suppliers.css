@@ -1,1 +1,165 @@
-@import url("finance-workflow.css?v=3");
+@import url("finance-workflow.css?v=9");
+
+.supplier-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(72px, 1fr));
+  gap: 8px;
+  min-width: 0;
+  width: min(100%, 280px);
+}
+
+.supplier-form {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.4fr) minmax(140px, 0.8fr) minmax(150px, 0.8fr) auto;
+  gap: 12px;
+  align-items: end;
+  margin: -8px 0 22px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.supplier-form[hidden] {
+  display: none;
+}
+
+.supplier-form label,
+.supplier-form span {
+  display: grid;
+  gap: 7px;
+}
+
+.supplier-form span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.supplier-form input {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0 12px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.supplier-action {
+  appearance: none;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px;
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 900;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+}
+
+.supplier-action:hover {
+  transform: translateY(-1px);
+}
+
+.supplier-action:active {
+  transform: translateY(0);
+}
+
+.supplier-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+  transform: none;
+}
+
+.supplier-action.approve {
+  border-color: rgba(52, 211, 153, 0.45);
+  background: rgba(52, 211, 153, 0.24);
+  color: #34d399;
+}
+
+.supplier-action.reject {
+  border-color: rgba(251, 113, 133, 0.45);
+  background: rgba(251, 113, 133, 0.16);
+  color: #fb7185;
+}
+
+.supplier-action.clear {
+  border-color: rgba(148, 163, 184, 0.4);
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--muted);
+}
+
+.toolbar-clear {
+  width: auto;
+  min-width: 96px;
+}
+
+.supplier-actions .row-action {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.danger-action {
+  border-color: rgba(251, 113, 133, 0.35);
+  color: #fb7185;
+}
+
+@media (max-width: 680px) {
+  .supplier-form {
+    grid-template-columns: 1fr;
+  }
+
+  body[data-finance-page="suppliers"] table {
+    min-width: 0;
+  }
+
+  body[data-finance-page="suppliers"] thead {
+    display: none;
+  }
+
+  body[data-finance-page="suppliers"] tr {
+    display: grid;
+    gap: 10px;
+    padding: 14px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  body[data-finance-page="suppliers"] td {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    align-items: center;
+    padding: 0;
+    border-bottom: 0;
+  }
+
+  body[data-finance-page="suppliers"] td::before {
+    content: attr(data-label);
+    color: var(--muted);
+    font-size: 0.76rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  body[data-finance-page="suppliers"] td[data-label="Action"] {
+    display: grid;
+    gap: 8px;
+  }
+
+  body[data-finance-page="suppliers"] td[data-label="Action"]::before {
+    margin-bottom: 2px;
+  }
+
+  .supplier-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+  }
+}

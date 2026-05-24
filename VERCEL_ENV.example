@@ -22,6 +22,9 @@ MPESA_CONSUMER_SECRET=
 MPESA_PASSKEY=
 MPESA_SHORTCODE=
 MPESA_CALLBACK_URL=
+MPESA_CALLBACK_TOKEN=
+BANK_API_URL=
+BANK_API_TOKEN=
 
 # Firebase is not required by the current app runtime.
 # If you later add Firebase Auth, keep credentials in Vercel only:

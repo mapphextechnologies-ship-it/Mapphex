@@ -630,6 +630,7 @@
             tenantId: data.tenantId,
             token: sessionData?.token || `local-${Date.now()}-${Math.random().toString(16).slice(2)}`,
             organizationId: data.organizationId,
+            organizationName: data.organization?.name || body.name,
             localMode: data.localMode === true || !sessionData?.token,
             expiresAt: sessionData?.session?.exp ? new Date(sessionData.session.exp).toISOString() : new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
           },

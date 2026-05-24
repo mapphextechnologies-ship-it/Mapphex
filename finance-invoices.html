@@ -6,7 +6,7 @@
     <title>Invoices | Finance Portal</title>
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/images/bytewave-icon-192.png" type="image/png" />
-    <link rel="stylesheet" href="finance-invoices.css?v=1" />
+    <link rel="stylesheet" href="finance-invoices.css?v=7" />
   </head>
   <body data-finance-page="invoices">
     <div class="finance-shell">
@@ -14,20 +14,33 @@
         <div class="sidebar-head"><div class="brand-mark">FI</div><div><p>Finance Portal</p><strong data-org-name>Business Finance</strong></div></div>
         <nav class="finance-nav" aria-label="Finance portal navigation">
           <p class="nav-group">Main</p><a class="nav-link" href="finance-workflow.html">Dashboard</a>
-          <p class="nav-group">Finance</p><a class="nav-link active" href="finance-invoices.html">Invoices <span>3</span></a><a class="nav-link" href="finance-approvals.html">Approvals <span>4</span></a><a class="nav-link" href="finance-suppliers.html">Suppliers</a><a class="nav-link" href="finance-budgets.html">Budgets</a>
+          <p class="nav-group">Finance</p><a class="nav-link active" href="finance-invoices.html">Invoices <span data-invoice-badge>0</span></a><a class="nav-link" href="finance-approvals.html">Approvals <span data-approval-badge>0</span></a><a class="nav-link" href="finance-suppliers.html">Suppliers</a><a class="nav-link" href="finance-budgets.html">Budgets</a>
           <p class="nav-group">People</p><a class="nav-link" href="finance-employees.html">Employees</a><a class="nav-link" href="finance-payroll.html">Payroll <span>!</span></a>
           <p class="nav-group">Accounting</p><a class="nav-link" href="finance-ledger.html">Ledger</a><a class="nav-link" href="finance-reports.html">Reports</a>
-          <p class="nav-group">Tools</p><a class="nav-link" href="finance-export.html">Export</a><a class="nav-link" href="finance-settings.html">Settings</a>
+          <p class="nav-group">Tools</p><a class="nav-link" href="finance-settings.html">Settings</a>
         </nav>
       </aside>
       <div class="sidebar-backdrop" data-close-sidebar></div>
       <main class="finance-main">
         <header class="finance-topbar"><button class="menu-button" type="button" aria-label="Open menu" data-menu-button><span></span><span></span><span></span></button><div><p>Workspace Portal</p><h1>Invoices</h1></div><a class="topbar-link" href="organization-module.html?portal=finance">Back to portal</a></header>
-        <section class="hero-panel"><div><p class="eyebrow">Finance</p><h2>All bills received and sent</h2><p>Track invoices with approved, pending, and rejected status.</p></div><button class="primary-action" type="button">Add invoice</button></section>
-        <section class="summary-grid"><article><span>Total invoices</span><strong>3</strong><small>Current records</small></article><article><span>Pending</span><strong>1</strong><small>Needs follow-up</small></article><article><span>Approved</span><strong>1</strong><small>Ready for records</small></article><article><span>Rejected</span><strong>1</strong><small>Needs correction</small></article></section>
-        <section class="content-card"><div class="content-head"><div><p class="eyebrow">Invoices</p><h2>Invoice list</h2><p>All bills received and sent by this organization.</p></div><div class="toolbar"><input type="search" placeholder="Search invoices" /><select><option>All</option><option>Pending</option><option>Approved</option><option>Rejected</option></select></div></div><div class="table-wrap"><table><thead><tr><th>Invoice</th><th>Status</th><th>Amount</th><th>Date</th><th>Action</th></tr></thead><tbody data-records-body></tbody></table></div></section>
+        <section class="summary-grid"><article><span>Total invoices</span><strong data-total-invoices>0</strong><small>Current records</small></article><article><span>Pending</span><strong data-pending-invoices>0</strong><small>Needs follow-up</small></article><article><span>Approved</span><strong data-approved-invoices>0</strong><small>Ready for records</small></article><article><span>Rejected</span><strong data-rejected-invoices>0</strong><small>Needs correction</small></article></section>
+        <section class="hero-panel"><div><p class="eyebrow">Finance</p><h2>All bills received and sent</h2><p>Track invoices with approved, pending, and rejected status.</p></div><button class="primary-action" type="button" data-toggle-invoice-form>Add invoice</button></section>
+        <form class="invoice-form" data-invoice-form hidden>
+          <label><span>Invoice number</span><input type="text" name="invoiceNumber" placeholder="Enter invoice number" required /></label>
+          <label><span>Invoice name</span><input type="text" name="name" placeholder="Enter invoice name" required /></label>
+          <label><span>Amount</span><input type="number" name="amount" placeholder="0" min="0" step="1" required /></label>
+          <label><span>Status</span><select name="status" required><option>Pending</option><option>Approved</option><option>Rejected</option></select></label>
+          <label><span>Invoice date</span><input type="date" name="invoiceDate" required /></label>
+          <label><span>Due date</span><input type="date" name="dueDate" required /></label>
+          <label><span>Payment status</span><select name="paymentStatus" required><option>Unpaid</option><option>Partly paid</option><option>Paid</option></select></label>
+          <button class="primary-action" type="submit">Save invoice</button>
+        </form>
+        <section class="content-card"><div class="content-head"><div><p class="eyebrow">Invoices</p><h2>Invoice list</h2><p>All bills received and sent by this organization.</p></div><div class="toolbar"><input type="search" placeholder="Search invoices" /><select><option>All</option><option>Pending</option><option>Approved</option><option>Rejected</option></select><button class="row-action danger-action" type="button" data-clear-all-invoices>Clear all</button></div></div><div class="table-wrap"><table><thead><tr><th>Invoice number</th><th>Invoice</th><th>Status</th><th>Payment status</th><th>Amount</th><th>Invoice date</th><th>Due date</th><th>Action</th></tr></thead><tbody data-records-body></tbody></table></div><div class="invoice-detail" data-invoice-detail hidden></div></section>
+        <footer class="finance-footer">Powered by © Mapphex Technology</footer>
       </main>
     </div>
-    <script src="finance-invoices.js?v=1"></script>
+    <script src="finance-db.js?v=3"></script>
+    <script src="finance-badges.js?v=2"></script>
+    <script src="finance-invoices.js?v=9"></script>
   </body>
 </html>

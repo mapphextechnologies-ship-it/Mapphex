@@ -6,7 +6,7 @@
     <title>Employees | Finance Portal</title>
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/images/bytewave-icon-192.png" type="image/png" />
-    <link rel="stylesheet" href="finance-employees.css?v=1" />
+    <link rel="stylesheet" href="finance-employees.css?v=10" />
   </head>
   <body data-finance-page="employees">
     <div class="finance-shell">
@@ -14,20 +14,40 @@
         <div class="sidebar-head"><div class="brand-mark">FI</div><div><p>Finance Portal</p><strong data-org-name>Business Finance</strong></div></div>
         <nav class="finance-nav" aria-label="Finance portal navigation">
           <p class="nav-group">Main</p><a class="nav-link" href="finance-workflow.html">Dashboard</a>
-          <p class="nav-group">Finance</p><a class="nav-link" href="finance-invoices.html">Invoices <span>3</span></a><a class="nav-link" href="finance-approvals.html">Approvals <span>4</span></a><a class="nav-link" href="finance-suppliers.html">Suppliers</a><a class="nav-link" href="finance-budgets.html">Budgets</a>
+          <p class="nav-group">Finance</p><a class="nav-link" href="finance-invoices.html">Invoices <span data-invoice-badge>0</span></a><a class="nav-link" href="finance-approvals.html">Approvals <span data-approval-badge>0</span></a><a class="nav-link" href="finance-suppliers.html">Suppliers</a><a class="nav-link" href="finance-budgets.html">Budgets</a>
           <p class="nav-group">People</p><a class="nav-link active" href="finance-employees.html">Employees</a><a class="nav-link" href="finance-payroll.html">Payroll <span>!</span></a>
           <p class="nav-group">Accounting</p><a class="nav-link" href="finance-ledger.html">Ledger</a><a class="nav-link" href="finance-reports.html">Reports</a>
-          <p class="nav-group">Tools</p><a class="nav-link" href="finance-export.html">Export</a><a class="nav-link" href="finance-settings.html">Settings</a>
+          <p class="nav-group">Tools</p><a class="nav-link" href="finance-settings.html">Settings</a>
         </nav>
       </aside>
       <div class="sidebar-backdrop" data-close-sidebar></div>
       <main class="finance-main">
         <header class="finance-topbar"><button class="menu-button" type="button" aria-label="Open menu" data-menu-button><span></span><span></span><span></span></button><div><p>Workspace Portal</p><h1>Employees</h1></div><a class="topbar-link" href="organization-module.html?portal=finance">Back to portal</a></header>
-        <section class="hero-panel"><div><p class="eyebrow">People</p><h2>Staff list</h2><p>View department, role, and contract type for each employee.</p></div><button class="primary-action" type="button">Add employee</button></section>
-        <section class="summary-grid"><article><span>Employees</span><strong>2</strong><small>Finance visible</small></article><article><span>Full-time</span><strong>1</strong><small>Active</small></article><article><span>Contract</span><strong>1</strong><small>Active</small></article><article><span>Pending</span><strong>1</strong><small>Needs review</small></article></section>
-        <section class="content-card"><div class="content-head"><div><p class="eyebrow">Employees</p><h2>Employee list</h2><p>Staff details connected to finance records.</p></div><div class="toolbar"><input type="search" placeholder="Search employees" /><select><option>All</option><option>Full-time</option><option>Contract</option></select></div></div><div class="table-wrap"><table><thead><tr><th>Employee</th><th>Status</th><th>Role</th><th>Date</th><th>Action</th></tr></thead><tbody data-records-body></tbody></table></div></section>
+        <section class="hero-panel"><div><p class="eyebrow">People</p><h2>Employee payment details</h2><p>Review employee details from HR, or add employee payment details directly when Finance is working alone.</p></div><div class="hero-actions"><button class="primary-action" type="button" data-toggle-employee-form>Add employee</button></div></section>
+        <form class="employee-form" data-employee-form hidden>
+          <label><span>Employee name</span><input type="text" name="name" placeholder="Employee name" required /></label>
+          <label><span>ID / Passport</span><input type="text" name="documentId" placeholder="ID or passport number" required /></label>
+          <label><span>Role</span><input type="text" name="role" placeholder="Role" required /></label>
+          <label><span>Salary</span><input type="number" name="salary" placeholder="0" min="0" step="1" required /></label>
+          <label><span>Payment</span><select name="paymentMethod" required><option>M-Pesa</option><option>Bank</option></select></label>
+          <label><span>M-Pesa phone</span><input type="tel" name="phoneNumber" placeholder="0712345678" /></label>
+          <label><span>Bank account</span><input type="text" name="bankAccount" placeholder="Bank account or reference" /></label>
+          <label><span>Date</span><input type="date" name="date" required /></label>
+          <button class="primary-action" type="submit">Save employee</button>
+        </form>
+        <section class="summary-grid"><article><span>Employee details</span><strong data-total-employees>0</strong><small>HR or Finance entries</small></article><article><span>Pending approval</span><strong data-pending-employees>0</strong><small>Needs finance action</small></article><article><span>Pending payment</span><strong data-queued-payments>0</strong><small>Approved, not yet paid</small></article><article><span>Rejected</span><strong data-rejected-employees>0</strong><small>Returned or declined</small></article></section>
+        <section class="content-card">
+          <div class="content-head">
+            <div><p class="eyebrow">Employees</p><h2>Payment review</h2><p>Approve details to automatically queue payment for M-Pesa or bank processing. HR receives a notification when the record came from HR.</p></div>
+            <div class="toolbar"><input type="search" placeholder="Search name, ID, role" data-employee-search /><select data-employee-filter><option>All</option><option>Pending</option><option>Approved</option><option>Rejected</option></select><button class="row-action danger-action" type="button" data-clear-all-employees>Clear all</button></div>
+          </div>
+          <div class="table-wrap"><table><thead><tr><th>Employee name</th><th>ID / Passport number</th><th>Role</th><th>Date</th><th>Action</th></tr></thead><tbody data-records-body></tbody></table></div>
+        </section>
+        <footer class="finance-footer">Powered by © Mapphex Technology</footer>
       </main>
     </div>
-    <script src="finance-employees.js?v=1"></script>
+    <script src="finance-db.js?v=3"></script>
+    <script src="finance-badges.js?v=2"></script>
+    <script src="finance-employees.js?v=11"></script>
   </body>
 </html>

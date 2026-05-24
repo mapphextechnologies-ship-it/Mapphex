@@ -177,6 +177,7 @@
             tenantId: data.session.tenantId,
             token: data.token,
             organizationId: data.organization?.organizationId,
+            organizationName: data.organization?.name || body.organizationName,
             localMode: data.localMode === true,
             expiresAt: new Date(data.session.exp).toISOString(),
           },
