@@ -10,6 +10,9 @@
   const DATA_KEY = "enterprise_erp_v1";
   const ORGS_KEY = "platform_organizations_v1";
   const SETTINGS_KEY = "enterprise_org_settings_v1";
+  const USERS_KEY = "enterprise_users_v1";
+  const NOTIFICATIONS_KEY = "enterprise_notifications_v1";
+  const AUDIT_KEY = "enterprise_audit_v1";
   const UI_BRANCHES_OPEN_KEY = "enterprise_ui_branches_open_v1";
   const UI_REPORTS_OPEN_KEY = "enterprise_ui_reports_open_v1";
   const API_ENABLED_KEY = "enterprise_api_enabled_v1";
@@ -783,6 +786,28 @@
     const branchReportDocBtn = $("#branch-report-doc-btn");
     const branchReportPdfBtn = $("#branch-report-pdf-btn");
 
+    const directorStaffTbody = $("#director-staff-tbody");
+    const directorSalesTbody = $("#director-sales-tbody");
+    const directorSalesBranchFilter = $("#director-sales-branch-filter");
+    const directorSalesTypeFilter = $("#director-sales-type-filter");
+    const directorSalesChannelFilter = $("#director-sales-channel-filter");
+    const directorSalesExportBtn = $("#director-sales-export-btn");
+    const directorCustomersTbody = $("#director-customers-tbody");
+    const directorCustomersExportBtn = $("#director-customers-export-btn");
+    const directorTaskBranch = $("#director-task-branch");
+    const directorTaskTitle = $("#director-task-title");
+    const directorTaskOwner = $("#director-task-owner");
+    const directorTaskDue = $("#director-task-due");
+    const directorTaskSaveBtn = $("#director-task-save-btn");
+    const directorTasksTbody = $("#director-tasks-tbody");
+    const directorAnnouncementBranch = $("#director-announcement-branch");
+    const directorAnnouncementMessage = $("#director-announcement-message");
+    const directorAnnouncementBtn = $("#director-announcement-btn");
+    const directorNotificationsTbody = $("#director-notifications-tbody");
+    const directorAuditTbody = $("#director-audit-tbody");
+    const directorAuditExportBtn = $("#director-audit-export-btn");
+    const directorSettingsGrid = $("#director-settings-grid");
+
     const chartsPanel = $("#director-charts-panel");
     const chartsCloseBtn = $("#director-charts-close-btn");
     const chartSold = $("#director-chart-sold");
@@ -790,6 +815,27 @@
     const chartDL = $("#director-chart-dl");
 
     const deptCards = Array.from(document.querySelectorAll("[data-dept]"));
+
+    const isMobileMenu = () => window.matchMedia("(max-width: 980px)").matches;
+
+    const setMenuOpen = (open) => {
+      const shouldOpen = !!open && isMobileMenu();
+      document.body.classList.toggle("menu-open", shouldOpen);
+      $("#menu-toggle")?.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
+      $("#portal-sidebar")?.setAttribute("aria-hidden", shouldOpen || !isMobileMenu() ? "false" : "true");
+      $("#menu-backdrop")?.setAttribute("aria-hidden", shouldOpen ? "false" : "true");
+    };
+
+    const navigateTo = (key) => {
+      const target = String(key || "").trim() || "overview";
+      document.querySelectorAll("[data-section]").forEach((section) => {
+        section.style.display = section.getAttribute("data-section") === target ? "" : "none";
+      });
+      document.querySelectorAll("[data-nav]").forEach((link) => {
+        link.classList.toggle("active", link.getAttribute("data-nav") === target);
+      });
+      if (isMobileMenu()) setMenuOpen(false);
+    };
 
     const applyOrganizationContext = () => {
       const orgName = orgContext.organization?.name || orgContext.settings?.organizationName || "MAPPHEX";
@@ -1920,6 +1966,7 @@
 
     const openCharts = () => {
       if (!chartsPanel) return;
+      navigateTo("director-charts-panel");
       chartsPanel.style.display = "";
 
       const branches = Array.isArray(data.branches) ? data.branches : [];
@@ -1961,6 +2008,7 @@
 
     const closeCharts = () => {
       if (chartsPanel) chartsPanel.style.display = "none";
+      navigateTo("report-center");
     };
 
     const downloadBranchReportCsv = (branchId) => {
@@ -2001,6 +2049,370 @@
       }
     };
 
+    const allTransactions = () => {
+      const rows = [];
+      for (const branch of data.branches || []) {
+        for (const tx of branch.txLog || []) {
+          rows.push({ branch, tx });
+        }
+      }
+      return rows.sort((a, z) => String(z.tx?.at || "").localeCompare(String(a.tx?.at || "")));
+    };
+
+    const populateDirectorSelects = () => {
+      const branches = Array.isArray(data.branches) ? data.branches : [];
+      const fill = (select, includeAll = false) => {
+        if (!select) return;
+        const selected = String(select.value || "");
+        select.textContent = "";
+        if (includeAll) {
+          const opt = document.createElement("option");
+          opt.value = "";
+          opt.textContent = "All branches";
+          select.appendChild(opt);
+        }
+        for (const branch of branches) {
+          const opt = document.createElement("option");
+          opt.value = branch.id;
+          opt.textContent = branch.name || branch.id;
+          select.appendChild(opt);
+        }
+        if (selected) select.value = selected;
+      };
+      fill(directorSalesBranchFilter, true);
+      fill(directorTaskBranch, false);
+      fill(directorAnnouncementBranch, true);
+    };
+
+    const staffSalesTotals = () => {
+      const totals = new Map();
+      for (const { tx } of allTransactions()) {
+        const actor = tx?.agent?.username || tx?.soldBy || "branch";
+        const current = totals.get(actor) || { count: 0, revenue: 0 };
+        current.count += 1;
+        current.revenue += Number(tx.amountPaid ?? tx.amount ?? 0) || 0;
+        totals.set(actor, current);
+      }
+      return totals;
+    };
+
+    const renderDirectorStaff = () => {
+      if (!directorStaffTbody) return;
+      const users = loadJson(USERS_KEY, []);
+      const list = Array.isArray(users) ? users : [];
+      const totals = staffSalesTotals();
+      directorStaffTbody.textContent = "";
+      if (!list.length) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td colspan="8" class="muted">No organization users have been assigned yet.</td>`;
+        directorStaffTbody.appendChild(tr);
+        return;
+      }
+      for (const user of list.slice().sort((a, z) => String(a.role || "").localeCompare(String(z.role || "")))) {
+        const branchId = user.branchId || user.assignedBranchId || user.branch || "";
+        const branch = branchById(branchId);
+        const key = user.username || user.name || user.email || "branch";
+        const total = totals.get(key) || totals.get(user.email) || { count: 0, revenue: 0 };
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td></td><td></td><td></td><td></td><td></td><td></td><td class="num"></td><td class="num"></td>`;
+        tr.children[0].textContent = user.name || user.username || user.email || "User";
+        tr.children[1].textContent = user.email || "";
+        tr.children[2].textContent = user.role || "";
+        tr.children[3].textContent = branch?.name || branchId || "All branches";
+        tr.children[4].textContent = user.status || "active";
+        tr.children[5].textContent = Array.isArray(user.portalAccess) ? user.portalAccess.join(", ") : "";
+        tr.children[6].textContent = formatInt(total.count);
+        tr.children[7].textContent = formatInt(total.revenue);
+        directorStaffTbody.appendChild(tr);
+      }
+    };
+
+    const filteredDirectorSales = () => {
+      const branchId = String(directorSalesBranchFilter?.value || "");
+      const type = String(directorSalesTypeFilter?.value || "").toLowerCase();
+      const channel = String(directorSalesChannelFilter?.value || "").toLowerCase();
+      return allTransactions().filter(({ branch, tx }) => {
+        if (branchId && branch.id !== branchId) return false;
+        if (type && String(tx.saleType || "").toLowerCase() !== type) return false;
+        if (channel && String(tx.channel || "").toLowerCase() !== channel) return false;
+        return true;
+      });
+    };
+
+    const renderDirectorSales = () => {
+      if (!directorSalesTbody) return;
+      const rows = filteredDirectorSales();
+      directorSalesTbody.textContent = "";
+      if (!rows.length) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td colspan="9" class="muted">No sales match this view yet.</td>`;
+        directorSalesTbody.appendChild(tr);
+        return;
+      }
+      for (const { branch, tx } of rows.slice(0, 120)) {
+        const amount = Number(tx.amount || 0) || 0;
+        const paid = Number(tx.amountPaid ?? tx.paidAmount ?? amount) || 0;
+        const balance = Math.max(0, Number(tx.balance ?? (amount - paid)) || 0);
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="num"></td><td class="num"></td>`;
+        tr.children[0].textContent = tx.at ? new Date(tx.at).toLocaleString() : "";
+        tr.children[1].textContent = branch.name || branch.id;
+        tr.children[2].textContent = tx?.phone?.name || tx?.phone?.model || tx.serial || "";
+        tr.children[3].textContent = tx.customerPhone || "";
+        tr.children[4].textContent = String(tx.channel || "").toUpperCase();
+        tr.children[5].textContent = tx.saleType || "cash";
+        tr.children[6].textContent = tx.ref || "";
+        tr.children[7].textContent = formatInt(paid);
+        tr.children[8].textContent = formatInt(balance);
+        directorSalesTbody.appendChild(tr);
+      }
+    };
+
+    const exportDirectorSalesCsv = () => {
+      const rows = [["Date", "Branch", "Item", "Customer", "Channel", "Type", "Reference", "PaidKES", "BalanceKES"]];
+      filteredDirectorSales().forEach(({ branch, tx }) => {
+        const amount = Number(tx.amount || 0) || 0;
+        const paid = Number(tx.amountPaid ?? tx.paidAmount ?? amount) || 0;
+        const balance = Math.max(0, Number(tx.balance ?? (amount - paid)) || 0);
+        rows.push([tx.at || "", branch.name || branch.id, tx?.phone?.name || tx.serial || "", tx.customerPhone || "", tx.channel || "", tx.saleType || "cash", tx.ref || "", paid, balance]);
+      });
+      downloadText(`enterprise-director-sales-${new Date().toISOString().slice(0, 10)}.csv`, rows.map((row) => row.map(csvEscape).join(",")).join("\n"));
+    };
+
+    const directorCustomerRows = () => {
+      const map = new Map();
+      for (const { branch, tx } of allTransactions()) {
+        const phone = String(tx.customerPhone || "").trim();
+        if (!phone) continue;
+        const amount = Number(tx.amount || 0) || 0;
+        const paid = Number(tx.amountPaid ?? tx.paidAmount ?? amount) || 0;
+        const balance = Math.max(0, Number(tx.balance ?? (amount - paid)) || 0);
+        const current = map.get(phone) || { phone, branches: new Set(), count: 0, paid: 0, balance: 0, lastAt: "" };
+        current.branches.add(branch.name || branch.id);
+        current.count += 1;
+        current.paid += paid;
+        current.balance += balance;
+        if (!current.lastAt || String(tx.at || "") > current.lastAt) current.lastAt = tx.at || "";
+        map.set(phone, current);
+      }
+      return Array.from(map.values()).sort((a, z) => String(z.lastAt).localeCompare(String(a.lastAt)));
+    };
+
+    const renderDirectorCustomers = () => {
+      if (!directorCustomersTbody) return;
+      const rows = directorCustomerRows();
+      directorCustomersTbody.textContent = "";
+      if (!rows.length) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td colspan="6" class="muted">Customer records appear after branches complete sales.</td>`;
+        directorCustomersTbody.appendChild(tr);
+        return;
+      }
+      for (const row of rows.slice(0, 120)) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td></td><td></td><td class="num"></td><td class="num"></td><td class="num"></td><td></td>`;
+        tr.children[0].textContent = row.phone;
+        tr.children[1].textContent = Array.from(row.branches).join(", ");
+        tr.children[2].textContent = formatInt(row.count);
+        tr.children[3].textContent = formatInt(row.paid);
+        tr.children[4].textContent = formatInt(row.balance);
+        tr.children[5].textContent = row.lastAt ? new Date(row.lastAt).toLocaleString() : "";
+        directorCustomersTbody.appendChild(tr);
+      }
+    };
+
+    const exportDirectorCustomersCsv = () => {
+      const rows = [["Customer", "Branches", "Transactions", "PaidKES", "CreditBalanceKES", "LastPurchase"]];
+      directorCustomerRows().forEach((row) => rows.push([row.phone, Array.from(row.branches).join("; "), row.count, row.paid, row.balance, row.lastAt]));
+      downloadText(`enterprise-director-customers-${new Date().toISOString().slice(0, 10)}.csv`, rows.map((row) => row.map(csvEscape).join(",")).join("\n"));
+    };
+
+    const makeRecordId = (prefix) => `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+
+    const renderDirectorTasks = () => {
+      if (!directorTasksTbody) return;
+      directorTasksTbody.textContent = "";
+      const tasks = [];
+      for (const branch of data.branches || []) {
+        for (const task of branch.tasks || []) tasks.push({ branch, task });
+      }
+      if (!tasks.length) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td colspan="5" class="muted">No branch tasks yet.</td>`;
+        directorTasksTbody.appendChild(tr);
+        return;
+      }
+      for (const { branch, task } of tasks.sort((a, z) => String(a.task.dueDate || "").localeCompare(String(z.task.dueDate || ""))).slice(0, 100)) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td></td><td></td><td></td><td></td><td></td>`;
+        tr.children[0].textContent = branch.name || branch.id;
+        tr.children[1].textContent = task.title || "";
+        tr.children[2].textContent = task.owner || "Branch";
+        tr.children[3].textContent = task.dueDate || "";
+        tr.children[4].textContent = task.status || "open";
+        directorTasksTbody.appendChild(tr);
+      }
+    };
+
+    const saveDirectorTask = () => {
+      const branch = branchById(String(directorTaskBranch?.value || ""));
+      if (!branch) return;
+      if (!Array.isArray(branch.tasks)) branch.tasks = [];
+      const title = String(directorTaskTitle?.value || "").trim();
+      if (!title) return directorTaskTitle?.focus?.();
+      branch.tasks.push({
+        id: makeRecordId("director-task"),
+        title,
+        owner: String(directorTaskOwner?.value || "").trim() || "Branch",
+        dueDate: String(directorTaskDue?.value || "").trim(),
+        status: "open",
+        createdBy: session.email || session.username || "director",
+        createdAt: isoNow(),
+      });
+      branch.updatedAt = isoNow();
+      persist();
+      if (directorTaskTitle) directorTaskTitle.value = "";
+      if (directorTaskOwner) directorTaskOwner.value = "";
+      if (directorTaskDue) directorTaskDue.value = "";
+      renderDirectorTasks();
+      renderDirectorNotifications();
+      toast("Task assigned", `Task sent to ${branch.name || branch.id}.`);
+    };
+
+    const saveNotification = (note) => {
+      const current = loadJson(NOTIFICATIONS_KEY, []);
+      const list = Array.isArray(current) ? current : [];
+      list.push({ id: makeRecordId("note"), createdAt: isoNow(), read: false, ...note });
+      saveJson(NOTIFICATIONS_KEY, list.slice(-300));
+    };
+
+    const sendDirectorAnnouncement = () => {
+      const message = String(directorAnnouncementMessage?.value || "").trim();
+      if (!message) return directorAnnouncementMessage?.focus?.();
+      const branchId = String(directorAnnouncementBranch?.value || "");
+      saveNotification({
+        branchId,
+        title: "Director announcement",
+        body: message,
+        actor: session.email || session.username || "director",
+      });
+      if (directorAnnouncementMessage) directorAnnouncementMessage.value = "";
+      renderDirectorNotifications();
+      toast("Announcement sent", branchId ? "Message sent to selected branch." : "Message sent to all branches.");
+    };
+
+    const directorNotifications = () => {
+      const rows = [];
+      const saved = loadJson(NOTIFICATIONS_KEY, []);
+      if (Array.isArray(saved)) {
+        saved.forEach((note) => rows.push({
+          at: note.createdAt || note.at || "",
+          branchId: note.branchId || "",
+          type: note.title || "Notice",
+          message: note.body || note.message || "",
+          status: note.read ? "read" : "new",
+        }));
+      }
+      for (const branch of data.branches || []) {
+        for (const task of branch.tasks || []) {
+          if (task.status !== "complete") rows.push({ at: task.dueDate || task.createdAt || "", branchId: branch.id, type: "Task", message: task.title || "", status: task.status || "open" });
+        }
+        for (const tx of branch.txLog || []) {
+          const balance = Number(tx.balance || 0) || 0;
+          if (String(tx.saleType || "").toLowerCase() === "credit" && balance > 0) {
+            rows.push({ at: tx.creditDueDate || tx.at || "", branchId: branch.id, type: "Credit", message: `${tx.customerPhone || "Customer"} owes KES ${formatInt(balance)}`, status: "open" });
+          }
+        }
+      }
+      return rows.sort((a, z) => String(z.at || "").localeCompare(String(a.at || "")));
+    };
+
+    const renderDirectorNotifications = () => {
+      if (!directorNotificationsTbody) return;
+      directorNotificationsTbody.textContent = "";
+      const rows = directorNotifications();
+      if (!rows.length) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td colspan="5" class="muted">No notifications yet.</td>`;
+        directorNotificationsTbody.appendChild(tr);
+        return;
+      }
+      for (const note of rows.slice(0, 120)) {
+        const branch = branchById(note.branchId);
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td></td><td></td><td></td><td></td><td></td>`;
+        tr.children[0].textContent = note.at ? new Date(note.at).toLocaleString() : "";
+        tr.children[1].textContent = branch?.name || note.branchId || "All branches";
+        tr.children[2].textContent = note.type || "";
+        tr.children[3].textContent = note.message || "";
+        tr.children[4].textContent = note.status || "";
+        directorNotificationsTbody.appendChild(tr);
+      }
+    };
+
+    const directorAuditRows = () => {
+      const rows = [];
+      const audit = loadJson(AUDIT_KEY, []);
+      if (Array.isArray(audit)) audit.forEach((row) => rows.push({ at: row.at || row.createdAt || "", branchId: row.branchId || "", action: row.action || row.type || "audit", detail: JSON.stringify(row.detail || row.payload || {}) }));
+      for (const account of loadBranchAccounts()) {
+        if (account.reviewedAt) rows.push({ at: account.reviewedAt, branchId: account.branchId || "", action: `branch.${account.status}`, detail: `${account.email || account.username || "Branch"} reviewed by ${account.reviewedBy || "director"}` });
+      }
+      for (const branch of data.branches || []) {
+        if (branch.updatedAt) rows.push({ at: branch.updatedAt, branchId: branch.id, action: "branch.updated", detail: branch.name || branch.id });
+      }
+      return rows.sort((a, z) => String(z.at || "").localeCompare(String(a.at || "")));
+    };
+
+    const renderDirectorAudit = () => {
+      if (!directorAuditTbody) return;
+      directorAuditTbody.textContent = "";
+      const rows = directorAuditRows();
+      if (!rows.length) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td colspan="4" class="muted">No audit entries yet.</td>`;
+        directorAuditTbody.appendChild(tr);
+        return;
+      }
+      for (const row of rows.slice(0, 150)) {
+        const branch = branchById(row.branchId);
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td></td><td></td><td></td><td></td>`;
+        tr.children[0].textContent = row.at ? new Date(row.at).toLocaleString() : "";
+        tr.children[1].textContent = branch?.name || row.branchId || "Organization";
+        tr.children[2].textContent = row.action || "";
+        tr.children[3].textContent = row.detail || "";
+        directorAuditTbody.appendChild(tr);
+      }
+    };
+
+    const exportDirectorAuditCsv = () => {
+      const rows = [["Time", "Branch", "Action", "Detail"]];
+      directorAuditRows().forEach((row) => rows.push([row.at, branchById(row.branchId)?.name || row.branchId || "Organization", row.action, row.detail]));
+      downloadText(`enterprise-director-audit-${new Date().toISOString().slice(0, 10)}.csv`, rows.map((row) => row.map(csvEscape).join(",")).join("\n"));
+    };
+
+    const renderDirectorSettings = () => {
+      if (!directorSettingsGrid) return;
+      const modules = orgContext.settings?.installedPortals || orgContext.settings?.navigation || [];
+      directorSettingsGrid.innerHTML = `
+        <div class="report-card"><div class="label">Organization</div><div class="value" style="font-size:16px;">${orgContext.organization?.name || "MAPPHEX"}</div></div>
+        <div class="report-card"><div class="label">Tenant</div><div class="value" style="font-size:16px;">${tenantId || "local"}</div></div>
+        <div class="report-card"><div class="label">Business type</div><div class="value" style="font-size:16px;">${orgContext.businessType || "company"}</div></div>
+        <div class="report-card"><div class="label">Enabled modules</div><div class="value" style="font-size:16px;">${Array.isArray(modules) && modules.length ? modules.join(", ") : "Configured by admin"}</div></div>
+      `;
+    };
+
+    const renderOperationsPanels = () => {
+      populateDirectorSelects();
+      renderDirectorStaff();
+      renderDirectorSales();
+      renderDirectorCustomers();
+      renderDirectorTasks();
+      renderDirectorNotifications();
+      renderDirectorAudit();
+      renderDirectorSettings();
+    };
+
     const syncAndRender = (opts = { toast: false }) => {
       const saved = loadJson(DATA_KEY, null);
       if (saved && typeof saved === "object") data = saved;
@@ -2013,6 +2425,7 @@
       renderKPIs();
       renderBranchAccounts();
       renderBranchesTable();
+      renderOperationsPanels();
       refreshCurrentReport();
       if (opts.toast) toast("Synced", "Dashboard refreshed from ERP store.");
 
@@ -2030,6 +2443,28 @@
         window.location.href = "director-login.html";
       });
     }
+
+    $("#menu-toggle")?.addEventListener("click", (event) => {
+      event.preventDefault();
+      setMenuOpen(!document.body.classList.contains("menu-open"));
+    });
+    $("#menu-close")?.addEventListener("click", () => setMenuOpen(false));
+    $("#menu-backdrop")?.addEventListener("click", () => setMenuOpen(false));
+    $("#portal-sidebar")?.addEventListener("click", (event) => {
+      const link = event.target?.closest?.("[data-nav]");
+      if (!link) return;
+      const target = link.getAttribute("data-nav");
+      if (!target) return;
+      event.preventDefault();
+      history.replaceState(null, "", `#${target}`);
+      navigateTo(target);
+    });
+    window.addEventListener("hashchange", () => {
+      navigateTo(String(window.location.hash || "").replace("#", "") || "overview");
+    });
+    window.addEventListener("resize", () => {
+      if (!isMobileMenu()) setMenuOpen(false);
+    });
 
     if (branchSearch) {
       branchSearch.addEventListener("input", () => renderBranchesTable());
@@ -2050,6 +2485,15 @@
     if (syncBtn) {
       syncBtn.addEventListener("click", () => syncAndRender({ toast: true }));
     }
+
+    [directorSalesBranchFilter, directorSalesTypeFilter, directorSalesChannelFilter].forEach((filter) => {
+      filter?.addEventListener("change", () => renderDirectorSales());
+    });
+    directorSalesExportBtn?.addEventListener("click", () => exportDirectorSalesCsv());
+    directorCustomersExportBtn?.addEventListener("click", () => exportDirectorCustomersCsv());
+    directorTaskSaveBtn?.addEventListener("click", () => saveDirectorTask());
+    directorAnnouncementBtn?.addEventListener("click", () => sendDirectorAnnouncement());
+    directorAuditExportBtn?.addEventListener("click", () => exportDirectorAuditCsv());
 
     if (branchAccountsRefreshBtn) {
       branchAccountsRefreshBtn.addEventListener("click", () => {
@@ -2233,6 +2677,8 @@
     renderBranchSelect();
     syncAndRender();
     generateGeneralReport();
+    navigateTo(String(window.location.hash || "").replace("#", "") || "overview");
+    setMenuOpen(false);
     setBranchesOpen(isBranchesOpen());
     setReportsOpen(isReportsOpen());
     window.setInterval(() => {
@@ -2240,6 +2686,7 @@
       persist();
       renderKPIs();
       renderBranchesTable();
+      renderOperationsPanels();
       refreshCurrentReport();
     }, REALTIME_INTERVAL_MS);
 

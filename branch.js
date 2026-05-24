@@ -9,6 +9,8 @@
   const DATA_KEY = "enterprise_erp_v1";
   const ORGS_KEY = "platform_organizations_v1";
   const SETTINGS_KEY = "enterprise_org_settings_v1";
+  const USERS_KEY = "enterprise_users_v1";
+  const NOTIFICATIONS_KEY = "enterprise_notifications_v1";
   const BRANCH_COUNT = 47;
   const API_ENABLED_KEY = "enterprise_api_enabled_v1";
 
@@ -452,6 +454,28 @@
     const dueDateInput = $("#report-due-date");
     const reportOut = $("#branch-report-output");
 
+    const supplierName = $("#supplier-name");
+    const supplierContact = $("#supplier-contact");
+    const supplierProducts = $("#supplier-products");
+    const supplierBalance = $("#supplier-balance");
+    const supplierSaveBtn = $("#supplier-save-btn");
+    const suppliersTbody = $("#suppliers-tbody");
+    const poSupplier = $("#po-supplier");
+    const poItem = $("#po-item");
+    const poQty = $("#po-qty");
+    const poDate = $("#po-date");
+    const poSaveBtn = $("#po-save-btn");
+    const poTbody = $("#po-tbody");
+    const staffTbody = $("#staff-tbody");
+    const customersTbody = $("#customers-tbody");
+    const customerExportBtn = $("#customer-export-btn");
+    const taskTitle = $("#task-title");
+    const taskDue = $("#task-due");
+    const taskOwner = $("#task-owner");
+    const taskSaveBtn = $("#task-save-btn");
+    const tasksTbody = $("#tasks-tbody");
+    const notificationsTbody = $("#notifications-tbody");
+
     const chartsPanel = $("#charts-panel");
     const chartsCloseBtn = $("#charts-close-btn");
     const chartStock = $("#chart-stock");
@@ -501,6 +525,9 @@
       if (!Array.isArray(branch.transactions)) branch.transactions = [];
       if (!Array.isArray(branch.txLog)) branch.txLog = [];
       if (!Array.isArray(branch.damageLoss)) branch.damageLoss = [];
+      if (!Array.isArray(branch.suppliers)) branch.suppliers = [];
+      if (!Array.isArray(branch.purchaseOrders)) branch.purchaseOrders = [];
+      if (!Array.isArray(branch.tasks)) branch.tasks = [];
       if (!branch.financeSummary || typeof branch.financeSummary !== "object") {
         branch.financeSummary = { mpesaIn: 0, bankIn: 0, txCount: 0, lastTxAt: "" };
       }
@@ -1187,6 +1214,8 @@
         ? `Payment recorded. Remaining balance KES ${formatInt(nextBalance)}.`
         : "Payment recorded. Credit cleared.";
       await renderTransactionsSafely();
+      renderCustomers();
+      renderNotifications();
       renderKPIs();
     };
 
@@ -1371,6 +1400,9 @@
 
       await renderTransactionsSafely();
       renderInventory();
+      renderStaff();
+      renderCustomers();
+      renderNotifications();
       renderKPIs();
       setTxButtonState();
     };
@@ -1457,6 +1489,345 @@
         `enterprise-${branch.id}-sales-${new Date().toISOString().slice(0, 10)}.csv`,
         csv,
       );
+    };
+
+    const makeRecordId = (prefix) => `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+
+    const renderSuppliers = () => {
+      if (!suppliersTbody) return;
+      const branch = normalizeBranch(getBranch());
+      if (!branch) return;
+      suppliersTbody.textContent = "";
+      const suppliers = Array.isArray(branch.suppliers) ? branch.suppliers : [];
+      if (!suppliers.length) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td colspan="6" class="muted">No supplier records yet.</td>`;
+        suppliersTbody.appendChild(tr);
+        return;
+      }
+      for (const supplier of suppliers.slice().sort((a, z) => String(a.name || "").localeCompare(String(z.name || "")))) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td></td><td></td><td></td><td class="num"></td><td></td><td class="num"></td>`;
+        tr.children[0].textContent = supplier.name || "Supplier";
+        tr.children[1].textContent = supplier.contact || "";
+        tr.children[2].textContent = supplier.products || "";
+        tr.children[3].textContent = formatInt(supplier.balance || 0);
+        tr.children[4].textContent = supplier.updatedAt ? new Date(supplier.updatedAt).toLocaleString() : "";
+        const del = document.createElement("button");
+        del.className = "btn";
+        del.type = "button";
+        del.textContent = "Remove";
+        del.addEventListener("click", () => {
+          branch.suppliers = suppliers.filter((row) => row.id !== supplier.id);
+          branch.updatedAt = isoNow();
+          persist().catch(() => null);
+          renderSuppliers();
+        });
+        tr.children[5].appendChild(del);
+        suppliersTbody.appendChild(tr);
+      }
+    };
+
+    const saveSupplier = () => {
+      const branch = normalizeBranch(getBranch());
+      if (!branch) return;
+      const name = String(supplierName?.value || "").trim();
+      if (!name) return supplierName?.focus?.();
+      const list = Array.isArray(branch.suppliers) ? branch.suppliers : [];
+      const idx = list.findIndex((supplier) => String(supplier.name || "").toLowerCase() === name.toLowerCase());
+      const row = {
+        id: idx >= 0 ? list[idx].id : makeRecordId("supplier"),
+        name,
+        contact: String(supplierContact?.value || "").trim(),
+        products: String(supplierProducts?.value || "").trim(),
+        balance: Math.max(0, Number(supplierBalance?.value || 0)),
+        updatedAt: isoNow(),
+      };
+      if (idx >= 0) list[idx] = { ...list[idx], ...row };
+      else list.push(row);
+      branch.suppliers = list;
+      branch.updatedAt = isoNow();
+      persist().catch(() => null);
+      if (supplierName) supplierName.value = "";
+      if (supplierContact) supplierContact.value = "";
+      if (supplierProducts) supplierProducts.value = "";
+      if (supplierBalance) supplierBalance.value = "";
+      renderSuppliers();
+    };
+
+    const renderPurchaseOrders = () => {
+      if (!poTbody) return;
+      const branch = normalizeBranch(getBranch());
+      if (!branch) return;
+      poTbody.textContent = "";
+      const orders = Array.isArray(branch.purchaseOrders) ? branch.purchaseOrders : [];
+      if (!orders.length) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td colspan="6" class="muted">No purchase orders yet.</td>`;
+        poTbody.appendChild(tr);
+        return;
+      }
+      for (const order of orders.slice().sort((a, z) => String(z.createdAt || "").localeCompare(String(a.createdAt || "")))) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td></td><td></td><td class="num"></td><td></td><td></td><td class="num"></td>`;
+        tr.children[0].textContent = order.supplier || "";
+        tr.children[1].textContent = order.item || "";
+        tr.children[2].textContent = formatInt(order.qty || 0);
+        tr.children[3].textContent = order.expectedDate || "";
+        tr.children[4].textContent = order.status || "pending";
+        const done = document.createElement("button");
+        done.className = "btn";
+        done.type = "button";
+        done.textContent = order.status === "received" ? "Received" : "Mark received";
+        done.disabled = order.status === "received";
+        done.addEventListener("click", () => {
+          order.status = "received";
+          order.receivedAt = isoNow();
+          branch.updatedAt = isoNow();
+          persist().catch(() => null);
+          renderPurchaseOrders();
+          renderNotifications();
+        });
+        tr.children[5].appendChild(done);
+        poTbody.appendChild(tr);
+      }
+    };
+
+    const savePurchaseOrder = () => {
+      const branch = normalizeBranch(getBranch());
+      if (!branch) return;
+      const item = String(poItem?.value || "").trim();
+      if (!item) return poItem?.focus?.();
+      const qty = Math.max(1, Number(poQty?.value || 1));
+      branch.purchaseOrders.push({
+        id: makeRecordId("po"),
+        supplier: String(poSupplier?.value || "").trim(),
+        item,
+        qty,
+        expectedDate: String(poDate?.value || "").trim(),
+        status: "pending",
+        createdAt: isoNow(),
+      });
+      branch.updatedAt = isoNow();
+      persist().catch(() => null);
+      if (poSupplier) poSupplier.value = "";
+      if (poItem) poItem.value = "";
+      if (poQty) poQty.value = "";
+      if (poDate) poDate.value = "";
+      renderPurchaseOrders();
+      renderNotifications();
+    };
+
+    const branchUsers = () => {
+      const users = loadJson(USERS_KEY, []);
+      const list = Array.isArray(users) ? users : [];
+      return list.filter((user) => {
+        const role = String(user.role || "").toLowerCase();
+        const userBranch = String(user.branchId || user.assignedBranchId || user.branch || "").toLowerCase();
+        return ["agent", "team-leader", "teamleader", "branch"].includes(role) && (!userBranch || userBranch === String(session.branchId || "").toLowerCase());
+      });
+    };
+
+    const agentSalesTotals = (branch) => {
+      const map = new Map();
+      for (const tx of branch.txLog || []) {
+        const name = tx?.agent?.username || tx?.soldBy || "branch";
+        const current = map.get(name) || { count: 0, revenue: 0 };
+        current.count += 1;
+        current.revenue += Number(tx.amountPaid ?? tx.amount ?? 0) || 0;
+        map.set(name, current);
+      }
+      return map;
+    };
+
+    const renderStaff = () => {
+      if (!staffTbody) return;
+      const branch = normalizeBranch(getBranch());
+      if (!branch) return;
+      const sales = agentSalesTotals(branch);
+      const users = branchUsers();
+      staffTbody.textContent = "";
+      if (!users.length) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td colspan="6" class="muted">No staff assigned to this branch yet.</td>`;
+        staffTbody.appendChild(tr);
+        return;
+      }
+      for (const user of users) {
+        const key = user.username || user.name || user.email || "branch";
+        const total = sales.get(key) || sales.get(user.email) || { count: 0, revenue: 0 };
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td></td><td></td><td></td><td></td><td class="num"></td><td class="num"></td>`;
+        tr.children[0].textContent = user.name || user.username || user.email || "Staff";
+        tr.children[1].textContent = user.email || "";
+        tr.children[2].textContent = user.role || "";
+        tr.children[3].textContent = user.status || "active";
+        tr.children[4].textContent = formatInt(total.count);
+        tr.children[5].textContent = formatInt(total.revenue);
+        staffTbody.appendChild(tr);
+      }
+    };
+
+    const customerRows = (branch) => {
+      const map = new Map();
+      for (const tx of branch.txLog || []) {
+        const phone = String(tx.customerPhone || "").trim();
+        if (!phone) continue;
+        const current = map.get(phone) || { phone, count: 0, paid: 0, balance: 0, lastAt: "" };
+        current.count += 1;
+        current.paid += Number(tx.amountPaid ?? tx.paidAmount ?? tx.amount ?? 0) || 0;
+        current.balance += Math.max(0, Number(tx.balance || 0) || 0);
+        if (!current.lastAt || String(tx.at || "") > current.lastAt) current.lastAt = tx.at || "";
+        map.set(phone, current);
+      }
+      return Array.from(map.values()).sort((a, z) => String(z.lastAt).localeCompare(String(a.lastAt)));
+    };
+
+    const renderCustomers = () => {
+      if (!customersTbody) return;
+      const branch = normalizeBranch(getBranch());
+      if (!branch) return;
+      const rows = customerRows(branch);
+      customersTbody.textContent = "";
+      if (!rows.length) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td colspan="5" class="muted">Customer records appear after sales are completed.</td>`;
+        customersTbody.appendChild(tr);
+        return;
+      }
+      for (const row of rows) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td></td><td class="num"></td><td class="num"></td><td class="num"></td><td></td>`;
+        tr.children[0].textContent = row.phone;
+        tr.children[1].textContent = formatInt(row.count);
+        tr.children[2].textContent = formatInt(row.paid);
+        tr.children[3].textContent = formatInt(row.balance);
+        tr.children[4].textContent = row.lastAt ? new Date(row.lastAt).toLocaleString() : "";
+        customersTbody.appendChild(tr);
+      }
+    };
+
+    const exportCustomersCsv = () => {
+      const branch = normalizeBranch(getBranch());
+      if (!branch) return;
+      const rows = [["Customer", "Transactions", "PaidKES", "CreditBalanceKES", "LastPurchase"]];
+      customerRows(branch).forEach((row) => rows.push([row.phone, row.count, row.paid, row.balance, row.lastAt]));
+      downloadText(`enterprise-${branch.id}-customers-${new Date().toISOString().slice(0, 10)}.csv`, rows.map((row) => row.map(csvEscape).join(",")).join("\n"));
+    };
+
+    const renderTasks = () => {
+      if (!tasksTbody) return;
+      const branch = normalizeBranch(getBranch());
+      if (!branch) return;
+      tasksTbody.textContent = "";
+      const tasks = Array.isArray(branch.tasks) ? branch.tasks : [];
+      if (!tasks.length) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td colspan="5" class="muted">No branch tasks yet.</td>`;
+        tasksTbody.appendChild(tr);
+        return;
+      }
+      for (const task of tasks.slice().sort((a, z) => String(a.dueDate || "").localeCompare(String(z.dueDate || "")))) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td></td><td></td><td></td><td></td><td class="num"></td>`;
+        tr.children[0].textContent = task.title || "";
+        tr.children[1].textContent = task.owner || "Branch";
+        tr.children[2].textContent = task.dueDate || "";
+        tr.children[3].textContent = task.status || "open";
+        const done = document.createElement("button");
+        done.className = "btn";
+        done.type = "button";
+        done.textContent = task.status === "complete" ? "Complete" : "Mark done";
+        done.disabled = task.status === "complete";
+        done.addEventListener("click", () => {
+          task.status = "complete";
+          task.completedAt = isoNow();
+          branch.updatedAt = isoNow();
+          persist().catch(() => null);
+          renderTasks();
+          renderNotifications();
+        });
+        tr.children[4].appendChild(done);
+        tasksTbody.appendChild(tr);
+      }
+    };
+
+    const saveTask = () => {
+      const branch = normalizeBranch(getBranch());
+      if (!branch) return;
+      const title = String(taskTitle?.value || "").trim();
+      if (!title) return taskTitle?.focus?.();
+      branch.tasks.push({
+        id: makeRecordId("task"),
+        title,
+        owner: String(taskOwner?.value || "").trim() || "Branch",
+        dueDate: String(taskDue?.value || "").trim(),
+        status: "open",
+        createdAt: isoNow(),
+      });
+      branch.updatedAt = isoNow();
+      persist().catch(() => null);
+      if (taskTitle) taskTitle.value = "";
+      if (taskOwner) taskOwner.value = "";
+      if (taskDue) taskDue.value = "";
+      renderTasks();
+      renderNotifications();
+    };
+
+    const renderNotifications = () => {
+      if (!notificationsTbody) return;
+      const branch = normalizeBranch(getBranch());
+      if (!branch) return;
+      const now = Date.now();
+      const notes = [];
+      for (const item of branch.phones || []) {
+        if (item.expiryDate && Date.parse(`${item.expiryDate}T00:00:00`) <= now + 14 * 24 * 60 * 60 * 1000) {
+          notes.push({ at: item.expiryDate, type: "Expiry", message: `${itemName(item)} expires on ${item.expiryDate}`, status: "attention" });
+        }
+        if (Number(item.reorderLevel || 0) > 0) {
+          notes.push({ at: item.updatedAt || item.createdAt || isoNow(), type: "Reorder", message: `${itemName(item)} has reorder level ${formatInt(item.reorderLevel)} configured`, status: "watch" });
+        }
+      }
+      for (const tx of branch.txLog || []) {
+        const balance = Number(tx.balance || 0) || 0;
+        if (String(tx.saleType || "").toLowerCase() === "credit" && balance > 0) {
+          notes.push({ at: tx.creditDueDate || tx.at || isoNow(), type: "Credit", message: `${tx.customerPhone || "Customer"} owes KES ${formatInt(balance)} for ${tx.serial || tx.ref || "sale"}`, status: "open" });
+        }
+      }
+      for (const task of branch.tasks || []) {
+        if (task.status !== "complete") notes.push({ at: task.dueDate || task.createdAt || isoNow(), type: "Task", message: task.title || "Task pending", status: task.status || "open" });
+      }
+      const globalNotes = loadJson(NOTIFICATIONS_KEY, []);
+      if (Array.isArray(globalNotes)) {
+        globalNotes
+          .filter((note) => !note.branchId || note.branchId === session.branchId)
+          .forEach((note) => notes.push({ at: note.createdAt || note.at || isoNow(), type: note.title || "Notice", message: note.body || note.message || "", status: note.read ? "read" : "new" }));
+      }
+      notificationsTbody.textContent = "";
+      if (!notes.length) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td colspan="4" class="muted">No notifications yet.</td>`;
+        notificationsTbody.appendChild(tr);
+        return;
+      }
+      for (const note of notes.sort((a, z) => String(z.at || "").localeCompare(String(a.at || ""))).slice(0, 80)) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td></td><td></td><td></td><td></td>`;
+        tr.children[0].textContent = note.at ? new Date(note.at).toLocaleString() : "";
+        tr.children[1].textContent = note.type || "";
+        tr.children[2].textContent = note.message || "";
+        tr.children[3].textContent = note.status || "";
+        notificationsTbody.appendChild(tr);
+      }
+    };
+
+    const renderOperationsPanels = () => {
+      renderSuppliers();
+      renderPurchaseOrders();
+      renderStaff();
+      renderCustomers();
+      renderTasks();
+      renderNotifications();
     };
 
     const setReportHtml = (html) => {
@@ -1953,6 +2324,7 @@
       renderInventory();
       renderDamageLoss();
       await renderTransactionsSafely();
+      renderOperationsPanels();
     };
 
     if (logoutBtn) {
@@ -2023,6 +2395,10 @@
     if (reportPdfBtn) reportPdfBtn.addEventListener("click", () => printReport());
     if (chartsBtn) chartsBtn.addEventListener("click", () => openCharts());
     if (chartsCloseBtn) chartsCloseBtn.addEventListener("click", () => closeCharts());
+    if (supplierSaveBtn) supplierSaveBtn.addEventListener("click", () => saveSupplier());
+    if (poSaveBtn) poSaveBtn.addEventListener("click", () => savePurchaseOrder());
+    if (customerExportBtn) customerExportBtn.addEventListener("click", () => exportCustomersCsv());
+    if (taskSaveBtn) taskSaveBtn.addEventListener("click", () => saveTask());
 
     // First render
     sync()
@@ -2032,6 +2408,7 @@
       })
       .finally(() => {
         generateReport();
+        renderOperationsPanels();
         navigateTo(String(window.location.hash || "").replace("#", "") || "overview");
         setTxButtonState();
       });

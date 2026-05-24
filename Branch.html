@@ -48,10 +48,16 @@
             <a class="sidebar-link" href="#inventory" data-nav="inventory" data-icon="I">Inventory entry</a>
             <a class="sidebar-link" href="#damages" data-nav="damages" data-icon="D">Damages &amp; loss</a>
             <a class="sidebar-link" href="#transactions" data-nav="transactions" data-icon="S">Sales completed</a>
+            <a class="sidebar-link" href="#suppliers" data-nav="suppliers" data-icon="P">Suppliers</a>
+            <a class="sidebar-link" href="#purchase-orders" data-nav="purchase-orders" data-icon="O">Purchase orders</a>
+            <a class="sidebar-link" href="#staff" data-nav="staff" data-icon="T">Staff roster</a>
+            <a class="sidebar-link" href="#customers" data-nav="customers" data-icon="C">Customers</a>
+            <a class="sidebar-link" href="#tasks" data-nav="tasks" data-icon="K">Tasks</a>
           </div>
           <div class="sidebar-nav-group">
             <strong>Insights</strong>
             <a class="sidebar-link" href="#reports" data-nav="reports" data-icon="R">Reports</a>
+            <a class="sidebar-link" href="#notifications" data-nav="notifications" data-icon="N">Notifications</a>
           </div>
         </nav>
         <div class="sidebar-foot muted">
@@ -340,6 +346,109 @@
         </div>
       </section>
 
+      <section class="panel" id="suppliers" data-section="suppliers">
+        <div class="panel-header">
+          <h2>Supplier Records</h2>
+          <div class="panel-actions">
+            <button id="supplier-save-btn" class="btn primary" type="button">Save supplier</button>
+          </div>
+        </div>
+        <div class="branch-form">
+          <label class="field"><span>Supplier name</span><input id="supplier-name" type="text" placeholder="e.g. Nairobi Medical Supplies" /></label>
+          <label class="field"><span>Contact</span><input id="supplier-contact" type="text" placeholder="Phone or email" /></label>
+          <label class="field"><span>Products supplied</span><input id="supplier-products" type="text" placeholder="Comma-separated products or services" /></label>
+          <label class="field"><span>Outstanding balance (KES)</span><input id="supplier-balance" type="number" min="0" step="1" placeholder="0" /></label>
+        </div>
+        <div class="table-wrap" role="region" aria-label="Supplier records" tabindex="0">
+          <table class="table">
+            <thead><tr><th>Supplier</th><th>Contact</th><th>Products</th><th class="num">Balance</th><th>Updated</th><th class="num">Action</th></tr></thead>
+            <tbody id="suppliers-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="purchase-orders" data-section="purchase-orders">
+        <div class="panel-header">
+          <h2>Purchase Orders</h2>
+          <div class="panel-actions">
+            <button id="po-save-btn" class="btn primary" type="button">Create order</button>
+          </div>
+        </div>
+        <div class="branch-form">
+          <label class="field"><span>Supplier</span><input id="po-supplier" type="text" placeholder="Supplier name" /></label>
+          <label class="field"><span>Item / service</span><input id="po-item" type="text" placeholder="What is being ordered" /></label>
+          <label class="field"><span>Quantity</span><input id="po-qty" type="number" min="1" step="1" placeholder="1" /></label>
+          <label class="field"><span>Expected date</span><input id="po-date" type="date" /></label>
+        </div>
+        <div class="table-wrap" role="region" aria-label="Purchase orders" tabindex="0">
+          <table class="table">
+            <thead><tr><th>Supplier</th><th>Item</th><th class="num">Qty</th><th>Expected</th><th>Status</th><th class="num">Action</th></tr></thead>
+            <tbody id="po-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="staff" data-section="staff">
+        <div class="panel-header">
+          <h2>Staff Roster</h2>
+          <div class="panel-actions muted">Agents and team leaders assigned to this branch</div>
+        </div>
+        <div class="table-wrap" role="region" aria-label="Branch staff roster" tabindex="0">
+          <table class="table">
+            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th class="num">Sales</th><th class="num">Revenue</th></tr></thead>
+            <tbody id="staff-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="customers" data-section="customers">
+        <div class="panel-header">
+          <h2>Customer Records</h2>
+          <div class="panel-actions">
+            <button id="customer-export-btn" class="btn" type="button">Export CSV</button>
+          </div>
+        </div>
+        <div class="table-wrap" role="region" aria-label="Customer records" tabindex="0">
+          <table class="table">
+            <thead><tr><th>Customer</th><th class="num">Transactions</th><th class="num">Paid</th><th class="num">Credit balance</th><th>Last purchase</th></tr></thead>
+            <tbody id="customers-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="tasks" data-section="tasks">
+        <div class="panel-header">
+          <h2>Tasks</h2>
+          <div class="panel-actions">
+            <button id="task-save-btn" class="btn primary" type="button">Create task</button>
+          </div>
+        </div>
+        <div class="branch-form">
+          <label class="field"><span>Task</span><input id="task-title" type="text" placeholder="e.g. Count closing stock" /></label>
+          <label class="field"><span>Due date</span><input id="task-due" type="date" /></label>
+          <label class="field"><span>Owner</span><input id="task-owner" type="text" placeholder="Branch manager, agent, or team leader" /></label>
+        </div>
+        <div class="table-wrap" role="region" aria-label="Branch tasks" tabindex="0">
+          <table class="table">
+            <thead><tr><th>Task</th><th>Owner</th><th>Due</th><th>Status</th><th class="num">Action</th></tr></thead>
+            <tbody id="tasks-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="notifications" data-section="notifications">
+        <div class="panel-header">
+          <h2>Notifications</h2>
+          <div class="panel-actions muted">Director messages, task reminders, low stock and credit alerts</div>
+        </div>
+        <div class="table-wrap" role="region" aria-label="Branch notifications" tabindex="0">
+          <table class="table">
+            <thead><tr><th>Time</th><th>Type</th><th>Message</th><th>Status</th></tr></thead>
+            <tbody id="notifications-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
       <section class="panel" id="reports" data-section="reports">
         <div class="panel-header">
           <h2>Report Center</h2>
@@ -420,7 +529,7 @@
     <script src="enterprise-store.js"></script>
     <script src="erp-client.js"></script>
     <script src="enterprise-platform.js"></script>
-    <script src="branch.js?v=3"></script>
+    <script src="branch.js?v=4"></script>
     <script src="pwa.js"></script>
   </body>
 </html>

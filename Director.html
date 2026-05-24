@@ -41,18 +41,24 @@
         <nav class="sidebar-nav">
           <div class="sidebar-nav-group">
             <strong>Main</strong>
-            <a class="sidebar-link active" href="Director.html" data-icon="D">Dashboard</a>
-            <a class="sidebar-link" href="Director.html#overview" data-icon="O">Overview</a>
+            <a class="sidebar-link active" href="#overview" data-nav="overview" data-icon="D">Dashboard</a>
+            <a class="sidebar-link" href="#overview" data-nav="overview" data-icon="O">Overview</a>
           </div>
           <div class="sidebar-nav-group">
             <strong>Operations</strong>
-            <a class="sidebar-link" href="Director.html#inventory-panel" data-icon="I">Inventory by Branch</a>
-            <a class="sidebar-link" href="Director.html#branch-accounts-panel" data-icon="B">Branch Accounts</a>
+            <a class="sidebar-link" href="#inventory-panel" data-nav="inventory-panel" data-icon="I">Inventory by Branch</a>
+            <a class="sidebar-link" href="#branch-accounts-panel" data-nav="branch-accounts-panel" data-icon="B">Branch Accounts</a>
+            <a class="sidebar-link" href="#director-staff" data-nav="director-staff" data-icon="S">Staff</a>
+            <a class="sidebar-link" href="#director-sales" data-nav="director-sales" data-icon="P">Sales</a>
+            <a class="sidebar-link" href="#director-customers" data-nav="director-customers" data-icon="C">Customers</a>
+            <a class="sidebar-link" href="#director-tasks" data-nav="director-tasks" data-icon="T">Tasks</a>
           </div>
           <div class="sidebar-nav-group">
             <strong>Insights</strong>
-            <a class="sidebar-link" href="Director.html#report-center" data-icon="C">Report Center</a>
-            <a class="sidebar-link" href="Director.html#report-output" data-icon="R">Reports</a>
+            <a class="sidebar-link" href="#report-center" data-nav="report-center" data-icon="R">Report Center</a>
+            <a class="sidebar-link" href="#director-notifications" data-nav="director-notifications" data-icon="N">Notifications</a>
+            <a class="sidebar-link" href="#director-audit" data-nav="director-audit" data-icon="A">Audit Log</a>
+            <a class="sidebar-link" href="#director-settings" data-nav="director-settings" data-icon="G">Settings</a>
           </div>
           <div class="sidebar-nav-group">
             <strong>Tools</strong>
@@ -68,7 +74,7 @@
       <div id="menu-backdrop" class="menu-backdrop" aria-hidden="true"></div>
 
       <main class="layout">
-      <section class="panel" id="overview">
+      <section class="panel" id="overview" data-section="overview">
         <div class="panel-header">
           <h2>Realtime Overview</h2>
           <div class="panel-actions">
@@ -104,7 +110,7 @@
         </div>
       </section>
 
-      <section class="panel" id="branch-accounts-panel">
+      <section class="panel" id="branch-accounts-panel" data-section="branch-accounts-panel">
         <div class="panel-header">
           <h2>Branch Accounts</h2>
           <div class="panel-actions">
@@ -129,7 +135,7 @@
         </div>
       </section>
 
-      <section class="panel" id="inventory-panel">
+      <section class="panel" id="inventory-panel" data-section="inventory-panel">
         <div class="panel-header">
           <h2>Inventory by Branch</h2>
           <div class="panel-actions">
@@ -158,7 +164,118 @@
         </div>
       </section>
 
-      <section class="panel" id="report-center">
+      <section class="panel" id="director-staff" data-section="director-staff">
+        <div class="panel-header">
+          <h2>Staff Management</h2>
+          <div class="panel-actions muted">Agents, team leaders, branch users and assigned portals</div>
+        </div>
+        <div class="table-wrap" role="region" aria-label="Organization staff" tabindex="0">
+          <table class="table">
+            <thead><tr><th>User</th><th>Email</th><th>Role</th><th>Branch</th><th>Status</th><th>Portals</th><th class="num">Sales</th><th class="num">Revenue</th></tr></thead>
+            <tbody id="director-staff-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="director-sales" data-section="director-sales">
+        <div class="panel-header">
+          <h2>Sales & Transactions</h2>
+          <div class="panel-actions">
+            <button id="director-sales-export-btn" class="btn" type="button">Export CSV</button>
+          </div>
+        </div>
+        <div class="branch-form" style="padding-bottom: 0;">
+          <label class="field"><span>Branch filter</span><select id="director-sales-branch-filter"></select></label>
+          <label class="field"><span>Sale type</span><select id="director-sales-type-filter"><option value="">All</option><option value="cash">Cash</option><option value="credit">Credit</option><option value="credit_payment">Credit payments</option></select></label>
+          <label class="field"><span>Channel</span><select id="director-sales-channel-filter"><option value="">All</option><option value="mpesa">M-Pesa</option><option value="bank">Bank</option></select></label>
+        </div>
+        <div class="table-wrap" role="region" aria-label="Director sales" tabindex="0">
+          <table class="table">
+            <thead><tr><th>Date</th><th>Branch</th><th>Item</th><th>Customer</th><th>Channel</th><th>Type</th><th>Reference</th><th class="num">Paid</th><th class="num">Balance</th></tr></thead>
+            <tbody id="director-sales-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="director-customers" data-section="director-customers">
+        <div class="panel-header">
+          <h2>Customer Records</h2>
+          <div class="panel-actions">
+            <button id="director-customers-export-btn" class="btn" type="button">Export CSV</button>
+          </div>
+        </div>
+        <div class="table-wrap" role="region" aria-label="Director customers" tabindex="0">
+          <table class="table">
+            <thead><tr><th>Customer</th><th>Branches</th><th class="num">Transactions</th><th class="num">Paid</th><th class="num">Credit balance</th><th>Last purchase</th></tr></thead>
+            <tbody id="director-customers-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="director-tasks" data-section="director-tasks">
+        <div class="panel-header">
+          <h2>Tasks & Operations</h2>
+          <div class="panel-actions">
+            <button id="director-task-save-btn" class="btn primary" type="button">Assign task</button>
+          </div>
+        </div>
+        <div class="branch-form">
+          <label class="field"><span>Branch</span><select id="director-task-branch"></select></label>
+          <label class="field"><span>Task</span><input id="director-task-title" type="text" placeholder="e.g. Submit weekly stock count" /></label>
+          <label class="field"><span>Owner</span><input id="director-task-owner" type="text" placeholder="Branch manager or agent" /></label>
+          <label class="field"><span>Due date</span><input id="director-task-due" type="date" /></label>
+        </div>
+        <div class="table-wrap" role="region" aria-label="Director tasks" tabindex="0">
+          <table class="table">
+            <thead><tr><th>Branch</th><th>Task</th><th>Owner</th><th>Due</th><th>Status</th></tr></thead>
+            <tbody id="director-tasks-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="director-notifications" data-section="director-notifications">
+        <div class="panel-header">
+          <h2>Notifications</h2>
+          <div class="panel-actions">
+            <button id="director-announcement-btn" class="btn primary" type="button">Send announcement</button>
+          </div>
+        </div>
+        <div class="branch-form">
+          <label class="field"><span>Target branch</span><select id="director-announcement-branch"></select></label>
+          <label class="field" style="grid-column: span 2;"><span>Message</span><input id="director-announcement-message" type="text" placeholder="Message to branches" /></label>
+        </div>
+        <div class="table-wrap" role="region" aria-label="Director notifications" tabindex="0">
+          <table class="table">
+            <thead><tr><th>Time</th><th>Branch</th><th>Type</th><th>Message</th><th>Status</th></tr></thead>
+            <tbody id="director-notifications-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="director-audit" data-section="director-audit">
+        <div class="panel-header">
+          <h2>Audit Log</h2>
+          <div class="panel-actions">
+            <button id="director-audit-export-btn" class="btn" type="button">Export CSV</button>
+          </div>
+        </div>
+        <div class="table-wrap" role="region" aria-label="Director audit log" tabindex="0">
+          <table class="table">
+            <thead><tr><th>Time</th><th>Branch</th><th>Action</th><th>Detail</th></tr></thead>
+            <tbody id="director-audit-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="director-settings" data-section="director-settings">
+        <div class="panel-header">
+          <h2>Organization Settings</h2>
+          <div class="panel-actions muted">Business type and modules are controlled by organization admin</div>
+        </div>
+        <div class="report-grid" id="director-settings-grid"></div>
+      </section>
+
+      <section class="panel" id="report-center" data-section="report-center">
         <div class="panel-header">
           <h2>Report Center</h2>
           <div class="panel-actions">
@@ -231,7 +348,7 @@
         <div id="report-output" class="report-output" aria-live="polite"></div>
       </section>
 
-      <section class="panel" id="director-charts-panel" style="display:none;">
+      <section class="panel" id="director-charts-panel" data-section="director-charts-panel" style="display:none;">
         <div class="panel-header">
           <h2>Live Charts (Company)</h2>
           <div class="panel-actions">
@@ -257,7 +374,7 @@
         </p>
       </section>
 
-      <section class="panel" id="departments">
+      <section class="panel" id="departments" data-section="departments">
         <div class="panel-header">
           <h2>Departments</h2>
           <div class="panel-actions muted">Director can access all departments</div>
@@ -308,7 +425,7 @@
     <script src="erp-client.js"></script>
     <script src="enterprise-platform.js"></script>
     <script src="ui-menu.js?v=2"></script>
-    <script src="director.js?v=3"></script>
+    <script src="director.js?v=4"></script>
     <script src="pwa.js"></script>
 </body>
 </html>
