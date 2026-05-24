@@ -138,6 +138,13 @@
     const form = $("#portal-login-form");
     if (form?.email) form.email.value = "";
     if (form?.portalPassword) form.portalPassword.value = "";
+    if (portalId !== "workspace" && session?.tenantId && roleCanOpen(session)) {
+      ensureAllowed(session)
+        .then(() => {
+          location.replace(portalTarget());
+        })
+        .catch(() => null);
+    }
     window.EnterpriseCore?.rememberLogin?.restore?.(`portal-${portalId}`, {
       checkbox: form?.remember,
       fields: {
