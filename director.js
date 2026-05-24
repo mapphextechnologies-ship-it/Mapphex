@@ -792,6 +792,11 @@
     const directorSalesTypeFilter = $("#director-sales-type-filter");
     const directorSalesChannelFilter = $("#director-sales-channel-filter");
     const directorSalesExportBtn = $("#director-sales-export-btn");
+    const directorProcurementTbody = $("#director-procurement-tbody");
+    const dirProcOrders = $("#dir-proc-orders");
+    const dirProcPending = $("#dir-proc-pending");
+    const dirProcSpend = $("#dir-proc-spend");
+    const dirProcBalances = $("#dir-proc-balances");
     const directorCustomersTbody = $("#director-customers-tbody");
     const directorCustomersExportBtn = $("#director-customers-export-btn");
     const directorTaskBranch = $("#director-task-branch");
@@ -2179,6 +2184,45 @@
       downloadText(`enterprise-director-sales-${new Date().toISOString().slice(0, 10)}.csv`, rows.map((row) => row.map(csvEscape).join(",")).join("\n"));
     };
 
+    const procurementRows = () => {
+      const rows = [];
+      for (const branch of data.branches || []) {
+        for (const order of branch.purchaseOrders || []) rows.push({ branch, order });
+      }
+      return rows.sort((a, z) => String(z.order.createdAt || "").localeCompare(String(a.order.createdAt || "")));
+    };
+
+    const renderDirectorProcurement = () => {
+      const rows = procurementRows();
+      const spend = rows.reduce((sum, row) => sum + Number(row.order.total || 0), 0);
+      const pending = rows.filter((row) => /approval pending|required/i.test(`${row.order.status || ""} ${row.order.approvalStatus || ""}`)).length;
+      const balances = (data.branches || []).reduce((sum, branch) => sum + (branch.suppliers || []).reduce((sub, supplier) => sub + Number(supplier.balance || 0), 0), 0);
+      if (dirProcOrders) dirProcOrders.textContent = formatInt(rows.length);
+      if (dirProcPending) dirProcPending.textContent = formatInt(pending);
+      if (dirProcSpend) dirProcSpend.textContent = `KES ${formatInt(spend)}`;
+      if (dirProcBalances) dirProcBalances.textContent = `KES ${formatInt(balances)}`;
+      if (!directorProcurementTbody) return;
+      directorProcurementTbody.textContent = "";
+      if (!rows.length) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td colspan="7" class="muted">No branch purchase orders yet.</td>`;
+        directorProcurementTbody.appendChild(tr);
+        return;
+      }
+      rows.slice(0, 120).forEach(({ branch, order }) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td></td><td></td><td></td><td></td><td class="num"></td><td></td><td></td>`;
+        tr.children[0].textContent = branch.name || branch.id;
+        tr.children[1].textContent = order.ref || order.id || "";
+        tr.children[2].textContent = order.supplier || "";
+        tr.children[3].textContent = order.item || "";
+        tr.children[4].textContent = formatInt(order.total || 0);
+        tr.children[5].textContent = order.approvalStatus || "auto-approved";
+        tr.children[6].textContent = order.status || "";
+        directorProcurementTbody.appendChild(tr);
+      });
+    };
+
     const directorCustomerRows = () => {
       const map = new Map();
       for (const { branch, tx } of allTransactions()) {
@@ -2406,6 +2450,7 @@
       populateDirectorSelects();
       renderDirectorStaff();
       renderDirectorSales();
+      renderDirectorProcurement();
       renderDirectorCustomers();
       renderDirectorTasks();
       renderDirectorNotifications();

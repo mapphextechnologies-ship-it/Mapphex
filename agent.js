@@ -341,6 +341,17 @@
 
     const serialInput = $("#tx-serial");
     const serialList = $("#serial-list");
+    const posSearch = $("#pos-search");
+    const posQty = $("#pos-qty");
+    const posDiscount = $("#pos-discount");
+    const posCustomerPhone = $("#pos-customer-phone");
+    const posChannel = $("#pos-channel");
+    const posCash = $("#pos-cash");
+    const posAddBtn = $("#pos-add-btn");
+    const posCheckoutBtn = $("#pos-checkout-btn");
+    const posClearBtn = $("#pos-clear-btn");
+    const posBasketTbody = $("#pos-basket-tbody");
+    const posSummary = $("#pos-summary");
     const customerPhone = $("#tx-customer-phone");
     const channelSel = $("#tx-channel");
     const saleTypeSel = $("#tx-sale-type");
@@ -370,6 +381,7 @@
     const orgSaveBtn = $("#agent-org-save");
     const orgReportBtn = $("#agent-org-report");
     const orgTbody = $("#agent-org-tbody");
+    let basket = [];
 
     const getBranch = () => (erp.branches || []).find((b) => b.id === session.branchId) || null;
 
@@ -504,6 +516,167 @@
         tr.children[5].textContent = p.assignedAgentName || p.assignedAgentUsername || "Open";
         invTbody.appendChild(tr);
       }
+    };
+
+    const findPosItems = (query, qty) => {
+      const branch = normalizeBranch(getBranch());
+      if (!branch) return [];
+      const q = String(query || "").trim().toLowerCase();
+      if (!q) return [];
+      const needed = Math.max(1, Number(qty || 1));
+      return (branch.phones || [])
+        .filter(phoneAvailableToAgent)
+        .filter((item) => {
+          const text = [item.serial, item.name, item.model, item.category, item.color, item.unit, item.storage].join(" ").toLowerCase();
+          return text.includes(q);
+        })
+        .slice(0, needed);
+    };
+
+    const renderBasket = () => {
+      if (posBasketTbody) {
+        posBasketTbody.textContent = "";
+        if (!basket.length) {
+          posBasketTbody.innerHTML = `<tr><td colspan="6" class="muted">Basket is empty. Search an item and add it.</td></tr>`;
+        } else {
+          basket.forEach((item, index) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td></td><td></td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num"></td>`;
+            tr.children[0].textContent = itemName(item);
+            tr.children[1].textContent = item.serial || "";
+            tr.children[2].textContent = "1";
+            tr.children[3].textContent = formatInt(item.price || 0);
+            tr.children[4].textContent = formatInt(item.price || 0);
+            const remove = document.createElement("button");
+            remove.className = "btn";
+            remove.type = "button";
+            remove.textContent = "Remove";
+            remove.addEventListener("click", () => {
+              basket.splice(index, 1);
+              renderBasket();
+            });
+            tr.children[5].appendChild(remove);
+            posBasketTbody.appendChild(tr);
+          });
+        }
+      }
+      const subtotal = basket.reduce((sum, item) => sum + Number(item.price || 0), 0);
+      const discount = Math.min(subtotal, Math.max(0, Number(posDiscount?.value || 0)));
+      const total = Math.max(0, subtotal - discount);
+      const cash = Number(posCash?.value || 0);
+      const change = String(posChannel?.value || "") === "cash" ? Math.max(0, cash - total) : 0;
+      if (posSummary) {
+        posSummary.textContent = `Items: ${formatInt(basket.length)}\nSubtotal: KES ${formatInt(subtotal)}\nDiscount: KES ${formatInt(discount)}\nTotal: KES ${formatInt(total)}\nChange: KES ${formatInt(change)}`;
+      }
+    };
+
+    const addToBasket = () => {
+      const items = findPosItems(posSearch?.value, posQty?.value);
+      if (!items.length) {
+        if (posSummary) posSummary.textContent = "No matching in-stock item found for this search.";
+        return posSearch?.focus?.();
+      }
+      const existing = new Set(basket.map((item) => String(item.serial || "").toLowerCase()));
+      for (const item of items) {
+        if (!existing.has(String(item.serial || "").toLowerCase())) basket.push(item);
+      }
+      if (posSearch) posSearch.value = "";
+      if (posQty) posQty.value = "1";
+      renderBasket();
+    };
+
+    const printPosReceipt = (tx) => {
+      const win = window.open("", "_blank", "width=420,height=640");
+      if (!win) {
+        if (posSummary) posSummary.textContent = "Allow popups to print the receipt.";
+        return;
+      }
+      const rows = (tx.items || []).map((item) => `<div class="row"><span>${htmlEscape(item.name)}</span><span>KES ${formatInt(item.price)}</span></div>`).join("");
+      win.document.write(`<html><head><meta charset="utf-8"><title>Receipt ${htmlEscape(tx.ref)}</title><style>body{font-family:Arial,sans-serif;margin:24px;color:#111}.receipt{max-width:360px;margin:auto;border:1px solid #ddd;padding:18px}.row{display:flex;justify-content:space-between;gap:12px;border-top:1px solid #eee;padding:8px 0}.total{font-weight:800;font-size:18px}</style></head><body><div class="receipt"><h2>${htmlEscape(tx.branchName || "MAPPHEX POS")}</h2><p>${new Date(tx.at).toLocaleString()}</p>${rows}<div class="row"><span>Discount</span><span>KES ${formatInt(tx.discount)}</span></div><div class="row total"><span>Total</span><span>KES ${formatInt(tx.amount)}</span></div><div class="row"><span>Paid via</span><span>${htmlEscape(String(tx.channel || "").toUpperCase())}</span></div><div class="row"><span>Receipt</span><span>${htmlEscape(tx.ref)}</span></div><p>Thank you.</p></div><script>window.print();<\/script></body></html>`);
+      win.document.close();
+    };
+
+    const checkoutBasket = async () => {
+      const branch = normalizeBranch(getBranch());
+      if (!branch) return;
+      if (!basket.length) return posSearch?.focus?.();
+      const channel = String(posChannel?.value || "mpesa");
+      const customer = String(posCustomerPhone?.value || "").trim() || "Walk-in";
+      const subtotal = basket.reduce((sum, item) => sum + Number(item.price || 0), 0);
+      const discount = Math.min(subtotal, Math.max(0, Number(posDiscount?.value || 0)));
+      const amount = Math.max(0, subtotal - discount);
+      const cash = Number(posCash?.value || 0);
+      if (channel === "cash" && cash < amount) {
+        if (posSummary) posSummary.textContent = "Cash received is less than the basket total.";
+        return posCash?.focus?.();
+      }
+      const stamp = new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14);
+      const ref = `${channel.toUpperCase()}-${branch.id}-POS-${stamp}`;
+      let mpesaResponse = null;
+      if (channel === "mpesa" && amount > 0 && customer !== "Walk-in") {
+        if (posSummary) posSummary.textContent = "Sending M-Pesa STK push...";
+        try {
+          mpesaResponse = await requestMpesaStk({
+            amount,
+            phoneNumber: customer,
+            accountReference: ref,
+            transactionDesc: "MAPPHEX POS sale",
+          });
+        } catch (err) {
+          if (posSummary) posSummary.textContent = String(err?.message || "M-Pesa STK push failed.");
+          return;
+        }
+      }
+      const at = isoNow();
+      const txObj = {
+        at,
+        channel,
+        ref,
+        amount,
+        amountPaid: channel === "credit" ? 0 : amount,
+        balance: channel === "credit" ? amount : 0,
+        saleType: channel === "credit" ? "credit" : "cash",
+        serial: basket.map((item) => item.serial).join(", "),
+        customerPhone: customer,
+        agent: { id: account.id, username: account.username },
+        phone: { name: `POS basket (${basket.length} items)`, category: "Retail", unit: "basket", price: amount },
+        items: basket.map((item) => ({ serial: item.serial, name: itemName(item), category: itemCategory(item), unit: itemUnit(item), price: Number(item.price || 0) })),
+        discount,
+        mpesa: mpesaResponse?.response || null,
+        branchName: branch.name || branch.id || "",
+      };
+      branch.txLog = Array.isArray(branch.txLog) ? branch.txLog : [];
+      branch.txLog.push(txObj);
+      branch.txLog = branch.txLog.slice(-400);
+      branch.soldPhones = Array.isArray(branch.soldPhones) ? branch.soldPhones : [];
+      for (const item of basket) {
+        const pos = branch.phones.findIndex((phone) => String(phone.serial || "").toLowerCase() === String(item.serial || "").toLowerCase());
+        if (pos !== -1) {
+          const [soldItem] = branch.phones.splice(pos, 1);
+          branch.soldPhones.push({ ...soldItem, status: "sold", soldAt: at, soldTo: customer, soldRef: ref, soldAmount: Number(soldItem.price || 0), soldChannel: channel, soldBy: account.username || "" });
+        }
+      }
+      if (!branch.financeSummary || typeof branch.financeSummary !== "object") {
+        branch.financeSummary = { mpesaIn: 0, bankIn: 0, txCount: 0, lastTxAt: "" };
+      }
+      if (channel === "bank") branch.financeSummary.bankIn += amount;
+      else branch.financeSummary.mpesaIn += amount;
+      branch.financeSummary.txCount += 1;
+      branch.financeSummary.lastTxAt = at;
+      rebuildInventoryFromPhones(branch);
+      branch.updatedAt = at;
+      persist();
+      notifyTransaction(txObj, branch);
+      if (customer !== "Walk-in") queueSms(customer, `MAPPHEX: POS sale KES ${formatInt(amount)}. Receipt ${ref}. Thank you.`);
+      printPosReceipt(txObj);
+      basket = [];
+      [posSearch, posDiscount, posCustomerPhone, posCash].forEach((el) => {
+        if (el) el.value = "";
+      });
+      renderBasket();
+      renderKPIs();
+      renderInventory();
+      renderHistory();
     };
 
     const renderHistory = () => {
@@ -929,6 +1102,7 @@
       renderInventory();
       renderHistory();
       renderPipeline();
+      renderBasket();
       updateTxFromSerial();
       if (indicator) {
         indicator.textContent = "Live";
@@ -976,6 +1150,20 @@
     });
 
     if (serialInput) serialInput.addEventListener("input", () => updateTxFromSerial());
+    if (posAddBtn) posAddBtn.addEventListener("click", () => addToBasket());
+    if (posCheckoutBtn) posCheckoutBtn.addEventListener("click", () => checkoutBasket());
+    if (posClearBtn) posClearBtn.addEventListener("click", () => {
+      basket = [];
+      renderBasket();
+    });
+    if (posDiscount) posDiscount.addEventListener("input", () => renderBasket());
+    if (posCash) posCash.addEventListener("input", () => renderBasket());
+    if (posSearch) posSearch.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        addToBasket();
+      }
+    });
     if (addBtn) addBtn.addEventListener("click", () => completeSale());
     if (exportBtn) exportBtn.addEventListener("click", () => exportCsv());
     if (creditPayBtn) creditPayBtn.addEventListener("click", () => recordCreditPayment());

@@ -50,6 +50,7 @@
             <a class="sidebar-link" href="#branch-accounts-panel" data-nav="branch-accounts-panel" data-icon="B">Branch Accounts</a>
             <a class="sidebar-link" href="#director-staff" data-nav="director-staff" data-icon="S">Staff</a>
             <a class="sidebar-link" href="#director-sales" data-nav="director-sales" data-icon="P">Sales</a>
+            <a class="sidebar-link" href="#director-procurement" data-nav="director-procurement" data-icon="Q">Procurement</a>
             <a class="sidebar-link" href="#director-customers" data-nav="director-customers" data-icon="C">Customers</a>
             <a class="sidebar-link" href="#director-tasks" data-nav="director-tasks" data-icon="T">Tasks</a>
           </div>
@@ -193,6 +194,25 @@
           <table class="table">
             <thead><tr><th>Date</th><th>Branch</th><th>Item</th><th>Customer</th><th>Channel</th><th>Type</th><th>Reference</th><th class="num">Paid</th><th class="num">Balance</th></tr></thead>
             <tbody id="director-sales-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="director-procurement" data-section="director-procurement">
+        <div class="panel-header">
+          <h2>Procurement Summary</h2>
+          <div class="panel-actions muted">Supplier spend, pending orders, received goods, and branch purchasing</div>
+        </div>
+        <div class="kpis">
+          <article class="kpi"><div class="kpi-label">Purchase orders</div><div id="dir-proc-orders" class="kpi-value">0</div><div class="kpi-foot muted">Across branches</div></article>
+          <article class="kpi"><div class="kpi-label">Pending approval</div><div id="dir-proc-pending" class="kpi-value">0</div><div class="kpi-foot muted">Director review</div></article>
+          <article class="kpi"><div class="kpi-label">Procurement spend</div><div id="dir-proc-spend" class="kpi-value">KES 0</div><div class="kpi-foot muted">Order value</div></article>
+          <article class="kpi"><div class="kpi-label">Supplier balances</div><div id="dir-proc-balances" class="kpi-value">KES 0</div><div class="kpi-foot muted">Outstanding</div></article>
+        </div>
+        <div class="table-wrap" role="region" aria-label="Director procurement summary" tabindex="0">
+          <table class="table">
+            <thead><tr><th>Branch</th><th>PO</th><th>Supplier</th><th>Item</th><th class="num">Total</th><th>Approval</th><th>Status</th></tr></thead>
+            <tbody id="director-procurement-tbody"></tbody>
           </table>
         </div>
       </section>
@@ -425,7 +445,7 @@
     <script src="erp-client.js"></script>
     <script src="enterprise-platform.js"></script>
     <script src="ui-menu.js?v=2"></script>
-    <script src="director.js?v=4"></script>
+    <script src="director.js?v=5"></script>
     <script src="pwa.js"></script>
 </body>
 </html>

@@ -455,17 +455,45 @@
     const reportOut = $("#branch-report-output");
 
     const supplierName = $("#supplier-name");
+    const supplierType = $("#supplier-type");
+    const supplierPerson = $("#supplier-person");
     const supplierContact = $("#supplier-contact");
     const supplierProducts = $("#supplier-products");
+    const supplierTerms = $("#supplier-terms");
+    const supplierPayment = $("#supplier-payment");
     const supplierBalance = $("#supplier-balance");
     const supplierSaveBtn = $("#supplier-save-btn");
     const suppliersTbody = $("#suppliers-tbody");
     const poSupplier = $("#po-supplier");
     const poItem = $("#po-item");
     const poQty = $("#po-qty");
+    const poUnitCost = $("#po-unit-cost");
     const poDate = $("#po-date");
+    const poTerms = $("#po-terms");
+    const poNotes = $("#po-notes");
     const poSaveBtn = $("#po-save-btn");
     const poTbody = $("#po-tbody");
+    const grPo = $("#gr-po");
+    const grSupplier = $("#gr-supplier");
+    const grItem = $("#gr-item");
+    const grOrdered = $("#gr-ordered");
+    const grReceived = $("#gr-received");
+    const grRejected = $("#gr-rejected");
+    const grWaybill = $("#gr-waybill");
+    const grReceivedBy = $("#gr-received-by");
+    const grSaveBtn = $("#gr-save-btn");
+    const grTbody = $("#gr-tbody");
+    const invoiceNumber = $("#invoice-number");
+    const invoicePo = $("#invoice-po");
+    const invoiceSupplier = $("#invoice-supplier");
+    const invoiceAmount = $("#invoice-amount");
+    const invoiceDue = $("#invoice-due");
+    const invoicePayment = $("#invoice-payment");
+    const invoiceChannel = $("#invoice-channel");
+    const invoiceRef = $("#invoice-ref");
+    const invoiceSaveBtn = $("#invoice-save-btn");
+    const invoicePayBtn = $("#invoice-pay-btn");
+    const invoiceTbody = $("#invoice-tbody");
     const staffTbody = $("#staff-tbody");
     const customersTbody = $("#customers-tbody");
     const customerExportBtn = $("#customer-export-btn");
@@ -528,6 +556,8 @@
       if (!Array.isArray(branch.damageLoss)) branch.damageLoss = [];
       if (!Array.isArray(branch.suppliers)) branch.suppliers = [];
       if (!Array.isArray(branch.purchaseOrders)) branch.purchaseOrders = [];
+      if (!Array.isArray(branch.goodsReceived)) branch.goodsReceived = [];
+      if (!Array.isArray(branch.supplierInvoices)) branch.supplierInvoices = [];
       if (!Array.isArray(branch.tasks)) branch.tasks = [];
       if (!branch.financeSummary || typeof branch.financeSummary !== "object") {
         branch.financeSummary = { mpesaIn: 0, bankIn: 0, txCount: 0, lastTxAt: "" };
@@ -1509,18 +1539,20 @@
       const suppliers = Array.isArray(branch.suppliers) ? branch.suppliers : [];
       if (!suppliers.length) {
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td colspan="6" class="muted">No supplier records yet.</td>`;
+        tr.innerHTML = `<td colspan="8" class="muted">No supplier records yet.</td>`;
         suppliersTbody.appendChild(tr);
         return;
       }
       for (const supplier of suppliers.slice().sort((a, z) => String(a.name || "").localeCompare(String(z.name || "")))) {
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td></td><td></td><td></td><td class="num"></td><td></td><td class="num"></td>`;
+        tr.innerHTML = `<td></td><td></td><td></td><td></td><td></td><td class="num"></td><td></td><td class="num"></td>`;
         tr.children[0].textContent = supplier.name || "Supplier";
-        tr.children[1].textContent = supplier.contact || "";
-        tr.children[2].textContent = supplier.products || "";
-        tr.children[3].textContent = formatInt(supplier.balance || 0);
-        tr.children[4].textContent = supplier.updatedAt ? new Date(supplier.updatedAt).toLocaleString() : "";
+        tr.children[1].textContent = supplier.type || "";
+        tr.children[2].textContent = [supplier.person, supplier.contact].filter(Boolean).join(" / ");
+        tr.children[3].textContent = supplier.terms || "";
+        tr.children[4].textContent = supplier.products || "";
+        tr.children[5].textContent = formatInt(supplier.balance || 0);
+        tr.children[6].textContent = supplier.updatedAt ? new Date(supplier.updatedAt).toLocaleString() : "";
         const del = document.createElement("button");
         del.className = "btn";
         del.type = "button";
@@ -1532,7 +1564,7 @@
           renderSuppliers();
           renderActivity();
         });
-        tr.children[5].appendChild(del);
+        tr.children[7].appendChild(del);
         suppliersTbody.appendChild(tr);
       }
     };
@@ -1547,9 +1579,14 @@
       const row = {
         id: idx >= 0 ? list[idx].id : makeRecordId("supplier"),
         name,
+        type: String(supplierType?.value || "").trim(),
+        person: String(supplierPerson?.value || "").trim(),
         contact: String(supplierContact?.value || "").trim(),
         products: String(supplierProducts?.value || "").trim(),
+        terms: String(supplierTerms?.value || "").trim(),
+        paymentDetails: String(supplierPayment?.value || "").trim(),
         balance: Math.max(0, Number(supplierBalance?.value || 0)),
+        status: "active",
         updatedAt: isoNow(),
       };
       if (idx >= 0) list[idx] = { ...list[idx], ...row };
@@ -1558,11 +1595,40 @@
       branch.updatedAt = isoNow();
       persist().catch(() => null);
       if (supplierName) supplierName.value = "";
+      if (supplierPerson) supplierPerson.value = "";
       if (supplierContact) supplierContact.value = "";
       if (supplierProducts) supplierProducts.value = "";
+      if (supplierPayment) supplierPayment.value = "";
       if (supplierBalance) supplierBalance.value = "";
       renderSuppliers();
       renderActivity();
+    };
+
+    const addReceivedInventory = (branch, item, qty, unitCost, supplier) => {
+      const count = Math.max(0, Number(qty || 0));
+      const cleanItem = String(item || "Received item").trim() || "Received item";
+      for (let i = 0; i < count; i += 1) {
+        const serial = `GR-${Date.now()}-${String(i + 1).padStart(3, "0")}`;
+        branch.phones.push({
+          serial,
+          model: cleanItem,
+          name: cleanItem,
+          color: supplier || "Procurement",
+          category: supplier || "Procurement",
+          storage: "unit",
+          unit: "unit",
+          costPrice: Math.max(0, Number(unitCost || 0)),
+          price: Math.max(0, Number(unitCost || 0)),
+          reorderLevel: 0,
+          expiryDate: "",
+          status: "in_stock",
+          supplier,
+          source: "goods_received",
+          createdAt: isoNow(),
+          updatedAt: isoNow(),
+        });
+      }
+      rebuildInventoryFromPhones(branch);
     };
 
     const renderPurchaseOrders = () => {
@@ -1573,18 +1639,21 @@
       const orders = Array.isArray(branch.purchaseOrders) ? branch.purchaseOrders : [];
       if (!orders.length) {
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td colspan="6" class="muted">No purchase orders yet.</td>`;
+        tr.innerHTML = `<td colspan="9" class="muted">No purchase orders yet.</td>`;
         poTbody.appendChild(tr);
         return;
       }
       for (const order of orders.slice().sort((a, z) => String(z.createdAt || "").localeCompare(String(a.createdAt || "")))) {
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td></td><td></td><td class="num"></td><td></td><td></td><td class="num"></td>`;
-        tr.children[0].textContent = order.supplier || "";
-        tr.children[1].textContent = order.item || "";
-        tr.children[2].textContent = formatInt(order.qty || 0);
-        tr.children[3].textContent = order.expectedDate || "";
-        tr.children[4].textContent = order.status || "pending";
+        tr.innerHTML = `<td></td><td></td><td></td><td class="num"></td><td class="num"></td><td></td><td></td><td></td><td class="num"></td>`;
+        tr.children[0].textContent = order.ref || order.id || "";
+        tr.children[1].textContent = order.supplier || "";
+        tr.children[2].textContent = order.item || "";
+        tr.children[3].textContent = formatInt(order.qty || 0);
+        tr.children[4].textContent = formatInt(order.total || 0);
+        tr.children[5].textContent = order.expectedDate || "";
+        tr.children[6].textContent = order.approvalStatus || "auto-approved";
+        tr.children[7].textContent = order.status || "pending";
         const done = document.createElement("button");
         done.className = "btn";
         done.type = "button";
@@ -1593,13 +1662,29 @@
         done.addEventListener("click", () => {
           order.status = "received";
           order.receivedAt = isoNow();
+          branch.goodsReceived.push({
+            id: makeRecordId("gr"),
+            at: order.receivedAt,
+            poRef: order.ref || order.id || "",
+            supplier: order.supplier || "",
+            item: order.item || "",
+            orderedQty: Number(order.qty || 0),
+            receivedQty: Number(order.qty || 0),
+            rejectedQty: 0,
+            waybill: "",
+            receivedBy: account?.username || "Branch",
+            status: "received",
+          });
+          addReceivedInventory(branch, order.item, Number(order.qty || 0), Number(order.unitCost || 0), order.supplier || "");
           branch.updatedAt = isoNow();
           persist().catch(() => null);
           renderPurchaseOrders();
+          renderGoodsReceived();
+          renderInventory();
           renderNotifications();
           renderActivity();
         });
-        tr.children[5].appendChild(done);
+        tr.children[8].appendChild(done);
         poTbody.appendChild(tr);
       }
     };
@@ -1610,23 +1695,180 @@
       const item = String(poItem?.value || "").trim();
       if (!item) return poItem?.focus?.();
       const qty = Math.max(1, Number(poQty?.value || 1));
+      const unitCost = Math.max(0, Number(poUnitCost?.value || 0));
+      const total = unitCost * qty;
+      const threshold = 50000;
+      const now = isoNow();
       branch.purchaseOrders.push({
         id: makeRecordId("po"),
+        ref: `PO-${branch.id}-${Date.now()}`,
         supplier: String(poSupplier?.value || "").trim(),
         item,
         qty,
+        unitCost,
+        total,
+        paymentTerms: String(poTerms?.value || "").trim(),
+        notes: String(poNotes?.value || "").trim(),
+        approvalStatus: total >= threshold ? "director approval required" : "auto-approved",
         expectedDate: String(poDate?.value || "").trim(),
-        status: "pending",
-        createdAt: isoNow(),
+        status: total >= threshold ? "approval pending" : "sent",
+        createdAt: now,
       });
       branch.updatedAt = isoNow();
       persist().catch(() => null);
       if (poSupplier) poSupplier.value = "";
       if (poItem) poItem.value = "";
       if (poQty) poQty.value = "";
+      if (poUnitCost) poUnitCost.value = "";
       if (poDate) poDate.value = "";
+      if (poNotes) poNotes.value = "";
       renderPurchaseOrders();
       renderNotifications();
+      renderActivity();
+    };
+
+    const renderGoodsReceived = () => {
+      if (!grTbody) return;
+      const branch = normalizeBranch(getBranch());
+      if (!branch) return;
+      grTbody.textContent = "";
+      const rows = Array.isArray(branch.goodsReceived) ? branch.goodsReceived : [];
+      if (!rows.length) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td colspan="8" class="muted">No goods received yet.</td>`;
+        grTbody.appendChild(tr);
+        return;
+      }
+      rows.slice().sort((a, z) => String(z.at || "").localeCompare(String(a.at || ""))).forEach((row) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td></td><td></td><td></td><td></td><td class="num"></td><td class="num"></td><td></td><td></td>`;
+        tr.children[0].textContent = row.at ? new Date(row.at).toLocaleString() : "";
+        tr.children[1].textContent = row.poRef || "";
+        tr.children[2].textContent = row.supplier || "";
+        tr.children[3].textContent = row.item || "";
+        tr.children[4].textContent = formatInt(row.receivedQty || 0);
+        tr.children[5].textContent = formatInt(row.rejectedQty || 0);
+        tr.children[6].textContent = row.waybill || "";
+        tr.children[7].textContent = row.status || "received";
+        grTbody.appendChild(tr);
+      });
+    };
+
+    const saveGoodsReceived = () => {
+      const branch = normalizeBranch(getBranch());
+      if (!branch) return;
+      const item = String(grItem?.value || "").trim();
+      if (!item) return grItem?.focus?.();
+      const receivedQty = Math.max(0, Number(grReceived?.value || 0));
+      const rejectedQty = Math.max(0, Number(grRejected?.value || 0));
+      const poRef = String(grPo?.value || "").trim();
+      const po = (branch.purchaseOrders || []).find((order) => String(order.ref || order.id || "").toLowerCase() === poRef.toLowerCase());
+      const row = {
+        id: makeRecordId("gr"),
+        at: isoNow(),
+        poRef,
+        supplier: String(grSupplier?.value || po?.supplier || "").trim(),
+        item,
+        orderedQty: Math.max(0, Number(grOrdered?.value || po?.qty || 0)),
+        receivedQty,
+        rejectedQty,
+        waybill: String(grWaybill?.value || "").trim(),
+        receivedBy: String(grReceivedBy?.value || account?.username || "Branch").trim(),
+        status: rejectedQty > 0 ? "received with rejection" : "received",
+      };
+      branch.goodsReceived.push(row);
+      if (po) {
+        po.status = receivedQty >= Number(po.qty || 0) ? "received" : "partial";
+        po.receivedAt = row.at;
+      }
+      addReceivedInventory(branch, item, receivedQty, Number(po?.unitCost || 0), row.supplier);
+      branch.updatedAt = row.at;
+      persist().catch(() => null);
+      [grPo, grSupplier, grItem, grOrdered, grReceived, grRejected, grWaybill, grReceivedBy].forEach((el) => {
+        if (el) el.value = "";
+      });
+      renderGoodsReceived();
+      renderPurchaseOrders();
+      renderInventory();
+      renderActivity();
+    };
+
+    const renderSupplierInvoices = () => {
+      if (!invoiceTbody) return;
+      const branch = normalizeBranch(getBranch());
+      if (!branch) return;
+      invoiceTbody.textContent = "";
+      const rows = Array.isArray(branch.supplierInvoices) ? branch.supplierInvoices : [];
+      if (!rows.length) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td colspan="8" class="muted">No supplier invoices yet.</td>`;
+        invoiceTbody.appendChild(tr);
+        return;
+      }
+      rows.slice().sort((a, z) => String(z.createdAt || "").localeCompare(String(a.createdAt || ""))).forEach((row) => {
+        const paid = Number(row.paid || 0);
+        const amount = Number(row.amount || 0);
+        const balance = Math.max(0, amount - paid);
+        const overdue = balance > 0 && row.dueDate && Date.parse(`${row.dueDate}T23:59:59`) < Date.now();
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td></td><td></td><td></td><td class="num"></td><td class="num"></td><td class="num"></td><td></td><td></td>`;
+        tr.children[0].textContent = row.invoiceNumber || "";
+        tr.children[1].textContent = row.supplier || "";
+        tr.children[2].textContent = row.poRef || "";
+        tr.children[3].textContent = formatInt(amount);
+        tr.children[4].textContent = formatInt(paid);
+        tr.children[5].textContent = formatInt(balance);
+        tr.children[6].textContent = row.dueDate || "";
+        tr.children[7].textContent = balance <= 0 ? "paid" : overdue ? "overdue" : row.status || "unpaid";
+        invoiceTbody.appendChild(tr);
+      });
+    };
+
+    const saveSupplierInvoice = () => {
+      const branch = normalizeBranch(getBranch());
+      if (!branch) return;
+      const number = String(invoiceNumber?.value || "").trim();
+      if (!number) return invoiceNumber?.focus?.();
+      branch.supplierInvoices.push({
+        id: makeRecordId("inv"),
+        invoiceNumber: number,
+        poRef: String(invoicePo?.value || "").trim(),
+        supplier: String(invoiceSupplier?.value || "").trim(),
+        amount: Math.max(0, Number(invoiceAmount?.value || 0)),
+        paid: 0,
+        dueDate: String(invoiceDue?.value || "").trim(),
+        status: "unpaid",
+        payments: [],
+        createdAt: isoNow(),
+      });
+      persist().catch(() => null);
+      [invoiceNumber, invoicePo, invoiceSupplier, invoiceAmount, invoiceDue].forEach((el) => {
+        if (el) el.value = "";
+      });
+      renderSupplierInvoices();
+      renderActivity();
+    };
+
+    const paySupplierInvoice = () => {
+      const branch = normalizeBranch(getBranch());
+      if (!branch) return;
+      const number = String(invoiceNumber?.value || "").trim();
+      const row = branch.supplierInvoices.find((invoice) => String(invoice.invoiceNumber || "").toLowerCase() === number.toLowerCase());
+      if (!row) return invoiceNumber?.focus?.();
+      const amount = Math.max(0, Number(invoicePayment?.value || 0));
+      if (!amount) return invoicePayment?.focus?.();
+      row.paid = Math.min(Number(row.amount || 0), Number(row.paid || 0) + amount);
+      row.status = row.paid >= Number(row.amount || 0) ? "paid" : "partial";
+      row.payments = Array.isArray(row.payments) ? row.payments : [];
+      row.payments.push({ at: isoNow(), amount, channel: String(invoiceChannel?.value || ""), ref: String(invoiceRef?.value || "") });
+      const supplier = branch.suppliers.find((item) => String(item.name || "").toLowerCase() === String(row.supplier || "").toLowerCase());
+      if (supplier) supplier.balance = Math.max(0, Number(supplier.balance || 0) - amount);
+      persist().catch(() => null);
+      [invoicePayment, invoiceRef].forEach((el) => {
+        if (el) el.value = "";
+      });
+      renderSupplierInvoices();
+      renderSuppliers();
       renderActivity();
     };
 
@@ -1865,6 +2107,12 @@
       for (const order of branch.purchaseOrders || []) {
         add(order.updatedAt || order.createdAt, "Purchase orders", order.status || "Order created", `${order.item || "Item"} x ${formatInt(order.qty || 0)}`);
       }
+      for (const receipt of branch.goodsReceived || []) {
+        add(receipt.at, "Goods received", receipt.status || "received", `${receipt.item || "Item"} x ${formatInt(receipt.receivedQty || 0)}`);
+      }
+      for (const invoice of branch.supplierInvoices || []) {
+        add(invoice.updatedAt || invoice.createdAt, "Supplier invoices", invoice.status || "unpaid", `${invoice.invoiceNumber || "Invoice"} KES ${formatInt(invoice.amount || 0)}`);
+      }
       for (const task of branch.tasks || []) {
         add(task.completedAt || task.createdAt, "Tasks", task.status === "complete" ? "Task completed" : "Task created", task.title || "");
       }
@@ -1894,6 +2142,8 @@
     const renderOperationsPanels = () => {
       renderSuppliers();
       renderPurchaseOrders();
+      renderGoodsReceived();
+      renderSupplierInvoices();
       renderStaff();
       renderCustomers();
       renderTasks();
@@ -2472,6 +2722,9 @@
     if (chartsCloseBtn) chartsCloseBtn.addEventListener("click", () => closeCharts());
     if (supplierSaveBtn) supplierSaveBtn.addEventListener("click", () => saveSupplier());
     if (poSaveBtn) poSaveBtn.addEventListener("click", () => savePurchaseOrder());
+    if (grSaveBtn) grSaveBtn.addEventListener("click", () => saveGoodsReceived());
+    if (invoiceSaveBtn) invoiceSaveBtn.addEventListener("click", () => saveSupplierInvoice());
+    if (invoicePayBtn) invoicePayBtn.addEventListener("click", () => paySupplierInvoice());
     if (customerExportBtn) customerExportBtn.addEventListener("click", () => exportCustomersCsv());
     if (taskSaveBtn) taskSaveBtn.addEventListener("click", () => saveTask());
 

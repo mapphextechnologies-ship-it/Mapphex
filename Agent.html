@@ -125,10 +125,53 @@
 
         <section class="panel" id="sell" data-section="sell">
           <div class="panel-header">
-            <h2>Complete Transaction</h2>
-            <div class="panel-actions muted">Products, services, subscriptions, contracts, and support billing</div>
+            <h2>Retail POS</h2>
+            <div class="panel-actions muted">Search items, build a basket, process payment, and print receipts</div>
           </div>
 
+          <div class="agent-form">
+            <label class="field">
+              <span>Search / scan item</span>
+              <input id="pos-search" type="text" list="serial-list" placeholder="SKU, barcode, service code, or item name" />
+            </label>
+            <label class="field">
+              <span>Quantity</span>
+              <input id="pos-qty" type="number" min="1" step="1" value="1" />
+            </label>
+            <label class="field">
+              <span>Basket discount (KES)</span>
+              <input id="pos-discount" type="number" min="0" step="1" placeholder="0" />
+            </label>
+            <label class="field">
+              <span>Customer phone</span>
+              <input id="pos-customer-phone" type="tel" inputmode="tel" placeholder="Walk-in or 07XXXXXXXX" />
+            </label>
+            <label class="field">
+              <span>Payment channel</span>
+              <select id="pos-channel"><option value="mpesa">M-Pesa</option><option value="cash">Cash</option><option value="bank">Bank</option><option value="credit">Credit</option></select>
+            </label>
+            <label class="field">
+              <span>Cash received (KES)</span>
+              <input id="pos-cash" type="number" min="0" step="1" placeholder="For cash/change" />
+            </label>
+            <div class="report-buttons" style="justify-content:flex-start;">
+              <button id="pos-add-btn" class="btn" type="button">Add to basket</button>
+              <button id="pos-checkout-btn" class="btn primary" type="button">Checkout basket</button>
+              <button id="pos-clear-btn" class="btn" type="button">Clear basket</button>
+            </div>
+          </div>
+          <div class="table-wrap" role="region" aria-label="POS basket" tabindex="0">
+            <table class="table">
+              <thead><tr><th>Item</th><th>SKU</th><th class="num">Qty</th><th class="num">Unit</th><th class="num">Line total</th><th class="num">Action</th></tr></thead>
+              <tbody id="pos-basket-tbody"></tbody>
+            </table>
+          </div>
+          <div id="pos-summary" class="report-output" aria-live="polite">Basket is empty.</div>
+
+          <div class="panel-header" style="border-top:1px solid rgba(255,255,255,0.08);">
+            <h2>Single Item / Credit Sale</h2>
+            <div class="panel-actions muted">Fallback for one-off service, contract, or credit sales</div>
+          </div>
           <div class="agent-form">
             <label class="field">
               <span>Product / service code</span>
@@ -283,7 +326,7 @@
     <script src="enterprise-store.js"></script>
     <script src="erp-client.js"></script>
     <script src="enterprise-platform.js"></script>
-    <script src="agent.js"></script>
+    <script src="agent.js?v=2"></script>
     <script src="pwa.js"></script>
   </body>
 </html>
