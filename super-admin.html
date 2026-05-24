@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Super Admin Control Center • MAPPHEX</title>
+    <title>Admin Control Center - MAPPHEX</title>
     <meta name="robots" content="noindex,nofollow" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/images/enterprise-icon-192.png" type="image/png" />
@@ -20,8 +20,8 @@
         </button>
         <img class="logo-img" src="/images/enterprise-logo.png" alt="" />
         <div>
-          <div class="brand-title">Super Admin</div>
-          <div class="brand-subtitle muted">Platform control center</div>
+          <div class="brand-title">Admin Control Center</div>
+          <div class="brand-subtitle muted">Platform governance, approvals, and tenant control</div>
         </div>
       </div>
       <div class="topbar-actions">
@@ -41,10 +41,15 @@
           <div class="sidebar-nav-group">
             <strong>Main</strong>
             <a class="sidebar-link active" href="#overview" data-icon="O">Overview</a>
+            <a class="sidebar-link" href="#approvals" data-icon="A">Approvals</a>
           </div>
           <div class="sidebar-nav-group">
             <strong>Platform</strong>
             <a class="sidebar-link" href="#organizations" data-icon="O">Organizations</a>
+            <a class="sidebar-link" href="#directors" data-icon="D">Directors</a>
+            <a class="sidebar-link" href="#branches" data-icon="B">Branches</a>
+            <a class="sidebar-link" href="#agents" data-icon="G">Agents</a>
+            <a class="sidebar-link" href="#modules" data-icon="M">Modules</a>
             <a class="sidebar-link" href="#monitoring" data-icon="M">Monitoring</a>
             <a class="sidebar-link" href="#users" data-icon="U">Global Users</a>
           </div>
@@ -55,10 +60,11 @@
           </div>
           <div class="sidebar-nav-group">
             <strong>Tools</strong>
+            <a class="sidebar-link" href="#notifications" data-icon="N">Notifications</a>
             <a class="sidebar-link" href="#settings" data-icon="P">Platform Settings</a>
           </div>
         </nav>
-        <div class="sidebar-foot muted">Isolated platform control plane. Organization admins cannot access this area.</div>
+        <div class="sidebar-foot muted">Admin is the top-level approval layer. Organization admins cannot access this area.</div>
       </aside>
       <div id="menu-backdrop" class="menu-backdrop" aria-hidden="true"></div>
 
@@ -74,14 +80,49 @@
           </div>
           <div class="kpis">
             <article class="kpi"><div class="kpi-label">Organizations</div><div id="kpi-orgs" class="kpi-value">0</div><div class="kpi-foot muted">Registered tenants</div></article>
-            <article class="kpi"><div class="kpi-label">Active</div><div id="kpi-active" class="kpi-value">0</div><div class="kpi-foot muted">Operational</div></article>
+            <article class="kpi"><div class="kpi-label">Pending Approval</div><div id="kpi-pending" class="kpi-value">0</div><div class="kpi-foot muted">Orgs and accounts waiting</div></article>
+            <article class="kpi"><div class="kpi-label">Branches</div><div id="kpi-branches" class="kpi-value">0</div><div class="kpi-foot muted">Active / pending</div></article>
             <article class="kpi"><div class="kpi-label">Users</div><div id="kpi-users" class="kpi-value">0</div><div class="kpi-foot muted">Across tenants</div></article>
             <article class="kpi"><div class="kpi-label">Revenue</div><div id="kpi-revenue" class="kpi-value">0</div><div class="kpi-foot muted">Reported summaries</div></article>
           </div>
-          <div class="super-grid">
-            <article class="report-card"><div class="label">Realtime clients</div><div id="kpi-sessions" class="value">0</div></article>
-            <article class="report-card"><div class="label">Platform health</div><div id="kpi-health" class="value">Checking</div></article>
-            <article class="report-card"><div class="label">Security alerts</div><div id="kpi-alerts" class="value">0</div></article>
+          <div class="admin-command-grid">
+            <article class="admin-command-card">
+              <span>Hierarchy</span>
+              <strong>Admin controls organization activation, Director assignment, branch approval, and agent access.</strong>
+            </article>
+            <article class="admin-command-card">
+              <span>Isolation</span>
+              <strong>Each company keeps its own users, branches, modules, and activity namespace.</strong>
+            </article>
+            <article class="admin-command-card">
+              <span>Security</span>
+              <strong>All Admin actions require the Super Admin session and are written to the audit event stream.</strong>
+            </article>
+          </div>
+        </section>
+
+        <section class="panel" id="approvals">
+          <div class="panel-header">
+            <h2>Approval Command Center</h2>
+            <div class="panel-actions muted">Nothing opens until Admin approves and assigns the right organization scope.</div>
+          </div>
+          <div class="approval-board">
+            <article class="approval-column">
+              <div class="approval-column-head"><h3>Organizations</h3><span id="approval-org-count">0</span></div>
+              <div id="approval-orgs" class="approval-list"></div>
+            </article>
+            <article class="approval-column">
+              <div class="approval-column-head"><h3>Directors</h3><span id="approval-director-count">0</span></div>
+              <div id="approval-directors" class="approval-list"></div>
+            </article>
+            <article class="approval-column">
+              <div class="approval-column-head"><h3>Branches</h3><span id="approval-branch-count">0</span></div>
+              <div id="approval-branches" class="approval-list"></div>
+            </article>
+            <article class="approval-column">
+              <div class="approval-column-head"><h3>Agents & Team Leaders</h3><span id="approval-agent-count">0</span></div>
+              <div id="approval-agents" class="approval-list"></div>
+            </article>
           </div>
         </section>
 
@@ -110,7 +151,7 @@
         <section class="panel" id="organizations">
           <div class="panel-header">
             <h2>Organizations</h2>
-            <div class="panel-actions muted">Suspend, activate, and inspect summaries</div>
+            <div class="panel-actions muted">Approve, suspend, activate, and inspect tenant summaries</div>
           </div>
           <div class="table-wrap">
             <table class="table">
@@ -120,6 +161,32 @@
               <tbody id="org-table"></tbody>
             </table>
           </div>
+        </section>
+
+        <section class="panel" id="directors">
+          <div class="panel-header"><h2>Director Management</h2><div class="panel-actions muted">One Director per organization, assigned and activated by Admin</div></div>
+          <div class="table-wrap">
+            <table class="table"><thead><tr><th>Director</th><th>Organization</th><th>Status</th><th>Portal Access</th><th>Actions</th></tr></thead><tbody id="directors-table"></tbody></table>
+          </div>
+        </section>
+
+        <section class="panel" id="branches">
+          <div class="panel-header"><h2>Branch Management</h2><div class="panel-actions muted">Branch managers, location assignment, and approval status</div></div>
+          <div class="table-wrap">
+            <table class="table"><thead><tr><th>Branch Manager</th><th>Organization</th><th>Branch / Area</th><th>Status</th><th>Actions</th></tr></thead><tbody id="branches-table"></tbody></table>
+          </div>
+        </section>
+
+        <section class="panel" id="agents">
+          <div class="panel-header"><h2>Agents & Team Leaders</h2><div class="panel-actions muted">Sales users must be assigned before they can transact</div></div>
+          <div class="table-wrap">
+            <table class="table"><thead><tr><th>User</th><th>Organization</th><th>Branch / Team</th><th>Status</th><th>Actions</th></tr></thead><tbody id="agents-table"></tbody></table>
+          </div>
+        </section>
+
+        <section class="panel" id="modules">
+          <div class="panel-header"><h2>Module & Service Control</h2><div class="panel-actions muted">Admin decides which portals each company can use</div></div>
+          <div id="modules-grid" class="admin-module-grid"></div>
         </section>
 
         <section class="panel" id="users">
@@ -146,8 +213,8 @@
           <div id="heatmap" class="heatmap"></div>
         </section>
 
-        <section class="panel" id="settings">
-          <div class="panel-header"><h2>Global Notification</h2><div class="panel-actions muted">Broadcast to all organizations</div></div>
+        <section class="panel" id="notifications">
+          <div class="panel-header"><h2>Notifications & Announcements</h2><div class="panel-actions muted">Broadcast to all organizations</div></div>
           <form id="broadcast-form" class="super-form">
             <label class="field"><span>Title</span><input name="title" required placeholder="Platform update" /></label>
             <label class="field"><span>Message</span><input name="body" required placeholder="Maintenance window, policy update, alert..." /></label>
@@ -157,6 +224,9 @@
             <label class="field"><span>Expires</span><input name="expiresAt" type="datetime-local" /></label>
             <button class="btn primary" type="submit">Send global notification</button>
           </form>
+        </section>
+
+        <section class="panel" id="settings">
           <div class="panel-header"><h2>Platform Settings</h2><div class="panel-actions"><button id="platform-settings-save" class="btn primary" type="button">Save settings</button></div></div>
           <div class="super-form">
             <label class="field"><span>Default subscription plan</span><input id="platform-default-plan" value="starter-monthly" /></label>
@@ -168,6 +238,6 @@
 
     <script src="/super-admin-session.js"></script>
     <script src="ui-menu.js?v=2"></script>
-    <script src="internal-control.js?v=4"></script>
+    <script src="internal-control.js?v=5"></script>
   </body>
 </html>

@@ -605,6 +605,12 @@
           data = await createLocalOrganization(body);
         }
         window.EnterpriseCore?.setTenant?.(data.tenantId);
+        if (data.pendingApproval) {
+          result.style.color = "var(--ok)";
+          result.textContent = `Registration submitted for ${data.organization.name}. ID: ${data.organizationId}. Admin must approve the organization before the workspace opens.`;
+          event.currentTarget.reset();
+          return;
+        }
         let sessionData = null;
         try {
           const sessionResponse = await postJson("/api/auth/session", {
