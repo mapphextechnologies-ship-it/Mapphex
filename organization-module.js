@@ -604,6 +604,7 @@
     const label = link.dataset.moduleLabel || "Records";
     const hash = link.dataset.moduleNav || label.toLowerCase().replace(/[^a-z0-9]+/g, "-");
     const workflow = workflowFor(moduleId);
+    const canManageRecords = ["sales", "pharmacy"].includes(moduleId);
     const rows = Array.isArray(moduleData()[moduleId]) ? moduleData()[moduleId] : [];
     const matchingRows = rows.filter((row) => {
       const text = (row.values || []).join(" ").toLowerCase();
@@ -615,10 +616,10 @@
           .map(
             (row) => `<tr>${workflow.labels
               .map((field, idx) => `<td data-label="${escapeHtml(field)}">${escapeHtml(row.values?.[idx] || "-")}</td>`)
-              .join("")}<td data-label="Updated">${escapeHtml(humanDate(row.updatedAt))}</td>${moduleId === "sales" ? `<td data-label="Actions"><button class="btn danger" type="button" data-record-delete="${escapeHtml(row.id)}">Delete</button></td>` : ""}</tr>`,
+              .join("")}<td data-label="Updated">${escapeHtml(humanDate(row.updatedAt))}</td>${canManageRecords ? `<td data-label="Actions"><button class="btn danger" type="button" data-record-delete="${escapeHtml(row.id)}">Delete</button></td>` : ""}</tr>`,
           )
           .join("")
-      : `<tr><td colspan="${workflow.labels.length + (moduleId === "sales" ? 2 : 1)}" class="muted">No ${escapeHtml(label.toLowerCase())} records yet.</td></tr>`;
+      : `<tr><td colspan="${workflow.labels.length + (canManageRecords ? 2 : 1)}" class="muted">No ${escapeHtml(label.toLowerCase())} records yet.</td></tr>`;
     const actionCopy = {
       orders: "Track who ordered, what they are buying, where it is going, amount, and invoice status.",
       products: "Keep products, pricing, and sales items easy to review.",
@@ -677,7 +678,7 @@
         <div class="panel-actions">
           <button class="btn" data-erp-export="xlsx" type="button">Export XLSX</button>
           <button class="btn" data-focus-record-form type="button">Add Record</button>
-          ${moduleId === "sales" ? `<button class="btn danger" data-clear-module-records type="button">Clear All</button>` : ""}
+          ${canManageRecords ? `<button class="btn danger" data-clear-module-records type="button">Clear All</button>` : ""}
         </div>
       </div>
       <div class="module-page-summary">
@@ -687,7 +688,7 @@
       </div>
       <div class="table-wrap">
         <table class="table">
-          <thead><tr>${workflow.labels.map((field) => `<th>${escapeHtml(field)}</th>`).join("")}<th>Updated</th>${moduleId === "sales" ? "<th>Actions</th>" : ""}</tr></thead>
+          <thead><tr>${workflow.labels.map((field) => `<th>${escapeHtml(field)}</th>`).join("")}<th>Updated</th>${canManageRecords ? "<th>Actions</th>" : ""}</tr></thead>
           <tbody>${rowsHtml}</tbody>
         </table>
       </div>`;
@@ -1029,10 +1030,11 @@
     }
     document.body.classList.remove("finance-simple-page");
     document.body.classList.remove("branch-management-page");
-    if (moduleId === "sales") {
+    if (moduleId === "sales" || moduleId === "pharmacy") {
       const recordActions = $("#portal-records .panel-header .panel-actions");
       if (recordActions) {
-        recordActions.innerHTML = `<input id="module-search" type="search" placeholder="Search sales records..." /><button class="btn danger" data-clear-module-records type="button">Clear All</button>`;
+        const recordLabel = moduleId === "pharmacy" ? "pharmacy records" : "sales records";
+        recordActions.innerHTML = `<input id="module-search" type="search" placeholder="Search ${recordLabel}..." /><button class="btn danger" data-clear-module-records type="button">Clear All</button>`;
       }
     }
     if ($("#erp-sections")) return;
