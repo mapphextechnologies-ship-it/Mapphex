@@ -822,7 +822,7 @@
     });
     const recordActions = $("#portal-records .panel-header .panel-actions");
     if (recordActions) {
-      recordActions.innerHTML = `<input id="module-search" type="search" placeholder="Search transactions..." /><select id="finance-filter" aria-label="Filter transactions"><option value="all">All</option><option value="money-in">Money In</option><option value="money-out">Money Out</option><option value="sale">Sales</option><option value="payment">Payments</option><option value="expense">Expenses</option></select><button class="btn" data-erp-export="xlsx" type="button">Export XLSX</button><button class="btn" data-erp-export="pdf" type="button">Export PDF</button>`;
+      recordActions.innerHTML = `<input id="module-search" type="search" placeholder="Search transactions..." /><select id="finance-filter" aria-label="Filter transactions"><option value="all">All</option><option value="money-in">Money In</option><option value="money-out">Money Out</option><option value="sale">Sales</option><option value="payment">Payments</option><option value="expense">Expenses</option></select><button class="btn" data-erp-export="xlsx" type="button">Export XLSX</button><button class="btn" data-erp-export="pdf" type="button">Print PDF</button>`;
     }
     const portalKpis = $("#portal-kpis");
     if (portalKpis && !portalKpis.classList.contains("finance-kpis")) {
@@ -939,7 +939,7 @@
       </section>
       <section id="finance-export-page" class="panel finance-focus-panel" hidden>
         <div class="panel-header"><div><h2>Export</h2><p class="portal-manager-subtitle">Download finance records for sharing or filing.</p></div><button class="btn primary" data-erp-export="xlsx" type="button">Export XLSX</button></div>
-        <div class="finance-focus-body"><strong>Export tools</strong><p>Use Export XLSX or Export PDF from the records table when you need a copy.</p></div>
+        <div class="finance-focus-body"><strong>Export tools</strong><p>Use Export XLSX or Print PDF from the records table when you need a copy.</p></div>
       </section>
       <section id="finance-settings" class="panel finance-focus-panel" hidden>
         <div class="panel-header"><h2>Settings</h2></div>
@@ -1112,7 +1112,7 @@
             <div><h2>${escapeHtml(moduleDef.title)} Dashboard</h2><p class="portal-manager-subtitle">See the latest work, pending items, and the jobs this team handles.</p></div>
             <div class="panel-actions">
               <button class="btn" data-erp-export="xlsx" type="button">Export XLSX</button>
-              <button class="btn" data-erp-export="pdf" type="button">Export PDF</button>
+              <button class="btn" data-erp-export="pdf" type="button">Print PDF</button>
             </div>
           </div>
           <div id="erp-kpis" class="erp-kpi-grid"></div>
@@ -1176,7 +1176,7 @@
               <label class="field"><span>Period</span><select name="period">${REPORT_PERIODS.map((period) => `<option value="${escapeHtml(period)}">${escapeHtml(period[0].toUpperCase() + period.slice(1))}</option>`).join("")}</select></label>
               <label class="field"><span>Format</span><select name="format"><option value="pdf">PDF</option><option value="excel">XLSX</option></select></label>
               <button class="btn primary" type="submit">Generate</button>
-              <button class="btn" data-sales-report-export="pdf" type="button">Export PDF</button>
+              <button class="btn" data-sales-report-export="pdf" type="button">Print PDF</button>
               <button class="btn" data-sales-report-export="excel" type="button">Export XLSX</button>
             </form>
             <div id="sales-report-output" class="report-preview">No report generated yet.</div>
@@ -1807,6 +1807,62 @@
     return true;
   };
 
+  const printModuleReport = (moduleId, reportName = "", period = "monthly") => {
+    const workflow = workflowFor(moduleId);
+    const rows = Array.isArray(moduleData()[moduleId]) ? moduleData()[moduleId] : [];
+    const state = ensurePortalState(moduleId);
+    const activities = Array.isArray(storeGet(ACTIVITY_KEY, [])) ? storeGet(ACTIVITY_KEY, []) : [];
+    const transactions = Array.isArray(storeGet(TRANSACTIONS_KEY, [])) ? storeGet(TRANSACTIONS_KEY, []) : [];
+    const labels = Array.isArray(workflow.labels) ? workflow.labels : [];
+    const filteredRecords = rows.filter((row) => inPeriod(row.updatedAt, period));
+    const filteredApprovals = (state.approvals || []).filter((item) => (item.target === moduleId || item.moduleId === moduleId || item.source === moduleId) && inPeriod(item.updatedAt || item.createdAt, period));
+    const filteredMessages = (state.messages || []).filter((item) => (item.moduleId === moduleId || item.to === moduleId || item.from === moduleId) && inPeriod(item.createdAt, period));
+    const filteredActivities = activities.filter((item) => item.moduleId === moduleId && inPeriod(item.at, period));
+    const filteredTransactions = transactions.filter((item) => item.sourceModule === moduleId && inPeriod(item.createdAt, period));
+    const recordRows = filteredRecords.length
+      ? filteredRecords.map((row) => `<tr>${labels.map((label, idx) => `<td>${escapeHtml(row.values?.[idx] || "-")}</td>`).join("")}<td>${escapeHtml(humanDate(row.updatedAt))}</td></tr>`).join("")
+      : `<tr><td colspan="${labels.length + 1}">No records for this period.</td></tr>`;
+    const approvalRows = filteredApprovals.length
+      ? filteredApprovals.map((row) => `<tr><td>${escapeHtml(row.title || "Approval")}</td><td>${escapeHtml(row.status || "")}</td><td>${escapeHtml(row.reason || row.note || "")}</td><td>${escapeHtml(humanDate(row.updatedAt || row.createdAt))}</td></tr>`).join("")
+      : `<tr><td colspan="4">No approvals for this period.</td></tr>`;
+    const messageRows = filteredMessages.length
+      ? filteredMessages.map((row) => `<tr><td>${escapeHtml(row.from || "")}</td><td>${escapeHtml(row.to || "")}</td><td>${escapeHtml(row.body || "")}</td><td>${escapeHtml(humanDate(row.createdAt))}</td></tr>`).join("")
+      : `<tr><td colspan="4">No messages for this period.</td></tr>`;
+    const activityRows = filteredActivities.length
+      ? filteredActivities.map((row) => `<tr><td>${escapeHtml(row.action || "")}</td><td>${escapeHtml(row.detail?.message || row.detail?.label || "Activity recorded")}</td><td>${escapeHtml(humanDate(row.at))}</td></tr>`).join("")
+      : `<tr><td colspan="3">No activity for this period.</td></tr>`;
+    const transactionRows = filteredTransactions.length
+      ? filteredTransactions.map((row) => `<tr><td>${escapeHtml(row.type || "")}</td><td>${escapeHtml(row.ref || row.id || "")}</td><td>${escapeHtml(row.status || "")}</td><td>${escapeHtml(row.amount || 0)}</td><td>${escapeHtml(humanDate(row.createdAt))}</td></tr>`).join("")
+      : `<tr><td colspan="5">No transactions for this period.</td></tr>`;
+    const title = `${reportName || workflow.title || moduleId} report`;
+    const reportWindow = window.open("", "_blank", "width=900,height=700");
+    if (!reportWindow) {
+      window.print();
+      return;
+    }
+    reportWindow.document.write(`<!doctype html><html><head><title>${escapeHtml(title)}</title><style>
+      body { margin: 32px; color: #111827; font-family: Arial, sans-serif; }
+      h1 { margin: 0 0 8px; font-size: 24px; } h2 { margin: 26px 0 10px; font-size: 16px; }
+      p { margin: 0 0 18px; color: #4b5563; } table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+      th, td { padding: 10px; border: 1px solid #d1d5db; text-align: left; font-size: 12px; vertical-align: top; }
+      th { background: #f3f4f6; } .summary { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 18px 0; }
+      .summary div { border: 1px solid #d1d5db; padding: 12px; } .summary span { display: block; color: #6b7280; font-size: 12px; }
+      .summary strong { display: block; margin-top: 4px; }
+    </style></head><body>
+      <h1>${escapeHtml(title)}</h1>
+      <p>${escapeHtml(moduleId)} - ${escapeHtml(period)} - ${escapeHtml(new Date().toLocaleString())}</p>
+      <div class="summary"><div><span>Records</span><strong>${filteredRecords.length}</strong></div><div><span>Approvals</span><strong>${filteredApprovals.length}</strong></div><div><span>Messages</span><strong>${filteredMessages.length}</strong></div><div><span>Activity</span><strong>${filteredActivities.length}</strong></div><div><span>Transactions</span><strong>${filteredTransactions.length}</strong></div></div>
+      <h2>Records</h2><table><thead><tr>${labels.map((label) => `<th>${escapeHtml(label)}</th>`).join("")}<th>Updated</th></tr></thead><tbody>${recordRows}</tbody></table>
+      <h2>Approvals</h2><table><thead><tr><th>Title</th><th>Status</th><th>Note</th><th>Updated</th></tr></thead><tbody>${approvalRows}</tbody></table>
+      <h2>Messages</h2><table><thead><tr><th>From</th><th>To</th><th>Message</th><th>Created</th></tr></thead><tbody>${messageRows}</tbody></table>
+      <h2>Activity</h2><table><thead><tr><th>Action</th><th>Details</th><th>Created</th></tr></thead><tbody>${activityRows}</tbody></table>
+      <h2>Transactions</h2><table><thead><tr><th>Type</th><th>Reference</th><th>Status</th><th>Amount</th><th>Created</th></tr></thead><tbody>${transactionRows}</tbody></table>
+    </body></html>`);
+    reportWindow.document.close();
+    reportWindow.focus();
+    reportWindow.print();
+  };
+
   const salesReportDetails = (reportName, period) => {
     const rows = Array.isArray(moduleData().sales) ? moduleData().sales : [];
     const state = ensurePortalState("sales");
@@ -1860,7 +1916,7 @@
       </div>
       <div class="sales-report-notes"><h3>Approval notes</h3><ul>${approvalRows}</ul></div>
       <div class="sales-report-actions">
-        <button class="btn" data-sales-report-export="pdf" type="button">Export PDF</button>
+        <button class="btn" data-sales-report-export="pdf" type="button">Print PDF</button>
         <button class="btn primary" data-sales-report-export="excel" type="button">Export XLSX</button>
       </div>
     </div>`;
@@ -2342,7 +2398,7 @@
         }
         const exportBtn = event.target.closest("[data-erp-export]");
         if (exportBtn?.dataset.erpExport === "xlsx" || exportBtn?.dataset.erpExport === "csv") exportExcel(moduleId);
-        if (exportBtn?.dataset.erpExport === "pdf") window.print();
+        if (exportBtn?.dataset.erpExport === "pdf") printModuleReport(moduleId, workflow.title || moduleDef.title, "monthly");
         const salesExport = event.target.closest("[data-sales-report-export]");
         if (salesExport) {
           const form = $("#sales-report-form");
@@ -2356,7 +2412,7 @@
           } else if (format === "excel") {
             exportExcel(moduleId);
           } else {
-            window.print();
+            printModuleReport(moduleId, reportName, period);
           }
           appendActivity(moduleId, "report.exported", { label: reportName, message: `${period} ${reportName} exported as ${format}.` });
           refreshEnterpriseSections(moduleId);
