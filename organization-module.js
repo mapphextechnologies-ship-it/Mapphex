@@ -1210,6 +1210,10 @@
   };
 
   const refreshEnterpriseSections = (moduleId) => {
+    if (moduleId === "pharmacy") {
+      $("#erp-messages")?.closest("article")?.remove();
+      $("#erp-activity")?.closest("article")?.remove();
+    }
     const blueprint = blueprintFor(moduleId);
     const state = ensurePortalState(moduleId);
     const activities = (storeGet(ACTIVITY_KEY, []) || []).filter((item) => item.moduleId === moduleId).slice(0, 8);
