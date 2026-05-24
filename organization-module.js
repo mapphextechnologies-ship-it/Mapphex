@@ -385,7 +385,7 @@
       viewGroups.dashboard ||
       [];
     const visible = new Set(group);
-    [
+    const managedIds = new Set([
       "portal-dashboard",
       "portal-kpis",
       "branch-management-overview",
@@ -403,7 +403,9 @@
       "finance-payroll-page",
       "finance-export-page",
       "finance-settings",
-    ].forEach((id) => {
+      ...Array.from(document.querySelectorAll(".module-content > section[id], #erp-sections > section[id]")).map((section) => section.id),
+    ]);
+    managedIds.forEach((id) => {
       const section = document.getElementById(id);
       if (section) section.hidden = !visible.has(id);
     });
