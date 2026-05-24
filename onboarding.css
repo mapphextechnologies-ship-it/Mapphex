@@ -294,13 +294,14 @@
   position: sticky;
   top: 92px;
   align-self: start;
+  display: flex;
+  flex-direction: column;
   max-height: calc(100dvh - 110px);
   padding: 22px;
   border-color: rgba(130, 190, 255, 0.16);
   background: rgba(2, 8, 18, 0.78);
   backdrop-filter: blur(18px);
-  overflow: auto;
-  overscroll-behavior: contain;
+  overflow: hidden;
   transition: width 180ms ease, transform 180ms ease, padding 180ms ease;
 }
 
@@ -319,6 +320,26 @@
 .module-nav {
   display: grid;
   gap: 8px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(91, 214, 255, 0.45) rgba(255, 255, 255, 0.08);
+}
+
+.module-nav::-webkit-scrollbar {
+  width: 8px;
+}
+
+.module-nav::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+}
+
+.module-nav::-webkit-scrollbar-thumb {
+  background: rgba(91, 214, 255, 0.45);
+  border-radius: 999px;
 }
 
 .module-nav-group {
