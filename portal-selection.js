@@ -84,6 +84,11 @@
   let org = null;
   let selected = new Set();
   const TECHNOLOGY_DEVICE_PORTALS = ["admin", "technology", "branch", "inventory", "customer", "sales", "finance", "staff", "reporting", "analytics", "agent"];
+  const isOrgAdmin = () => {
+    const session = window.EnterpriseCore?.getSession?.() || {};
+    const role = String(session.role || "").toLowerCase();
+    return role === "org_admin" || role === "admin" || (Array.isArray(session.permissions) && session.permissions.includes("*"));
+  };
 
   const portalPricing = (portal) => {
     const monthly = Math.max(0, Number(settings.portalPricing?.[portal.id] ?? pricingApi().priceFor(portal.id)) || 0);
@@ -108,6 +113,9 @@
 
   const portalUrl = (portal) => {
     const tenant = window.EnterpriseCore?.currentTenantId?.() || "";
+    if (portal.id === "admin") {
+      return `organization-admin.html${tenant ? `?tenant=${encodeURIComponent(tenant)}` : ""}`;
+    }
     try {
       const url = new URL("portal-auth.html", location.origin);
       url.searchParams.set("tenant", tenant);
@@ -169,6 +177,7 @@
 
   const render = () => {
     const installed = new Set(settings.installedPortals || []);
+    if (isOrgAdmin()) installed.add("admin");
     selected = new Set([...selected].filter((id) => !installed.has(id)));
     $("#portal-grid").innerHTML = catalog
       .map(
@@ -211,7 +220,7 @@
             <div class="portal-card-actions">
               ${
                 isInstalled
-                  ? `<a class="btn primary" href="${escapeHtml(portalUrl(portal))}">Open Portal</a><button class="btn" data-portal-deactivate="${escapeHtml(portal.id)}" type="button">Uninstall</button>`
+                  ? `<a class="btn primary" href="${escapeHtml(portalUrl(portal))}">Open Portal</a>${portal.id === "admin" ? "" : `<button class="btn" data-portal-deactivate="${escapeHtml(portal.id)}" type="button">Uninstall</button>`}`
                   : `<button class="btn" data-portal-toggle="${escapeHtml(portal.id)}" type="button">${isSelected ? "Remove from install" : "Add to install"}</button>`
               }
             </div>
@@ -225,6 +234,7 @@
   const renderBulkBar = () => {
     const count = selected.size;
     const installed = new Set(settings.installedPortals || []);
+    if (isOrgAdmin()) installed.add("admin");
     const available = catalog.filter((portal) => !installed.has(portal.id));
     const hasAvailable = available.length > 0;
     const names = [...selected]
@@ -267,6 +277,7 @@
 
   const toggleSelection = (portalId, force) => {
     const installed = new Set(settings.installedPortals || []);
+    if (isOrgAdmin()) installed.add("admin");
     if (installed.has(portalId)) return;
     const shouldSelect = typeof force === "boolean" ? force : !selected.has(portalId);
     if (shouldSelect) selected.add(portalId);
@@ -276,6 +287,7 @@
 
   const selectCoreSet = () => {
     const installed = new Set(settings.installedPortals || []);
+    if (isOrgAdmin()) installed.add("admin");
     let changed = false;
     ["admin", "branch", "departments", "staff", "inventory", "finance", "reporting", "analytics"].forEach((id) => {
       if (!installed.has(id) && catalog.some((portal) => portal.id === id)) {
@@ -292,6 +304,7 @@
 
   const selectAllAvailable = () => {
     const installed = new Set(settings.installedPortals || []);
+    if (isOrgAdmin()) installed.add("admin");
     let changed = false;
     catalog.forEach((portal) => {
       if (!installed.has(portal.id)) {

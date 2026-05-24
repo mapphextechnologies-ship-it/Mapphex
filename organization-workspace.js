@@ -53,6 +53,9 @@
 
   const portalUrl = (portal, org) => {
     const tenant = window.EnterpriseCore?.currentTenantId?.() || "";
+    if (portal.id === "admin") {
+      return `organization-admin.html${tenant ? `?tenant=${encodeURIComponent(tenant)}` : ""}`;
+    }
     if (portal.id === "finance") {
       return `finance-workflow.html${tenant ? `?tenant=${encodeURIComponent(tenant)}` : ""}`;
     }
@@ -106,6 +109,12 @@
     });
   };
 
+  const isOrgAdmin = () => {
+    const session = window.EnterpriseCore?.getSession?.() || {};
+    const role = String(session.role || "").toLowerCase();
+    return role === "org_admin" || role === "admin" || (Array.isArray(session.permissions) && session.permissions.includes("*"));
+  };
+
   const renderPortals = (query = "", org = null) => {
     const target = $("#installed-portals");
     const empty = $("#portal-empty");
@@ -130,7 +139,7 @@
             </ul>
             <div class="portal-card-actions">
               <a class="btn primary" href="${escapeHtml(portalUrl(portal, org))}">Open Portal</a>
-              <button class="btn" type="button" data-portal-uninstall="${escapeHtml(portal.id)}">Uninstall</button>
+              ${portal.id === "admin" ? "" : `<button class="btn" type="button" data-portal-uninstall="${escapeHtml(portal.id)}">Uninstall</button>`}
             </div>
           </article>`,
       )
@@ -141,6 +150,7 @@
   const refreshPortalState = (settings, org = orgState) => {
     settingsState = settings || {};
     const installed = new Set((settingsState.installedPortals || []).filter((id) => VALID_PORTAL_IDS.has(id)));
+    if (isOrgAdmin() && VALID_PORTAL_IDS.has("admin")) installed.add("admin");
     portals = (settingsState.portalCatalog || PORTAL_CATALOG)
       .filter((portal) => installed.has(portal.id))
       .map((portal) => ({ ...portal, summary: portalSummary(portal, settingsState) }));
@@ -243,6 +253,8 @@
       $("#hub-kpi-departments").textContent = settings.departments?.length || 0;
       $("#hub-kpi-session").textContent = "Signed in and ready";
       $("#manage-portals-link").href = `portal-selection.html?tenant=${encodeURIComponent(tenantId)}`;
+      $("#organization-admin-link").href = `organization-admin.html?tenant=${encodeURIComponent(tenantId)}`;
+      $("#organization-admin-link").hidden = !isOrgAdmin();
 
       refreshPortalState(settingsState, org);
       $("#portal-search")?.addEventListener("input", (event) => renderPortals(event.currentTarget.value, org));
