@@ -34,7 +34,6 @@
   ];
   const memoryStore = new Map();
   const rawLocalGet = Storage.prototype.getItem;
-  const rawLocalSet = Storage.prototype.setItem;
   const rawLocalRemove = Storage.prototype.removeItem;
 
   const isFinanceStorageKey = (key) => {
@@ -61,27 +60,6 @@
     } catch {
       // storage can be blocked by the browser
     }
-  };
-
-  Storage.prototype.getItem = function financeGetItem(key) {
-    if (this === localStorage && isFinanceStorageKey(key)) return memoryStore.has(String(key)) ? memoryStore.get(String(key)) : null;
-    return rawLocalGet.call(this, key);
-  };
-
-  Storage.prototype.setItem = function financeSetItem(key, value) {
-    if (this === localStorage && isFinanceStorageKey(key)) {
-      memoryStore.set(String(key), String(value));
-      return undefined;
-    }
-    return rawLocalSet.call(this, key, value);
-  };
-
-  Storage.prototype.removeItem = function financeRemoveItem(key) {
-    if (this === localStorage && isFinanceStorageKey(key)) {
-      memoryStore.delete(String(key));
-      return undefined;
-    }
-    return rawLocalRemove.call(this, key);
   };
 
   clearPersistedFinanceStorage();
@@ -139,6 +117,7 @@
 
   const readRawStorage = (storage, key) => {
     try {
+      if (storage === localStorage && isFinanceStorageKey(key)) return memoryStore.get(String(key)) || null;
       return storage.getItem(key);
     } catch {
       return null;
