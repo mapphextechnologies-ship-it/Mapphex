@@ -19,6 +19,33 @@
   const store = () => window.EnterpriseStore || null;
   let orgContext = { businessType: "general", settings: {}, organization: {} };
 
+  const redirectFinanceModule = () => {
+    const params = new URLSearchParams(location.search);
+    const moduleId = String(params.get("portal") || params.get("module") || "").trim().toLowerCase();
+    if (moduleId !== "finance") return false;
+    const section = String(location.hash || "").replace(/^#/, "").trim().toLowerCase();
+    const pages = {
+      approvals: "finance-approvals.html",
+      budgets: "finance-budgets.html",
+      employees: "finance-employees.html",
+      export: "finance-export.html",
+      invoices: "finance-invoices.html",
+      ledger: "finance-ledger.html",
+      payroll: "finance-payroll.html",
+      reports: "finance-reports.html",
+      settings: "finance-settings.html",
+      suppliers: "finance-suppliers.html",
+    };
+    const target = pages[section] || "finance-workflow.html";
+    const next = new URL(target, location.href);
+    const tenant = params.get("tenant") || window.EnterpriseCore?.currentTenantId?.() || "";
+    if (tenant) next.searchParams.set("tenant", tenant);
+    location.replace(`${next.pathname}${next.search}${next.hash}`);
+    return true;
+  };
+
+  if (redirectFinanceModule()) return;
+
   const readJson = (key, fallback) => {
     try {
       const raw = localStorage.getItem(key);

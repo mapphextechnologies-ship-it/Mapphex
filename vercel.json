@@ -20,11 +20,11 @@
     },
     {
       "source": "/finance",
-      "destination": "/organization-module.html?portal=finance"
+      "destination": "/finance-workflow.html"
     },
     {
       "source": "/portal/finance",
-      "destination": "/organization-module.html?portal=finance"
+      "destination": "/finance-workflow.html"
     },
     {
       "source": "/_internal/mapphex-control",
