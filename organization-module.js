@@ -71,16 +71,16 @@
 
   const isLocalDevelopment = () => ["localhost", "127.0.0.1", ""].includes(location.hostname);
 
-  const writeJson = (key, value) => localStorage.setItem(key, JSON.stringify(value ?? null));
   const storeGet = (key, fallback) => store()?.getJson?.(key, null) ?? (isLocalDevelopment() ? readJson(key, fallback) : fallback);
   const storeSet = (key, value) => {
-    if (isLocalDevelopment()) writeJson(key, value);
     store()?.setJson?.(key, value);
   };
 
   const money = (value) => `KES ${Number(value || 0).toLocaleString()}`;
   const nowIso = () => new Date().toISOString();
   const humanDate = (value) => new Date(value || Date.now()).toLocaleString();
+  const salesRevenue = (rows) =>
+    (Array.isArray(rows) ? rows : []).reduce((sum, row) => sum + (Number(String(row.values?.[3] || "").replace(/[^\d.-]/g, "")) || 0), 0);
   const REPORT_PERIODS = ["daily", "weekly", "monthly", "yearly"];
 
   const defaultBlueprint = {
@@ -246,9 +246,7 @@
     const salesRows = Array.isArray(moduleData().sales) ? moduleData().sales : [];
     const pending = (state.approvals || []).filter((item) => (item.target === moduleId || item.moduleId === moduleId) && item.status === "pending").length;
     const moduleTransactions = (Array.isArray(transactions) ? transactions : []).filter((tx) => tx.sourceModule === moduleId).length;
-    const revenue = moduleId === "sales"
-      ? salesRows.reduce((sum, row) => sum + (Number(String(row.values?.[3] || "").replace(/[^\d.-]/g, "")) || 0), 0)
-      : Number(reports?.[moduleId]?.revenue || 0);
+    const revenue = moduleId === "sales" ? salesRevenue(salesRows) : Number(reports?.[moduleId]?.revenue || 0);
     return {
       kpis: [
         [moduleId === "finance" ? "Activity" : standard.entity === "Finance Record" ? "Transactions" : `${standard.entity}s`, rows],
@@ -454,22 +452,13 @@
   const erpState = () => storeGet(ERP_STATE_KEY, {});
   const saveErpState = (data) => storeSet(ERP_STATE_KEY, data);
 
-  const resetSalesRecordsOnce = (tenantId) => {
-    const key = `sales_records_reset_v2:${tenantId || "default"}`;
-    try {
-      if (localStorage.getItem(key) === "done") return;
-    } catch {
-      // Storage can be blocked; still clear stale in-memory records for this session.
-    }
+  const clearLegacySalesRecords = () => {
     const data = moduleData();
-    if (Array.isArray(data.sales) && data.sales.length) {
+    const rows = Array.isArray(data.sales) ? data.sales : [];
+    const hasOldShape = rows.some((row) => !Array.isArray(row.values) || row.values.length < 5);
+    if (hasOldShape) {
       data.sales = [];
       saveModuleData(data);
-    }
-    try {
-      localStorage.setItem(key, "done");
-    } catch {
-      // Ignore blocked storage.
     }
   };
 
@@ -664,7 +653,7 @@
       <div class="module-page-summary">
         <article><span>Records</span><strong>${displayRows.length}</strong><small>${escapeHtml(label)} in view</small></article>
         <article><span>Workspace</span><strong>Ready</strong><small>Uses shared organization data</small></article>
-        <article><span>${moduleId === "sales" ? "Total revenue" : "Next action"}</span><strong>${moduleId === "sales" ? escapeHtml(money(rows.reduce((sum, row) => sum + (Number(String(row.values?.[3] || "").replace(/[^\d.-]/g, "")) || 0), 0))) : "Add"}</strong><small>${moduleId === "sales" ? "From saved sales records" : `Create a new ${escapeHtml(label.toLowerCase())} record`}</small></article>
+        <article><span>${moduleId === "sales" ? "Total revenue" : "Next action"}</span><strong>${moduleId === "sales" ? escapeHtml(money(salesRevenue(rows))) : "Add"}</strong><small>${moduleId === "sales" ? "From saved sales records" : `Create a new ${escapeHtml(label.toLowerCase())} record`}</small></article>
       </div>
       <div class="table-wrap">
         <table class="table">
@@ -1175,10 +1164,7 @@
       const rows = Array.isArray(moduleData().sales) ? moduleData().sales : [];
       const textFor = (row) => (row.values || []).join(" ").toLowerCase();
       const countBy = (pattern) => rows.filter((row) => pattern.test(textFor(row))).length;
-      const revenue = rows.reduce((sum, row) => {
-        const amount = Number(String(row.values?.[3] || "").replace(/[^\d.-]/g, "")) || 0;
-        return sum + amount;
-      }, 0);
+      const revenue = salesRevenue(rows);
       document.querySelector('[data-sales-pipeline="orders"]')?.replaceChildren(document.createTextNode(String(countBy(/order|invoice|sale/) || rows.length)));
       document.querySelector('[data-sales-pipeline="customers"]')?.replaceChildren(document.createTextNode(String(countBy(/customer|client/) || 0)));
       document.querySelector('[data-sales-pipeline="discounts"]')?.replaceChildren(document.createTextNode(String(countBy(/discount|promotion/) || approvals.filter((item) => /discount/i.test(`${item.title} ${item.note}`)).length)));
@@ -1753,10 +1739,7 @@
     const filteredMessages = (state.messages || []).filter((item) => (item.moduleId === "sales" || item.to === "sales" || item.from === "sales") && inPeriod(item.createdAt, period));
     const filteredActivities = activities.filter((item) => item.moduleId === "sales" && inPeriod(item.at, period));
     const filteredTransactions = transactions.filter((item) => item.sourceModule === "sales" && inPeriod(item.createdAt, period));
-    const totalAmount = filteredRecords.reduce((sum, row) => {
-      const amount = Number(String(row.values?.[3] || "").replace(/[^\d.-]/g, "")) || 0;
-      return sum + amount;
-    }, 0);
+    const totalAmount = salesRevenue(filteredRecords);
     return {
       reportName: reportName || "Orders",
       period: period || "monthly",
@@ -2040,7 +2023,7 @@
 
       await hydrateSharedData();
       if (moduleId === "sales") {
-        resetSalesRecordsOnce(session.tenantId);
+        clearLegacySalesRecords();
         await store()?.flush?.().catch(() => null);
       }
       ensurePortalState(moduleId);
