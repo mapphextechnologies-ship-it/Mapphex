@@ -591,6 +591,113 @@
   font-size: clamp(22px, 2.5vw, 30px);
 }
 
+.sales-dashboard-page {
+  display: grid;
+  gap: 16px;
+}
+
+.sales-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.sales-work-layout,
+.sales-review-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.9fr) minmax(420px, 1.1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.sales-pipeline-card {
+  border: 1px solid rgba(130, 190, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+  padding: 16px;
+}
+
+.sales-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: start;
+  margin-bottom: 14px;
+}
+
+.sales-card-head strong {
+  color: rgba(255, 255, 255, 0.96);
+  font-size: 18px;
+}
+
+.sales-card-head span {
+  color: rgba(218, 232, 255, 0.62);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.sales-pipeline-list {
+  display: grid;
+  gap: 10px;
+}
+
+.sales-pipeline-list button {
+  width: 100%;
+  min-height: 48px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid rgba(91, 214, 255, 0.16);
+  border-radius: 8px;
+  background: rgba(3, 10, 22, 0.44);
+  color: rgba(255, 255, 255, 0.92);
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.sales-pipeline-list button:hover {
+  transform: translateX(2px);
+  border-color: rgba(91, 214, 255, 0.38);
+  background: rgba(0, 119, 255, 0.14);
+}
+
+.sales-pipeline-list strong {
+  color: #ffffff;
+}
+
+.sales-focus-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.sales-focus-list span {
+  padding: 9px 11px;
+  border: 1px solid rgba(130, 190, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.sales-action-list {
+  padding: 14px 18px 18px;
+  display: grid;
+  gap: 10px;
+}
+
+.sales-action-list .erp-action {
+  min-height: 66px;
+  border-radius: 8px;
+}
+
+.sales-approval-list {
+  padding: 14px 18px 18px;
+}
+
 .sales-report-workspace {
   display: grid;
   gap: 16px;
@@ -1599,6 +1706,9 @@
 
   .sales-report-status-grid,
   .module-page-summary,
+  .sales-metric-grid,
+  .sales-work-layout,
+  .sales-review-layout,
   .sales-report-form {
     grid-template-columns: 1fr;
   }

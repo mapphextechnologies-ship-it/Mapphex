@@ -915,6 +915,73 @@
     document.body.classList.remove("branch-management-page");
     if ($("#erp-sections")) return;
     const blueprint = blueprintFor(moduleId);
+    const salesDashboardSection = moduleId === "sales"
+      ? `<section id="dashboard" class="panel sales-dashboard-page">
+          <div class="panel-header">
+            <div>
+              <span class="eyebrow">Sales workspace</span>
+              <h2>Sales command center</h2>
+              <p class="portal-manager-subtitle">Track orders, invoices, discounts, customers, and revenue without mixing every task into one page.</p>
+            </div>
+            <div class="panel-actions">
+              <button class="btn" data-erp-export="csv" type="button">Export Excel</button>
+              <button class="btn" data-focus-record-form type="button">Add Sale</button>
+            </div>
+          </div>
+          <div id="erp-kpis" class="sales-metric-grid"></div>
+          <div class="sales-work-layout">
+            <article class="sales-pipeline-card">
+              <div class="sales-card-head"><strong>Pipeline</strong><span>Current flow</span></div>
+              <div class="sales-pipeline-list">
+                <button data-module-jump="orders" type="button"><span>Orders</span><strong data-sales-pipeline="orders">0</strong></button>
+                <button data-module-jump="customers" type="button"><span>Customers</span><strong data-sales-pipeline="customers">0</strong></button>
+                <button data-module-jump="discounts" type="button"><span>Discounts</span><strong data-sales-pipeline="discounts">0</strong></button>
+                <button data-module-jump="revenue" type="button"><span>Revenue</span><strong data-sales-pipeline="revenue">KES 0</strong></button>
+              </div>
+            </article>
+            <article class="sales-pipeline-card">
+              <div class="sales-card-head"><strong>Focus Areas</strong><span>Sales work</span></div>
+              <div class="sales-focus-list">
+                ${["Orders", "Quotations", "Invoices", "Revenue tracking", "Discounts", "Customer history"].map((item) => `<span>${escapeHtml(item)}</span>`).join("")}
+              </div>
+            </article>
+          </div>
+        </section>`
+      : `<section id="dashboard" class="panel erp-dashboard-panel">
+          <div class="panel-header">
+            <div><h2>${escapeHtml(moduleDef.title)} Dashboard</h2><p class="portal-manager-subtitle">See the latest work, pending items, and the jobs this team handles.</p></div>
+            <div class="panel-actions">
+              <button class="btn" data-erp-export="csv" type="button">Export Excel</button>
+              <button class="btn" data-erp-export="pdf" type="button">Print / PDF</button>
+            </div>
+          </div>
+          <div id="erp-kpis" class="erp-kpi-grid"></div>
+          <div class="erp-dashboard-grid">
+            <article class="erp-card"><strong>Performance</strong>${renderBars(blueprint.chart)}<span class="muted">A quick look at recent movement</span></article>
+            <article class="erp-card"><strong>Responsibilities</strong><ul>${blueprint.responsibilities.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></article>
+          </div>
+        </section>`;
+    const salesWorkflowSection = moduleId === "sales"
+      ? `<section id="approvals" class="sales-review-layout">
+          <article class="panel">
+            <div class="panel-header"><div><h2>Sales work queue</h2><p class="portal-manager-subtitle">Send invoices, request discount approval, and move sales work forward.</p></div><span class="badge">Actions</span></div>
+            <div id="erp-actions" class="sales-action-list"></div>
+          </article>
+          <article class="panel">
+            <div class="panel-header"><div><h2>Approval review</h2><p class="portal-manager-subtitle">Discount and invoice requests that need a decision.</p></div><span id="erp-approval-count" class="badge">0 pending</span></div>
+            <div id="erp-approvals" class="erp-approval-list sales-approval-list"></div>
+          </article>
+        </section>`
+      : `<section id="approvals" class="erp-work-grid">
+          <article class="panel">
+            <div class="panel-header"><h2>Department Actions</h2><span class="badge">Workflow</span></div>
+            <div id="erp-actions" class="erp-action-list"></div>
+          </article>
+          <article class="panel">
+            <div class="panel-header"><h2>Approvals Inbox</h2><span id="erp-approval-count" class="badge">0 pending</span></div>
+            <div id="erp-approvals" class="erp-approval-list"></div>
+          </article>
+        </section>`;
     const salesReportSection = moduleId === "sales"
       ? `<section id="reports" class="panel sales-report-workspace">
           <div class="panel-header">
@@ -972,31 +1039,9 @@
     $(".portal-hub-widgets").insertAdjacentHTML(
       "afterend",
       `<div id="erp-sections" class="erp-sections">
-        <section id="dashboard" class="panel erp-dashboard-panel">
-          <div class="panel-header">
-            <div><h2>${escapeHtml(moduleDef.title)} Dashboard</h2><p class="portal-manager-subtitle">See the latest work, pending items, and the jobs this team handles.</p></div>
-            <div class="panel-actions">
-              <button class="btn" data-erp-export="csv" type="button">Export Excel</button>
-              <button class="btn" data-erp-export="pdf" type="button">Print / PDF</button>
-            </div>
-          </div>
-          <div id="erp-kpis" class="erp-kpi-grid"></div>
-          <div class="erp-dashboard-grid">
-            <article class="erp-card"><strong>Performance</strong>${renderBars(blueprint.chart)}<span class="muted">A quick look at recent movement</span></article>
-            <article class="erp-card"><strong>Responsibilities</strong><ul>${blueprint.responsibilities.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></article>
-          </div>
-        </section>
+        ${salesDashboardSection}
         <section id="module-detail-page" class="panel module-detail-page" hidden></section>
-        <section id="approvals" class="erp-work-grid">
-          <article class="panel">
-            <div class="panel-header"><h2>Department Actions</h2><span class="badge">Workflow</span></div>
-            <div id="erp-actions" class="erp-action-list"></div>
-          </article>
-          <article class="panel">
-            <div class="panel-header"><h2>Approvals Inbox</h2><span id="erp-approval-count" class="badge">0 pending</span></div>
-            <div id="erp-approvals" class="erp-approval-list"></div>
-          </article>
-        </section>
+        ${salesWorkflowSection}
         ${salesReportSection}
       </div>`,
     );
@@ -1012,8 +1057,33 @@
     const kpiGrid = $("#erp-kpis");
     if (kpiGrid) {
       kpiGrid.innerHTML = blueprint.kpis
-        .map(([label, value]) => `<article class="kpi"><div class="kpi-label">${escapeHtml(label)}</div><div class="kpi-value">${typeof value === "number" && label.toLowerCase().match(/revenue|sales|expenses|billing|amount/) ? money(value) : escapeHtml(value)}</div><div class="kpi-foot muted">Updated from this workspace</div></article>`)
+        .map(([label, value]) => {
+          const foot = moduleId === "sales"
+            ? label.toLowerCase().includes("approval")
+              ? "Needs review"
+              : label.toLowerCase().includes("transaction")
+                ? "Posted to records"
+                : label.toLowerCase().includes("report")
+                  ? "Available exports"
+                  : "Sales records"
+            : "Updated from this workspace";
+          return `<article class="kpi"><div class="kpi-label">${escapeHtml(label)}</div><div class="kpi-value">${typeof value === "number" && label.toLowerCase().match(/revenue|sales|expenses|billing|amount/) ? money(value) : escapeHtml(value)}</div><div class="kpi-foot muted">${escapeHtml(foot)}</div></article>`;
+        })
         .join("");
+    }
+
+    if (moduleId === "sales") {
+      const rows = Array.isArray(moduleData().sales) ? moduleData().sales : [];
+      const textFor = (row) => (row.values || []).join(" ").toLowerCase();
+      const countBy = (pattern) => rows.filter((row) => pattern.test(textFor(row))).length;
+      const revenue = rows.reduce((sum, row) => {
+        const amount = (row.values || []).map((value) => Number(String(value).replace(/[^\d.-]/g, ""))).find((value) => Number.isFinite(value) && value > 0) || 0;
+        return sum + amount;
+      }, 0);
+      document.querySelector('[data-sales-pipeline="orders"]')?.replaceChildren(document.createTextNode(String(countBy(/order|invoice|sale/) || rows.length)));
+      document.querySelector('[data-sales-pipeline="customers"]')?.replaceChildren(document.createTextNode(String(countBy(/customer|client/) || 0)));
+      document.querySelector('[data-sales-pipeline="discounts"]')?.replaceChildren(document.createTextNode(String(countBy(/discount|promotion/) || approvals.filter((item) => /discount/i.test(`${item.title} ${item.note}`)).length)));
+      document.querySelector('[data-sales-pipeline="revenue"]')?.replaceChildren(document.createTextNode(money(revenue)));
     }
 
     if (moduleId === "finance") {
@@ -1647,6 +1717,14 @@
           else setPortalView("portal-records");
           document.getElementById("portal-records")?.scrollIntoView({ behavior: "smooth", block: "start" });
           document.querySelector("#module-record-form input, #module-record-form select, #module-record-form textarea")?.focus();
+          return;
+        }
+        const moduleJump = event.target.closest("[data-module-jump]");
+        if (moduleJump) {
+          event.preventDefault();
+          const target = moduleJump.dataset.moduleJump || "dashboard";
+          const link = Array.from(document.querySelectorAll("[data-module-nav]")).find((item) => item.dataset.moduleNav === target);
+          if (link) activatePortalMenuItem(link);
           return;
         }
         const action = event.target.closest("[data-erp-action]");
