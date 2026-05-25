@@ -98,7 +98,7 @@
       cost: serviceCost,
       plan: ["director", "device-branch", "team-leader", "device-departments"].includes(portal.id) ? "Business" : servicePlan,
       monthly,
-      subscription: `${portal.title} runs inside the registered ${settings.serviceTitle || "organization"} workspace. Install only this portal when that role is needed; more portals can be added later under the same organization subscription.`,
+      subscription: `${portal.title} runs inside the registered ${settings.serviceTitle || "organization"} workspace. Enable only the portals needed now; added portals stay inside the same MAPPHEX app and organization subscription.`,
     };
   };
 
@@ -331,11 +331,11 @@
     const portal = catalog.find((item) => item.id === portalId);
     if (!portal) return;
     const progress = $("#portal-progress");
-    if (progress) progress.textContent = `Preparing ${portal.title} app install...`;
+    if (progress) progress.textContent = `Preparing MAPPHEX app install for ${portal.title}...`;
     const result = await promptWorkspacePwa();
     const message = result?.ok
-      ? `${portal.title} app installed. Opening portal...`
-      : `${portal.title} is enabled. Open it and use the browser menu to install this portal app.`;
+      ? `MAPPHEX app installed. Opening ${portal.title}...`
+      : `${portal.title} is enabled inside MAPPHEX. Use the browser menu to install the unified MAPPHEX app if the prompt does not appear.`;
     if (progress) progress.textContent = message;
     showPwaHelp(message, portal);
     if (result?.ok) window.setTimeout(() => (location.href = portalUrl(portal)), 900);
@@ -363,19 +363,19 @@
     if (subtitle) subtitle.textContent = "All portals are available. Recommended portals are marked for this organization.";
     if (helpText) {
       helpText.textContent =
-        "After a portal is enabled, open that portal and install it from your browser menu if the install prompt does not appear.";
+        "After portals are enabled, install MAPPHEX once from your browser menu if the install prompt does not appear.";
     }
   };
 
   const manualInstallMessage = () => {
     const ua = navigator.userAgent || "";
     if (/iPad|iPhone|iPod/i.test(ua)) {
-      return "Portal is enabled. On iPhone or iPad, open the portal, tap Share, then Add to Home Screen.";
+      return "Portals are enabled. On iPhone or iPad, open MAPPHEX, tap Share, then Add to Home Screen.";
     }
     if (/Android/i.test(ua)) {
-      return "Portal is enabled. Open the portal, then use the browser menu to install the portal app or add it to the home screen.";
+      return "Portals are enabled. Open MAPPHEX, then use the browser menu to install the app or add it to the home screen.";
     }
-    return "Portal is enabled. Open the portal, then use Chrome or Edge menu to install it as an app.";
+    return "Portals are enabled. Open MAPPHEX, then use Chrome or Edge menu to install it as one app.";
   };
 
   const install = async (portalIds, options = {}) => {
@@ -444,7 +444,7 @@
       if (reason !== "dismissed") window.setTimeout(openWorkspace, 2800);
       return;
     }
-    if (progress && !options.installPwa) progress.textContent = "Portal installation complete. Use each installed portal card to open or install that portal app.";
+    if (progress && !options.installPwa) progress.textContent = "Portal installation complete. Installed portals are available inside the same MAPPHEX app.";
   };
 
   const deactivate = async (portalId) => {

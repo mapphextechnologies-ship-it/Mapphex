@@ -1,10 +1,10 @@
 {
   "name": "MAPPHEX",
   "short_name": "MAPPHEX",
-  "id": "/organization-login.html",
+  "id": "/",
   "description": "Install MAPPHEX as one unified organization workspace app with selected ERP modules for operations, finance, HR, logistics, reporting, and administration.",
-  "start_url": "./organization-login.html",
-  "scope": "./",
+  "start_url": "/organization-login.html",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#06101f",
   "theme_color": "#06101f",
