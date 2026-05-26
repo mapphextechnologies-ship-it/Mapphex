@@ -58,6 +58,7 @@
   };
 
   const serviceImage = (id, fallback) => {
+    if (id === "technology-services") return "images/services/cloud-hosting.jpg";
     if (!serviceImageQueries[id]) return fallback;
     return `images/services/${id}.jpg`;
   };
